@@ -1,0 +1,17 @@
+junitvm*.properties
+build.properties
+gradle.properties
+.DS_Store
+build
+*.iml
+*.iws
+*.ipr
+.idea/
+.gradle/
+*~
+out
+TempStatsStore
+derby.log
+metastore_db
+test.dot
+

@@ -1,0 +1,175 @@
+/*
+ * Copyright (c) 2007-2013 Concurrent, Inc. All Rights Reserved.
+ *
+ * Project and contact information: http://www.cascading.org/
+ *
+ * This file is part of the Cascading project.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import java.text.SimpleDateFormat
+
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'propdeps'
+apply plugin: 'propdeps-idea'
+apply plugin: 'propdeps-eclipse'
+apply plugin: 'propdeps-maven'
+
+ext.cascadingVersion = '2.5.2'
+ext.hadoopVersion = '1.2.1'
+ext.hiveVersion = '0.12.0'
+
+apply from: "etc/properties.gradle"
+apply from: "etc/version.gradle"
+
+def versionProperties = new Properties()
+file( 'version.properties' ).withInputStream { versionProperties.load( it ) }
+
+group = 'cascading'
+version = releaseVersion
+
+ext.timestamp = new SimpleDateFormat( "yyyyMMdd" ).format( new Date() )
+
+buildscript {
+  repositories {
+    mavenCentral()
+    maven { url 'http://repo.springsource.org/plugins-release' }
+  }
+
+  dependencies {
+    classpath 'org.springframework.build.gradle:propdeps-plugin:0.0.4'
+  }
+}
+
+configurations {
+  testArtifacts {
+    extendsFrom testRuntime
+  }
+}
+
+repositories {
+  mavenLocal()
+  mavenCentral()
+  maven{ url 'http://conjars.org/repo/' }
+}
+
+dependencies {
+  compile group: 'org.apache.hive', name: 'hive-exec', version: hiveVersion
+
+  compile group: 'cascading', name: 'cascading-hadoop', version: cascadingVersion, changing: true
+  runtime group: 'xerces', name: 'xercesImpl', version: '2.9.1'
+  runtime group: 'xalan', name: 'xalan', version: '2.7.1'
+
+  provided group: 'org.apache.hadoop', name: 'hadoop-core', version: hadoopVersion
+  provided group: 'org.slf4j', name: 'slf4j-api', version: '1.6.1'
+  provided group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.6.1'
+  provided group: 'log4j', name: 'log4j', version: '1.2.17'
+
+  testCompile group: 'cascading', name: 'cascading-hadoop', version: cascadingVersion, changing: true
+  testCompile group: 'cascading', name: 'cascading-core', version: cascadingVersion, classifier: 'tests', changing: true
+  testCompile group: 'cascading', name: 'cascading-hadoop', version: cascadingVersion, classifier: 'tests', changing: true
+  testCompile group: 'cascading', name: 'cascading-platform', version: cascadingVersion, classifier: 'tests', changing: true
+  testCompile group: 'junit', name: 'junit', version: '4.11'
+  testCompile group: 'org.mockito', name: 'mockito-all', version: '1.9.5'
+
+}
+
+task sourcesJar( type: Jar, dependsOn: classes ) {
+  from sourceSets.main.allSource
+  classifier = 'sources'
+}
+
+task javadocJar( type: Jar, dependsOn: javadoc ) {
+  classifier = 'javadoc'
+  from javadoc.destinationDir
+}
+
+task testsJar( type: Jar, dependsOn: testClasses ) {
+  from sourceSets.test.output
+  classifier = 'tests'
+}
+
+task testSourcesJar( type: Jar, dependsOn: classes ) {
+  from sourceSets.test.allSource
+  classifier = 'test-sources'
+}
+
+artifacts {
+  archives jar
+  archives sourcesJar
+  archives javadocJar
+  archives testsJar
+  archives testSourcesJar
+  testArtifacts testsJar
+  testArtifacts testSourcesJar
+}
+
+jar {
+  manifest {
+    attributes( "Build-Date": "${timestamp}" )
+  }
+}
+
+test {
+  jvmArgs '-Xmx756m'
+
+  enableAssertions = false
+
+  include '**/*Test.class'
+}
+
+uploadArchives {
+
+  repositories.mavenDeployer {
+    configuration = configurations.archives
+
+    repository( url: repoUrl ) {
+      authentication( userName: repoUserName, password: repoPassword )
+    }
+
+    pom.project {
+      description 'Cascading hive is an adapter to run hive queries in Cascading flows'
+      inceptionYear '2014'
+      url 'http://cascading.org/'
+      scm {
+        url 'https://github.com/ConcurrentCore/cascading-hive.git'
+      }
+      licenses {
+        license {
+          name 'The Apache Software License, Version 2.0'
+          url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+          distribution 'repo'
+        }
+      }
+    }
+  }
+}
+
+idea {
+  module {
+    downloadJavadoc = true
+    downloadSources = true
+  }
+}
+
+eclipse {
+  classpath {
+    defaultOutputDir = file( 'build' )
+    downloadSources = true
+    downloadJavadoc = true
+  }
+}
