@@ -128,24 +128,26 @@ public class HiveFlowTest extends PlatformTestCase
     CascadeConnector connector = new CascadeConnector();
 
     HiveFlow createFirstTableFlow = new HiveFlow( "create keyvalue table", new Properties(),
-      " create table keyvalue (key int, value string) row format delimited fields terminated by '\t' ",
+      " create table keyvalue3 (key int, value string) row format delimited fields terminated by '\t' ",
       createHiveConf() );
 
     HiveFlow createSecondTableFlow = new HiveFlow( "create keyvalue2 table", new Properties(),
-      " create table keyvalue2 (key int, value string) row format delimited fields terminated by '\t' ",
+      " create table keyvalue4 (key int, value string) row format delimited fields terminated by '\t' ",
       createHiveConf() );
     connector.connect( createFirstTableFlow, createSecondTableFlow ).complete();
 
     HiveFlow multitableSelect = new HiveFlow( "select from multiple tables", new Properties(),
-      "select keyvalue.key, keyvalue.value from keyvalue join keyvalue2 on keyvalue.key = keyvalue2.key",
+      "select keyvalue3.key, keyvalue3.value from keyvalue3 join keyvalue4 on keyvalue3.key = keyvalue4.key",
       createHiveConf() );
 
     Map<String, Tap> sources = multitableSelect.getSources();
     assertEquals( 2, sources.size() );
-    Tap firstTable = sources.get( "file://" + HIVE_WAREHOUSE_DIR + "keyvalue" );
-    assertNotNull( firstTable );
-    Tap secondTable = sources.get( "file://" + HIVE_WAREHOUSE_DIR + "keyvalue2" );
-    assertNotNull( secondTable );
+    for ( String key: sources.keySet() )
+      {
+      Tap source = sources.get( key );
+      assertNotNull ( source );
+      assertEquals( key, source.getIdentifier() );
+      }
 
     }
 

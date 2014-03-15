@@ -31,7 +31,7 @@ apply plugin: 'propdeps-maven'
 
 ext.cascadingVersion = '2.5.2'
 ext.hadoopVersion = '1.2.1'
-ext.hiveVersion = '0.12.0'
+ext.hiveVersion = '0.10.0'
 
 apply from: "etc/properties.gradle"
 apply from: "etc/version.gradle"
@@ -69,6 +69,7 @@ repositories {
 
 dependencies {
   compile group: 'org.apache.hive', name: 'hive-exec', version: hiveVersion
+  compile group: 'org.apache.hive', name: 'hive-builtins', version: hiveVersion
 
   compile group: 'cascading', name: 'cascading-hadoop', version: cascadingVersion, changing: true
   runtime group: 'xerces', name: 'xercesImpl', version: '2.9.1'
