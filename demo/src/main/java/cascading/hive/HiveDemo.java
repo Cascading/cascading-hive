@@ -38,26 +38,22 @@ import cascading.operation.FunctionCall;
 import cascading.pipe.Each;
 import cascading.pipe.Pipe;
 import cascading.property.AppProps;
-import cascading.scheme.hadoop.TextDelimited;
 import cascading.tap.Tap;
-import cascading.tap.hadoop.Hfs;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
+
 /**
- *  Demo Application using HiveFlows which creates three tables, loads data, converts them in cascading and reads it back
- *  via JDBC.
+ * Demo Application using HiveFlows which creates three tables, loads data, converts them in cascading and reads it
+ * back via JDBC.
  */
 public class HiveDemo
   {
 
   private static String dualTableInputFile = System.getProperty( "user.dir" ) + "/src/main/resources/data.txt";
 
-  /**
-   */
-  public static void main( String [] args ) throws Exception
+  public static void main( String[] args ) throws Exception
     {
-
     Properties properties = new Properties();
     AppProps.setApplicationName( properties, "cascading hive integration demo" );
 
@@ -67,15 +63,13 @@ public class HiveDemo
     // first we create a table called dual (like the one in oracle)
     HiveFlow createFlow = new HiveFlow( "create table dual", properties, "create table dual( value string )" );
 
-    // create table flows have to run before other flows can interact with it, since the information has to be
-    CascadeConnector connector = new CascadeConnector();
-    connector.connect( createFlow ).complete();
-
     // create a second table with two columns
     HiveFlow createSecondTableFlow = new HiveFlow( "create table keyvalue", properties,
       " create table keyvalue (key string, value string) row format delimited fields terminated by '\\t' " );
-
-    connector.connect( createSecondTableFlow ).complete();
+    // "create table"-flows have to run before other flows can interact with it, since the information has to be persisted
+    // in the hive meta store.
+    CascadeConnector connector = new CascadeConnector();
+    connector.connect( createFlow, createSecondTableFlow ).complete();
 
     // load data from local fs into the hive table
     HiveFlow loadDataFlow = new HiveFlow( "load data into dual", properties,
@@ -93,26 +87,27 @@ public class HiveDemo
     // simple function we use in a pure cascading flow
     class Upper extends BaseOperation implements Function
       {
-      public Upper ( Fields fieldDeclaration )
+      public Upper( Fields fieldDeclaration )
         {
-        super( 2, fieldDeclaration);
+        super( 2, fieldDeclaration );
         }
+
       @Override
       public void operate( FlowProcess flowProcess, FunctionCall functionCall )
         {
         TupleEntry argument = functionCall.getArguments();
         String key = argument.getString( 0 ).toUpperCase();
         String value = argument.getString( 1 ).toUpperCase();
-        Tuple result = new Tuple(key, value);
+        Tuple result = new Tuple( key, value );
         functionCall.getOutputCollector().add( result );
         }
       }
     // create a pure cascading flow, that reads from the second table, converts everything to upper case and writes it into the third table
     Tap inTap = createSecondTableFlow.getSink();
-    Tap outTap =  createThirdTableFlow.getSink();
+    Tap outTap = createThirdTableFlow.getSink();
 
-    Pipe copyPipe = new Each( "convert keavalue to uppercase and write to keyvalue2", inTap.getSinkFields(), new Upper( inTap.getSinkFields() ), Fields.RESULTS ) ;
-    Flow<?> pureCascadingFlow = new HadoopFlowConnector( ).connect( inTap, outTap, copyPipe );
+    Pipe copyPipe = new Each( "convert keavalue to uppercase and write to keyvalue2", inTap.getSinkFields(), new Upper( inTap.getSinkFields() ), Fields.RESULTS );
+    Flow<?> pureCascadingFlow = new HadoopFlowConnector().connect( inTap, outTap, copyPipe );
 
     // run all of the above flows, cascading will figure out the right order of execution
     Cascade cascade = connector.connect( createThirdTableFlow, pureCascadingFlow, loadDataFlow, selectFlow );
@@ -127,10 +122,10 @@ public class HiveDemo
     Statement stmt = con.createStatement();
 
     ResultSet rs = stmt.executeQuery( "select key, value from keyvalue2" );
-    System.out.println("----------------------Hive JDBC--------------------------");
-    while ( rs.next() )
+    System.out.println( "----------------------Hive JDBC--------------------------" );
+    while( rs.next() )
       System.out.printf( "data from hive table copy: key=%s,value=%s\n", rs.getString( 1 ), rs.getString( 2 ) );
-    System.out.println("---------------------------------------------------------");
+    System.out.println( "---------------------------------------------------------" );
     stmt.close();
     con.close();
     }
