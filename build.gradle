@@ -65,6 +65,7 @@ repositories {
   mavenLocal()
   mavenCentral()
   maven{ url 'http://conjars.org/repo/' }
+  maven{ url 'http://www.datanucleus.org/downloads/maven2/' }
 }
 
 dependencies {
