@@ -18,13 +18,14 @@
 * limitations under the License.
 */
 
-package cascading.flow.hive;
+package cascading.tap.hive;
 
 import java.io.IOException;
 
 import cascading.flow.FlowProcess;
 import cascading.scheme.NullScheme;
 import cascading.tap.Tap;
+import cascading.tap.hive.HiveNullTap;
 import org.junit.Test;
 import org.mockito.Mockito;
 

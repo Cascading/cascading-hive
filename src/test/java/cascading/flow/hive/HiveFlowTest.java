@@ -21,53 +21,51 @@
 package cascading.flow.hive;
 
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
 import cascading.CascadingException;
-import cascading.PlatformTestCase;
+import cascading.HiveTestCase;
 import cascading.cascade.CascadeConnector;
 import cascading.tap.Tap;
-import org.apache.commons.io.FileUtils;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.junit.Before;
+import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.Driver;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.junit.Test;
 
 
 /**
  * Integration style tests, which bootstrap a set of tables and use them from cascading later on.
  */
-public class HiveFlowTest extends PlatformTestCase
+public class HiveFlowTest extends HiveTestCase
   {
-  private final static File DERBY_HOME = new File( "build/test/derby" );
-  private final static String CWD = System.getProperty( "user.dir" );
-  private final static String HIVE_WAREHOUSE_DIR = CWD + "/build/test/hive";
-
-  public HiveFlowTest()
-    {
-    super( false );
-    }
-
-  @Before
-  public void setUp() throws IOException
-    {
-    // the hive meta store uses derby by default
-    if( DERBY_HOME.exists() )
-      FileUtils.deleteDirectory( DERBY_HOME );
-
-    System.setProperty( "derby.system.home", DERBY_HOME.getAbsolutePath() );
-    }
-
-
+  /*
   @Test(expected = CascadingException.class)
   public void testWrongSQL()
     {
     new HiveFlow( "broken", new Properties(), "create tble foobar", createHiveConf() );
     }
+   */
 
+  @Test
+  public void testExistingTable() throws Exception
+    {
+    SessionState.start( createHiveConf() );
+    SessionState.get().setIsSilent( true );
+    Driver driver = new Driver( createHiveConf() );
+    driver.init();
+    driver.run( "create table duplicate( value string ) row format delimited fields terminated by '\\t' " );
+    driver.destroy();
 
+    HiveMetaStoreClient client = new HiveMetaStoreClient( createHiveConf() );
+    Table table = client.getTable( "default", "duplicate" );
+    System.out.println(table);
+
+    }
+
+  /*
   @Test
   public void testCreateDualAndLoadDataIntoTable() throws IOException
     {
@@ -119,7 +117,7 @@ public class HiveFlowTest extends PlatformTestCase
     TupleEntry te = iterator.next();
 
     assertEquals( 2, te.getTuple().size() ); */
-
+ /*
     }
 
   @Test
@@ -151,11 +149,6 @@ public class HiveFlowTest extends PlatformTestCase
 
     }
 
-  private HiveConf createHiveConf()
-    {
-    HiveConf conf = new HiveConf();
-    conf.set( HiveConf.ConfVars.METASTOREWAREHOUSE.varname, HIVE_WAREHOUSE_DIR );
-    return conf;
-    }
 
+   */
   }

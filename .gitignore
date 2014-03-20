@@ -13,5 +13,5 @@ out
 TempStatsStore
 derby.log
 metastore_db
-test.dot
+*.dot
 

@@ -29,7 +29,8 @@ apply plugin: 'propdeps-idea'
 apply plugin: 'propdeps-eclipse'
 apply plugin: 'propdeps-maven'
 
-ext.cascadingVersion = '2.5.2'
+// wip for now, for the ProcessFlow fix
+ext.cascadingVersion = '2.5.3-wip-95'
 ext.hadoopVersion = '1.2.1'
 ext.hiveVersion = '0.10.0'
 

@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-package cascading.flow.hive;
+package cascading.tap.hive;
 
 import java.io.IOException;
 
