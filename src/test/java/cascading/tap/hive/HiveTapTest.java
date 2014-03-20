@@ -53,7 +53,7 @@ public class HiveTapTest extends HiveTestCase
   @Test
   public void testCreateResource() throws IOException
     {
-    HiveTableDescriptor desc = new HiveTableDescriptor( "myTable", new String[]{"key"}, new String[]{"string"} );
+    HiveTableDescriptor desc = new HiveTableDescriptor( "myTable2", new String[]{"key"}, new String[]{"string"} );
     HiveTap tap = new HiveTap( createHiveConf(), desc, new NullScheme() );
     assertTrue( tap.createResource( new JobConf() ) );
     assertTrue( tap.resourceExists( new JobConf() ) );
@@ -63,11 +63,11 @@ public class HiveTapTest extends HiveTestCase
   @Test(expected = HiveTableValidationException.class)
   public void testResourceExistsStrictModeColumnCountMismatch() throws IOException
     {
-    HiveTableDescriptor desc = new HiveTableDescriptor( "myTable", new String[]{"key"}, new String[]{"string"} );
+    HiveTableDescriptor desc = new HiveTableDescriptor( "myTable3", new String[]{"key"}, new String[]{"string"} );
     HiveTap tap = new HiveTap( createHiveConf(), desc, new NullScheme() );
     tap.createResource( new JobConf() );
 
-    HiveTableDescriptor mismatch = new HiveTableDescriptor( "myTable", new String[]{"key", "value"},
+    HiveTableDescriptor mismatch = new HiveTableDescriptor( "myTable3", new String[]{"key", "value"},
       new String[]{"string", "string"} );
 
     tap = new HiveTap( createHiveConf(), mismatch, new NullScheme(  ), SinkMode.REPLACE, true );
@@ -78,11 +78,11 @@ public class HiveTapTest extends HiveTestCase
   @Test(expected = HiveTableValidationException.class)
   public void testResourceExistsStrictModeNameMismatch() throws IOException
     {
-    HiveTableDescriptor desc = new HiveTableDescriptor( "myTable", new String[]{"key"}, new String[]{"string"} );
+    HiveTableDescriptor desc = new HiveTableDescriptor( "myTable4", new String[]{"key"}, new String[]{"string"} );
     HiveTap tap = new HiveTap( createHiveConf(), desc, new NullScheme() );
     tap.createResource( new JobConf() );
 
-    HiveTableDescriptor mismatch = new HiveTableDescriptor( "myTable", new String[]{"key2"}, new String[]{"string"} );
+    HiveTableDescriptor mismatch = new HiveTableDescriptor( "myTable4", new String[]{"key2"}, new String[]{"string"} );
 
     tap = new HiveTap( createHiveConf(), mismatch, new NullScheme(  ), SinkMode.REPLACE, true );
     tap.resourceExists( new JobConf(  ) );
@@ -92,11 +92,11 @@ public class HiveTapTest extends HiveTestCase
   @Test(expected = HiveTableValidationException.class)
   public void testResourceExistsStrictModeTypeMismatch() throws IOException
     {
-    HiveTableDescriptor desc = new HiveTableDescriptor( "myTable", new String[]{"key"}, new String[]{"string"} );
+    HiveTableDescriptor desc = new HiveTableDescriptor( "myTable5", new String[]{"key"}, new String[]{"string"} );
     HiveTap tap = new HiveTap( createHiveConf(), desc, new NullScheme() );
     tap.createResource( new JobConf() );
 
-    HiveTableDescriptor mismatch = new HiveTableDescriptor( "myTable", new String[]{"key"}, new String[]{"int"} );
+    HiveTableDescriptor mismatch = new HiveTableDescriptor( "myTable5", new String[]{"key"}, new String[]{"int"} );
     tap = new HiveTap( createHiveConf(), mismatch, new NullScheme(  ), SinkMode.REPLACE, true );
     tap.resourceExists( new JobConf(  ) );
     }
