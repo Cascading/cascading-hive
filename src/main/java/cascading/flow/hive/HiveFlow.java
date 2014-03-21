@@ -20,132 +20,37 @@
 
 package cascading.flow.hive;
 
-import java.beans.ConstructorProperties;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
-import cascading.CascadingException;
-import cascading.scheme.NullScheme;
-import cascading.tap.SinkMode;
+import cascading.flow.hadoop.ProcessFlow;
 import cascading.tap.Tap;
-import cascading.tap.hadoop.Hfs;
-import cascading.tuple.Fields;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.ql.CommandNeedRetryException;
-import org.apache.hadoop.hive.ql.Driver;
-import org.apache.hadoop.hive.ql.exec.Task;
-import org.apache.hadoop.hive.ql.plan.CopyWork;
-import org.apache.hadoop.hive.ql.plan.DDLWork;
-import org.apache.hadoop.hive.ql.plan.api.StageType;
-import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
-import org.apache.hadoop.hive.ql.session.SessionState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import riffle.process.DependencyIncoming;
-import riffle.process.DependencyOutgoing;
-import riffle.process.ProcessComplete;
-import riffle.process.ProcessStart;
-import riffle.process.ProcessStop;
 
 /**
- * Flow implementation for running Hive queries within a Cascade.
+ * A subclass of ProcessFlow for running Hive queries.
  */
-@riffle.process.Process
-public class HiveFlow
+public class HiveFlow extends ProcessFlow
   {
-  /** Field LOG */
-  private static final Logger LOG = LoggerFactory.getLogger( HiveFlow.class );
-  private final List<Tap> sources;
-  private final Tap sink;
-
-  /** The hive query to run */
-  private String query;
-
-  /** HiveConf object */
-  private HiveConf hiveConf;
 
   /**
-   * Constructs a new HiveFlow with the given name, properties, query and a custom HiveConf object. This constructor
-   * is currently meant for testing only.
+   * Constructs a new HiveFlow object with the given name, query, a list of source taps and sink.
    *
-   * @param hiveConf The HiveConf object to use
-   * @param query    The hive query to run.
+   * @param name The name of the flow.
+   * @param query   The hive query to run.
+   * @param sources The source taps of the query.
+   * @param sink  The sink of the query.
    */
-  @ConstructorProperties({"hiveConf"})
-  public HiveFlow( HiveConf hiveConf, String query, List<Tap> sources, Tap sink )
+  public HiveFlow( String name, String query, List<cascading.tap.Tap> sources, Tap sink)
     {
-    this.hiveConf = hiveConf;
-    this.query = query;
-    this.sources = sources;
-    this.sink = sink;
-    }
-
-
-  @ProcessStart
-  public void start()
-    {
-    //NOOP, but required for riffle
-    }
-
-  @ProcessStop
-  public void stop()
-    {
-    // NOOP, but required for riffle
-    }
-
-  @ProcessComplete
-  public void complete()
-    {
-    Driver driver = null;
-    try
-      {
-      driver = createHiveDriver();
-      LOG.info( "running query {}", query );
-      CommandProcessorResponse response = driver.run( this.query );
-      if( response.getResponseCode() != 0 )
-        {
-        throw new CascadingException( "hive error '" + response.getErrorMessage() + "' while running query " + query );
-        }
-      }
-    catch( CommandNeedRetryException exception )
-      {
-      throw new CascadingException( "problem while executing hive query: " + query, exception );
-      }
-    finally
-      {
-      if( driver != null )
-        driver.destroy();
-      }
-    }
-
-  @DependencyOutgoing
-  public Collection getOutgoing()
-    {
-    return Collections.unmodifiableCollection( Arrays.asList( sink ) );
-    }
-
-  @DependencyIncoming
-  public Collection getIncoming()
-    {
-    return Collections.unmodifiableCollection( sources );
+    this( name, new HiveDriverFactory(), query, sources, sink );
     }
 
   /**
-   * Creates a new Driver instance and sets everything up for compiling/processing queries
+   * Package private constructor which allows injecting a custom HiveDriverFactory during tests.
    *
-   * @return a new Driver instance.
    */
-  private Driver createHiveDriver()
+  HiveFlow( String name, HiveDriverFactory driverFactory, String query, List<cascading.tap.Tap> sources, Tap sink)
     {
-    // TODO do we need a global lock here? This looks problematic with concurrent flows running.
-    SessionState.start( hiveConf );
-    SessionState.get().setIsSilent( true );
-    Driver driver = new Driver( hiveConf );
-    driver.init();
-    return driver;
+    super( name, new HiveRiffle( driverFactory, query, sources, sink ) );
     }
 
   }

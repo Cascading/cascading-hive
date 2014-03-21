@@ -20,32 +20,20 @@
 
 package cascading.flow.hive;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import cascading.HiveTestCase;
-import cascading.scheme.NullScheme;
-import cascading.tap.Tap;
-import cascading.tap.hadoop.Hfs;
+import org.apache.hadoop.hive.ql.Driver;
 import org.junit.Test;
 
 /**
- * Test for HiveFlow.
+ * Tests for HiveDriverFactory.
  */
-public class HiveFlowTest extends HiveTestCase
+public class HiveDriverFactoryTest extends HiveTestCase
   {
   @Test
-  public void testConstruction()
+  public void testCreateHiveDriver()
     {
-    Tap sink = new Hfs( new NullScheme(), "/foo" );
-    List<Tap> sources = Arrays.asList( (Tap) new Hfs( new NullScheme(), "/bar" ) );
-    HiveFlow flow = new HiveFlow( "some name", createHiveDriverFactory(), "select * from foo", sources, sink );
-    assertEquals( sink, flow.getSink() );
-    Map<String, Tap> expectedSources = new HashMap<String, Tap>(  );
-    expectedSources.put( "/bar", sources.get( 0 ) );
-    assertEquals( expectedSources, flow.getSources() );
-    assertEquals( "some name", flow.getName() );
+    Driver driver = new HiveDriverFactory().createHiveDriver();
+    assertNotNull( driver );
+    driver.destroy();
     }
   }

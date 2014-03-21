@@ -23,13 +23,9 @@ package cascading.tap.hive;
 import java.io.IOException;
 import java.util.List;
 
-import cascading.flow.FlowProcess;
-import cascading.flow.hadoop.util.HadoopUtil;
 import cascading.scheme.Scheme;
 import cascading.tap.SinkMode;
 import cascading.tap.hadoop.Hfs;
-import cascading.tap.hadoop.util.Hadoop18TapUtil;
-import cascading.tuple.TupleEntryCollector;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaHook;

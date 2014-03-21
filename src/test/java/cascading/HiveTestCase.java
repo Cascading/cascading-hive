@@ -23,12 +23,10 @@ package cascading;
 import java.io.File;
 import java.io.IOException;
 
+import cascading.flow.hive.HiveDriverFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.rules.TestName;
 
 /**
  * Super class for tests interacting with hive and its MetaStore.
@@ -40,6 +38,8 @@ public class HiveTestCase extends PlatformTestCase
   public final static String CWD = System.getProperty( "user.dir" );
 
   public final static String HIVE_WAREHOUSE_DIR = CWD + "/build/test/hive";
+
+  private HiveDriverFactory hiveDriverFactory = new HiveDriverFactoryForTesting( createHiveConf() );
 
   @BeforeClass
   public static void beforeClass() throws IOException
@@ -60,6 +60,11 @@ public class HiveTestCase extends PlatformTestCase
     HiveConf conf = new HiveConf();
     conf.set( HiveConf.ConfVars.METASTOREWAREHOUSE.varname, HIVE_WAREHOUSE_DIR );
     return conf;
+    }
+
+  public HiveDriverFactory createHiveDriverFactory()
+    {
+    return hiveDriverFactory;
     }
 
   }

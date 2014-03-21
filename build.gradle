@@ -24,6 +24,7 @@ apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
+apply plugin: 'jacoco'
 apply plugin: 'propdeps'
 apply plugin: 'propdeps-idea'
 apply plugin: 'propdeps-eclipse'
@@ -133,7 +134,21 @@ test {
   enableAssertions = false
 
   include '**/*Test.class'
+  jacoco {
+    append = false
+    destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+    classDumpFile = file("$buildDir/jacoco/classpathdumps")
+  }
 }
+
+jacocoTestReport {
+  reports {
+    xml.enabled false
+    csv.enabled false
+    html.destination "${buildDir}/jacocoHtml"
+  }
+}
+
 
 uploadArchives {
 

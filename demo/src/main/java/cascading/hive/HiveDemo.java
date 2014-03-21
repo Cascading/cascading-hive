@@ -32,7 +32,6 @@ import cascading.cascade.CascadeConnector;
 import cascading.flow.Flow;
 import cascading.flow.FlowProcess;
 import cascading.flow.hadoop.HadoopFlowConnector;
-import cascading.flow.hadoop.ProcessFlow;
 import cascading.flow.hive.HiveFlow;
 import cascading.operation.BaseOperation;
 import cascading.operation.Function;
@@ -52,7 +51,6 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.mapred.JobConf;
 
 import static cascading.tap.SinkMode.REPLACE;
-import static cascading.tap.SinkMode.UPDATE;
 
 /**
  * Demo Application using HiveFlows which creates three tables, loads data, converts them in cascading and reads it
@@ -79,11 +77,10 @@ public class HiveDemo
     dualTap.createResource( jobConf );
 
     // load local data into dual. The table will be created as needed.
-    HiveFlow hiveLoadDual = new HiveFlow( hiveConf,
+    HiveFlow loadDataFlow = new HiveFlow( "load data into dual",
       String.format( "load data local inpath '%s' overwrite into table dual", dualTableInputFile ),
       Arrays.<Tap>asList( new Hfs( new NullScheme(), dualTableInputFile ) ), dualTap );
     // load data from local fs into the hive table
-    ProcessFlow loadDataFlow = new ProcessFlow( "load data into dual", hiveLoadDual );
 
     // describe a second table: keyvalue
     HiveTableDescriptor keyValueDescriptor = new HiveTableDescriptor( "keyvalue", new String[]{"key", "value"},
@@ -93,9 +90,9 @@ public class HiveDemo
     keyvalueTap.createResource( jobConf );
 
     // populate data in keyvalue by selecting data from dual
-    HiveFlow hiveSelectFlow = new HiveFlow( hiveConf, "insert overwrite table keyvalue select 'Hello' as key, 'hive!' as value from dual ",
+    HiveFlow selectFlow = new HiveFlow( "select data from dual into keyvalue",
+      "insert overwrite table keyvalue select 'Hello' as key, 'hive!' as value from dual ",
       Arrays.<Tap>asList( dualTap ), keyvalueTap );
-    ProcessFlow selectFlow = new ProcessFlow( "select data from dual into keyvalue", hiveSelectFlow );
 
     // describe a third table, similar to keyvalue. This will be used as a sink in a pure cascading flow
     HiveTableDescriptor keyValueDescriptor2 = new HiveTableDescriptor( "keyvalue2", new String[]{"key", "value"},

@@ -22,7 +22,9 @@
 package cascading.tap.hive;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import cascading.CascadingException;
 import cascading.scheme.Scheme;
@@ -39,6 +41,7 @@ import org.junit.Test;
 
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 /**
  * Tests for the HiveTableDescriptor.
@@ -106,7 +109,7 @@ public class HiveTableDescriptorTest
     }
 
   @Test
-  public void testToSchemeWithCustomtDelimiter()
+  public void testToSchemeWithCustomDelimiter()
     {
     String delim = "\\t";
     HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
@@ -116,4 +119,47 @@ public class HiveTableDescriptorTest
     Assert.assertEquals( delim, ( (TextDelimited) scheme ).getDelimiter() );
     }
 
+  @Test
+  public void testToSchemeWithNullDelimiter()
+    {
+    String delim = null;
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
+      new String[]{"int", "string", "boolean"}, delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME );
+    Scheme scheme = descriptor.toScheme();
+    assertNotNull( scheme );
+    Assert.assertEquals( HiveTableDescriptor.HIVE_DEFAULT_DELIMITER, ( (TextDelimited) scheme ).getDelimiter() );
+    }
+
+  @Test
+  public void testHashCodeEquals()
+    {
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
+      new String[]{"int", "string", "boolean"} );
+
+    HiveTableDescriptor descriptor2 = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
+      new String[]{"int", "string", "boolean"} );
+
+    HiveTableDescriptor descriptor3 = new HiveTableDescriptor( "myTable", new String[]{"one","three","two"},
+      new String[]{"int", "boolean", "string"} );
+
+    assertEquals( descriptor, descriptor2 );
+    assertFalse( descriptor.equals( descriptor3 ));
+    assertFalse( descriptor2.equals( descriptor3 ));
+
+    Set<HiveTableDescriptor> descriptors = new HashSet<HiveTableDescriptor>(  );
+    descriptors.add( descriptor );
+    assertEquals(1, descriptors.size() );
+    descriptors.add( descriptor2 );
+    assertEquals(1, descriptors.size() );
+    descriptors.add( descriptor3 );
+    assertEquals(2, descriptors.size() );
+    }
+
+  @Test
+  public void testToString()
+    {
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
+      new String[]{"int", "string", "boolean"} );
+    assertNotNull( descriptor.toString() );
+    }
   }
