@@ -32,7 +32,7 @@ apply plugin: 'propdeps-maven'
 
 ext.cascadingVersion = '2.5.2'
 ext.hadoopVersion = '1.2.1'
-ext.hiveVersion = '0.12.0'
+ext.hiveVersion = '0.10.0'
 
 group = "cascading"
 version = "1.0"
@@ -61,11 +61,18 @@ repositories {
   mavenLocal()
   mavenCentral()
   maven{ url 'http://conjars.org/repo/' }
+  maven{ url 'http://www.datanucleus.org/downloads/maven2/' }
+
 }
 
 dependencies {
+  // broken hive deps..
+  compile group: 'sqlline', name: 'sqlline',  version: '1.1.6'
   compile group: 'cascading', name: 'cascading-hive', version: '1.0.0-wip-dev'
-  compile group: 'org.apache.hive', name: 'hive-jdbc', version: hiveVersion
+  compile( group: 'org.apache.hive', name: 'hive-jdbc', version: hiveVersion  ){
+    exclude group: 'sqline'
+  }
+
 
 
   provided group: 'org.apache.hadoop', name: 'hadoop-core', version: hadoopVersion
@@ -88,7 +95,8 @@ jar {
   }
 
   manifest {
-    attributes( "Main-Class": "cascading/hive/HiveDemo" )
+    //attributes( "Main-Class": "cascading/hive/HiveDemo" )
+    //attributes( "Main-Class": "cascading/PlayGround" )
   }
 }
 

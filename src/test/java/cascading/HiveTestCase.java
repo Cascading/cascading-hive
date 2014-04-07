@@ -49,6 +49,7 @@ public class HiveTestCase extends PlatformTestCase
       FileUtils.deleteDirectory( DERBY_HOME );
     DERBY_HOME.mkdirs();
     System.setProperty( "derby.system.home", DERBY_HOME.getAbsolutePath() );
+    System.setProperty( HiveConf.ConfVars.METASTOREWAREHOUSE.varname, HIVE_WAREHOUSE_DIR );
     }
 
   /**

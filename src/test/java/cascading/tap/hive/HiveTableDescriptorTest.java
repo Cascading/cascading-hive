@@ -22,11 +22,12 @@
 package cascading.tap.hive;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import cascading.CascadingException;
 import cascading.scheme.Scheme;
 import cascading.scheme.hadoop.TextDelimited;
 import cascading.tuple.Fields;
@@ -40,6 +41,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
@@ -49,22 +51,28 @@ import static org.junit.Assert.assertFalse;
 public class HiveTableDescriptorTest
   {
 
-  @Test(expected = CascadingException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testConstructionTableNameNull()
     {
     new HiveTableDescriptor( null, new String[]{"foo"}, new String[]{"string"} );
     }
 
-  @Test(expected = CascadingException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testConstructionTableNameEmpty()
     {
     new HiveTableDescriptor( "", new String[]{"foo"}, new String[]{"string"} );
     }
 
-  @Test(expected = CascadingException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testConstructionColumnNamesAndTypesMismatch()
     {
     new HiveTableDescriptor( "table", new String[]{"foo"}, new String[]{} );
+    }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testConstructionPartitionKeysMismatch()
+    {
+    new HiveTableDescriptor( "table", new String[]{"foo"}, new String[]{}, new String[]{"bar"} );
     }
 
   @Test
@@ -79,8 +87,8 @@ public class HiveTableDescriptorTest
     StorageDescriptor sd = table.getSd();
     assertNotNull( sd );
 
-    List<FieldSchema> expectedSchema = Arrays.asList( new FieldSchema( "key", "int", "" ),
-      new FieldSchema( "value", "string", "" ) );
+    List<FieldSchema> expectedSchema = Arrays.asList( new FieldSchema( "key", "int", "created by Cascading" ),
+      new FieldSchema( "value", "string", "created by Cascading" ) );
     assertEquals( expectedSchema, sd.getCols() );
 
     SerDeInfo serDeInfo = sd.getSerdeInfo();
@@ -88,7 +96,35 @@ public class HiveTableDescriptorTest
 
     assertEquals( HiveTableDescriptor.HIVE_DEFAULT_INPUT_FORMAT_NAME, sd.getInputFormat() );
     assertEquals( HiveTableDescriptor.HIVE_DEFAULT_OUTPUT_FORMAT_NAME, sd.getOutputFormat() );
+    assertFalse( table.isSetPartitionKeys() );
     }
+
+
+  @Test
+  public void testToHiveTableWithPartitioning()
+    {
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"key", "value"},
+      new String[]{"int", "string"}, new String[]{"key"} );
+    assertTrue( descriptor.isPartitioned() );
+    Table table = descriptor.toHiveTable();
+    assertEquals( "myTable", table.getTableName() );
+    assertEquals( MetaStoreUtils.DEFAULT_DATABASE_NAME, table.getDbName() );
+
+    StorageDescriptor sd = table.getSd();
+    assertNotNull( sd );
+
+    List<FieldSchema> expectedSchema = Arrays.asList( new FieldSchema( "value", "string", "created by Cascading" ) );
+    assertEquals( expectedSchema, sd.getCols() );
+
+    SerDeInfo serDeInfo = sd.getSerdeInfo();
+    assertEquals( HiveConf.ConfVars.HIVESCRIPTSERDE.defaultVal, serDeInfo.getSerializationLib() );
+
+    assertEquals( HiveTableDescriptor.HIVE_DEFAULT_INPUT_FORMAT_NAME, sd.getInputFormat() );
+    assertEquals( HiveTableDescriptor.HIVE_DEFAULT_OUTPUT_FORMAT_NAME, sd.getOutputFormat() );
+    assertTrue( table.isSetPartitionKeys() );
+
+    }
+
 
   @Test
   public void testToFields()
@@ -112,19 +148,40 @@ public class HiveTableDescriptorTest
   public void testToSchemeWithCustomDelimiter()
     {
     String delim = "\\t";
-    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
-      new String[]{"int", "string", "boolean"}, delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME );
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "myTable",
+      new String[]{"one", "two", "three"},
+      new String[]{"int", "string", "boolean"}, new String[]{},
+      delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME );
     Scheme scheme = descriptor.toScheme();
     assertNotNull( scheme );
     Assert.assertEquals( delim, ( (TextDelimited) scheme ).getDelimiter() );
     }
 
   @Test
+  public void testCustomDelimiterInSerdeParameters()
+    {
+    String delim = "\\t";
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "myTable",
+      new String[]{"one", "two", "three"},
+      new String[]{"int", "string", "boolean"}, new String[]{},
+      delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME );
+    StorageDescriptor sd = descriptor.toHiveTable().getSd();
+    Map<String, String> expected = new HashMap<String, String>(  );
+    expected.put( "field.delim", delim );
+    expected.put( "serialization.format", delim );
+    assertEquals( expected, sd.getSerdeInfo().getParameters() );
+    }
+
+
+  @Test
   public void testToSchemeWithNullDelimiter()
     {
     String delim = null;
-    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
-      new String[]{"int", "string", "boolean"}, delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME );
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "myTable",
+      new String[]{"one", "two", "three"},
+      new String[]{"int", "string",
+                   "boolean"}, new String[]{}, delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME
+    );
     Scheme scheme = descriptor.toScheme();
     assertNotNull( scheme );
     Assert.assertEquals( HiveTableDescriptor.HIVE_DEFAULT_DELIMITER, ( (TextDelimited) scheme ).getDelimiter() );
@@ -139,21 +196,22 @@ public class HiveTableDescriptorTest
     HiveTableDescriptor descriptor2 = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"} );
 
-    HiveTableDescriptor descriptor3 = new HiveTableDescriptor( "myTable", new String[]{"one","three","two"},
+    HiveTableDescriptor descriptor3 = new HiveTableDescriptor( "myTable", new String[]{"one", "three", "two"},
       new String[]{"int", "boolean", "string"} );
 
     assertEquals( descriptor, descriptor2 );
-    assertFalse( descriptor.equals( descriptor3 ));
-    assertFalse( descriptor2.equals( descriptor3 ));
+    assertFalse( descriptor.equals( descriptor3 ) );
+    assertFalse( descriptor2.equals( descriptor3 ) );
 
-    Set<HiveTableDescriptor> descriptors = new HashSet<HiveTableDescriptor>(  );
+    Set<HiveTableDescriptor> descriptors = new HashSet<HiveTableDescriptor>();
     descriptors.add( descriptor );
-    assertEquals(1, descriptors.size() );
+    assertEquals( 1, descriptors.size() );
     descriptors.add( descriptor2 );
-    assertEquals(1, descriptors.size() );
+    assertEquals( 1, descriptors.size() );
     descriptors.add( descriptor3 );
-    assertEquals(2, descriptors.size() );
+    assertEquals( 2, descriptors.size() );
     }
+
 
   @Test
   public void testToString()
@@ -162,4 +220,21 @@ public class HiveTableDescriptorTest
       new String[]{"int", "string", "boolean"} );
     assertNotNull( descriptor.toString() );
     }
+
+  @Test
+  public void testGetFilesystempathWithDefaultDB()
+    {
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
+      new String[]{"int", "string", "boolean"} );
+    assertEquals( "myTable", descriptor.getFilesystemPath() );
+    }
+
+  @Test
+  public void testGetFilesystempathWithCustomDB()
+    {
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myDB", "myTable", new String[]{"one", "two", "three"},
+      new String[]{"int", "string", "boolean"} );
+    assertEquals( "myDB.db/myTable", descriptor.getFilesystemPath() );
+    }
   }
+

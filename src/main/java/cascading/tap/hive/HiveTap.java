@@ -23,6 +23,7 @@ package cascading.tap.hive;
 import java.io.IOException;
 import java.util.List;
 
+import cascading.CascadingException;
 import cascading.scheme.Scheme;
 import cascading.tap.SinkMode;
 import cascading.tap.hadoop.Hfs;
@@ -33,10 +34,16 @@ import org.apache.hadoop.hive.metastore.HiveMetaHookLoader;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.RetryingMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
+import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
+import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.metadata.Hive;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
@@ -66,30 +73,31 @@ public class HiveTap extends Hfs
 
   /**
    * Constructs a new HiveTap instance.
-   * @param hiveConf The HiveConf object to use.
    * @param tableDesc The HiveTableDescriptor for creating and validating Hive tables.
    * @param scheme   The Scheme to be used by the Tap.
    */
-  public HiveTap( HiveConf hiveConf, HiveTableDescriptor tableDesc, Scheme scheme )
+  public HiveTap( HiveTableDescriptor tableDesc, Scheme scheme )
     {
-    this( hiveConf, tableDesc, scheme, SinkMode.REPLACE, false );
+    this( tableDesc, scheme, SinkMode.REPLACE, false );
     }
   /**
    * Constructs a new HiveTap instance.
-   * @param hiveConf The HiveConf object to use.
    * @param tableDesc The HiveTableDescriptor for creating and validating Hive tables.
    * @param scheme   The Scheme to be used by the Tap.
    * @param mode The SinkMode to use
    * @param strict Enables and disables strict validation of hive tables.
    */
-  public HiveTap( HiveConf hiveConf, HiveTableDescriptor tableDesc, Scheme scheme, SinkMode mode, boolean strict )
+  public HiveTap( HiveTableDescriptor tableDesc, Scheme scheme, SinkMode mode, boolean strict )
     {
-    super(scheme, String.format("%s/%s", hiveConf.get( HiveConf.ConfVars.METASTOREWAREHOUSE.varname ),
-      tableDesc.getTableName() ), mode);
-    setScheme( scheme );
-    this.hiveConf = hiveConf;
+    super( scheme, "/", mode );
     this.tableDescriptor = tableDesc;
     this.strict = strict;
+
+    setScheme( scheme );
+
+    setStringPath( String.format( "%s/%s", getHiveConf().get( HiveConf.ConfVars.METASTOREWAREHOUSE.varname ),
+      tableDesc.getFilesystemPath() ) );
+
     }
 
   @Override
@@ -105,6 +113,19 @@ public class HiveTap extends Hfs
       try
         {
         metaStoreClient = createMetaStoreClient();
+        try
+          {
+          metaStoreClient.getDatabase( tableDescriptor.getDatabaseName() );
+          }
+        // there is no databaseExists method in hive 0.10, so we have to use exceptions for flow control.
+        catch( NoSuchObjectException exception )
+          {
+          LOG.info( "creating database {} at {} ", tableDescriptor.getDatabaseName(), getPath().getParent().toString() );
+          Database db = new Database( tableDescriptor.getDatabaseName(), "created by Cascading",
+                                      getPath().getParent().toString(), null );
+          metaStoreClient.createDatabase( db );
+          }
+        LOG.info( "creating table {} at {} ", tableDescriptor.getDatabaseName(), getPath().toString() );
         metaStoreClient.createTable( tableDescriptor.toHiveTable() );
         modifiedTime = System.currentTimeMillis();
         return true;
@@ -134,7 +155,7 @@ public class HiveTap extends Hfs
     try
       {
       metaStoreClient = createMetaStoreClient();
-      Table table = metaStoreClient.getTable( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME,
+      Table table = metaStoreClient.getTable( tableDescriptor.getDatabaseName(),
                                                tableDescriptor.getTableName() );
       modifiedTime = table.getLastAccessTime();
       // check if the schema matches the table descriptor. If not, throw an exception.
@@ -181,11 +202,83 @@ public class HiveTap extends Hfs
   @Override
   public boolean deleteResource( JobConf conf ) throws IOException
     {
-    // hive does not create the directories, when creating a table. This works around that "problem"
-    FileSystem fs = FileSystem.get( conf );
-    if ( fs.exists( getPath() ) )
-      return super.deleteResource( conf );
+    if ( !resourceExists( conf ) )
+      return true;
+    IMetaStoreClient metaStoreClient = null;
+    try
+      {
+      LOG.info( "dropping hive table {} in database {}", tableDescriptor.getTableName(), tableDescriptor.getDatabaseName() );
+      metaStoreClient = createMetaStoreClient();
+      metaStoreClient.dropTable( tableDescriptor.getDatabaseName(), tableDescriptor.getTableName(),
+        true, true );
+      }
+    catch( MetaException exception )
+      {
+      throw new IOException( exception );
+      }
+    catch( NoSuchObjectException exception )
+      {
+      throw new IOException( exception );
+      }
+    catch( TException exception )
+      {
+      throw new IOException( exception );
+      }
+    finally
+      {
+      if (metaStoreClient != null )
+        metaStoreClient.close();
+      }
     return true;
+    }
+
+  void registerPartition( JobConf conf, Partition partition ) throws IOException
+    {
+    if ( !tableDescriptor.isPartitioned() )
+      return;
+
+    if ( !resourceExists( conf ) )
+      createResource( conf );
+
+    IMetaStoreClient metaStoreClient = null;
+    try
+      {
+      metaStoreClient = createMetaStoreClient();
+      metaStoreClient.add_partition( partition );
+      }
+    catch( MetaException exception )
+      {
+      throw new IOException( exception );
+      }
+    catch( InvalidObjectException exception )
+      {
+      throw new IOException( exception );
+      }
+    catch( AlreadyExistsException exception )
+      {
+      // ignore
+      }
+    catch( TException exception )
+      {
+      throw new IOException( exception );
+      }
+    finally
+      {
+      if ( metaStoreClient != null );
+        metaStoreClient.close();
+      }
+    }
+
+  HiveConf getHiveConf()
+    {
+    if ( hiveConf == null )
+      this.hiveConf = new HiveConf(  );
+    return hiveConf;
+    }
+
+  HiveTableDescriptor getTableDescriptor()
+    {
+    return tableDescriptor;
     }
 
 

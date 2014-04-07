@@ -20,19 +20,26 @@
 
 package cascading.tap.hive;
 
-import cascading.CascadingException;
+import cascading.scheme.NullScheme;
+import org.junit.Test;
+
+import static org.junit.Assert.assertSame;
 
 /**
- * Custom exception thrown when HiveTap is in strict mode and the schema does not match the expectations.
+ * Tests for HivePartitionTap.
  */
-public class HiveTableValidationException extends CascadingException
+public class HivePartitionTapTest
   {
-  /**
-   * Constructs a new HiveTableValidationExcpetion witht he given message.
-   * @param message The Exception message.
-   */
-  public HiveTableValidationException( String message )
+
+  @Test
+  public void testConstruction()
     {
-    super( message );
+    HiveTableDescriptor desc = new HiveTableDescriptor( "dual", new String[]{"key", "val"},
+                                                                new String[]{"int", "string"},
+                                                                new String[]{"key"} );
+    HiveTap tap = new HiveTap( desc, new NullScheme(  ) );
+    HivePartitionTap partitionTap =  new HivePartitionTap( tap );
+    assertSame( partitionTap.getParent(), tap );
     }
+
   }

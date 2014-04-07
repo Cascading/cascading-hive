@@ -65,16 +65,11 @@ public class HiveDemo
     Properties properties = new Properties();
     AppProps.setApplicationName( properties, "cascading hive integration demo" );
 
-    HiveConf hiveConf = new HiveConf();
-    JobConf jobConf = new JobConf();
-
-
     // descriptor of the dual table.
     HiveTableDescriptor dualTableDescriptor = new HiveTableDescriptor( "dual", new String[]{"value"}, new String[]{
       "string"} );
     // create HiveTap based on the descriptor
-    HiveTap dualTap = new HiveTap( hiveConf, dualTableDescriptor, dualTableDescriptor.toScheme(), REPLACE, true );
-    dualTap.createResource( jobConf );
+    HiveTap dualTap = new HiveTap( dualTableDescriptor, dualTableDescriptor.toScheme(), REPLACE, true );
 
     // load local data into dual. The table will be created as needed.
     HiveFlow loadDataFlow = new HiveFlow( "load data into dual",
@@ -86,8 +81,7 @@ public class HiveDemo
     HiveTableDescriptor keyValueDescriptor = new HiveTableDescriptor( "keyvalue", new String[]{"key", "value"},
       new String[]{"string", "string"} );
 
-    HiveTap keyvalueTap = new HiveTap( hiveConf, keyValueDescriptor, keyValueDescriptor.toScheme(), REPLACE, true );
-    keyvalueTap.createResource( jobConf );
+    HiveTap keyvalueTap = new HiveTap( keyValueDescriptor, keyValueDescriptor.toScheme(), REPLACE, true );
 
     // populate data in keyvalue by selecting data from dual
     HiveFlow selectFlow = new HiveFlow( "select data from dual into keyvalue",
@@ -98,8 +92,7 @@ public class HiveDemo
     HiveTableDescriptor keyValueDescriptor2 = new HiveTableDescriptor( "keyvalue2", new String[]{"key", "value"},
       new String[]{"string", "string"} );
 
-    HiveTap keyvalue2Tap = new HiveTap( hiveConf, keyValueDescriptor2, keyValueDescriptor2.toScheme(), REPLACE, true );
-    keyvalue2Tap.createResource( jobConf );
+    HiveTap keyvalue2Tap = new HiveTap( keyValueDescriptor2, keyValueDescriptor2.toScheme(), REPLACE, true );
 
     // simple function we use in a pure cascading flow
     class Upper extends BaseOperation implements Function
@@ -133,10 +126,10 @@ public class HiveDemo
     cascade.complete();
 
     // finally read the data from the table, that was filled by cascading via the Hive JDBC driver
-    Class.forName( "org.apache.hive.jdbc.HiveDriver" );
+    Class.forName( "org.apache.hadoop.hive.jdbc.HiveDriver" );
 
     // change the url, if you use hiveserver2
-    Connection con = DriverManager.getConnection( "jdbc:hive2://", "", "" );
+    Connection con = DriverManager.getConnection( "jdbc:hive://", "", "" );
     Statement stmt = con.createStatement();
 
     ResultSet rs = stmt.executeQuery( "select key, value from keyvalue2" );
