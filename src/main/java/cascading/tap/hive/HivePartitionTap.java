@@ -32,19 +32,31 @@ import org.apache.hadoop.mapred.OutputCollector;
 
 /**
  * Subclass of PartitionTap which registers partitions created in a Cascading Flow in the HiveMetaStore. Since the registering
- * is happening cluster side, the MetaStore has to be a remote.
+ * is happening cluster side, the MetaStore has to be deployed as a standalone service.
  */
 public class HivePartitionTap extends PartitionTap
   {
+  /**
+   * Constructs a new HivePartitionTap with the given HiveTap as the parent directory.
+   * @param parent
+   */
   public HivePartitionTap( HiveTap parent )
     {
     super( parent, parent.getTableDescriptor().getPartition() );
     }
 
+
+  /**
+   * Subclass of PartitionCollector, which will register each partition in the HiveMetaStore on the fly.
+   */
   class HivePartitionCollector extends PartitionCollector
     {
-    private final FlowProcess<JobConf> flowProcess;
+    private FlowProcess<JobConf> flowProcess;
 
+    /**
+     * Constructs a new HivePartitionCollector instance with the current FlowProcess instance.
+     * @param flowProcess The currently running FlowProcess.
+     */
     public HivePartitionCollector( FlowProcess<JobConf> flowProcess )
       {
       super( flowProcess );
@@ -58,6 +70,7 @@ public class HivePartitionTap extends PartitionTap
       HiveTap tap = (HiveTap) getParent();
       try
         {
+        // register the new partition, when we close the collector. If it already exists, nothing will happen.
         tap.registerPartition( flowProcess.getConfigCopy(), partition.toHivePartition( path, tap.getTableDescriptor() ) );
         }
       catch( IOException exception )

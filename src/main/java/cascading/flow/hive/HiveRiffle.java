@@ -100,7 +100,6 @@ public class HiveRiffle
   @ProcessComplete
   public void complete()
     {
-    // TODO make this async to support stop?
     Driver driver = null;
     try
       {

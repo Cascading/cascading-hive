@@ -44,7 +44,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 /**
  * HiveTableDescriptor encapsulates information about a table in Hive like the table name, column names, types,
  * partitioning etc. The class can convert the information to Hive specific objects or Cascading specific objects. It
- * acts as a translator of the concepts of a Hive table vs. the concepts of a Cascading Tap.
+ * acts as a translator of the concepts of a Hive table and the concepts of a Cascading Tap/Scheme.
  */
 public class HiveTableDescriptor implements Serializable
   {
@@ -196,7 +196,6 @@ public class HiveTableDescriptor implements Serializable
       this.databaseName = HIVE_DEFAULT_DATABASE_NAME;
     else
       this.databaseName = databaseName;
-
     this.tableName = tableName;
     this.columnNames = columnNames;
     this.columnTypes = columnTypes;
@@ -243,11 +242,9 @@ public class HiveTableDescriptor implements Serializable
     for( int index = 0; index < columnNames.length; index++ )
       {
       String columnName = columnNames[ index ];
-      if (!partitionColumns.contains( columnName ))
+      if ( !partitionColumns.contains( columnName ) )
         sd.addToCols( new FieldSchema( columnName, columnTypes[ index ], "created by Cascading" ) );
       }
-
-    // TODO inspecting the Scheme for this might make sense. We might move this method elsewhere
     SerDeInfo serDeInfo = new SerDeInfo();
     serDeInfo.setSerializationLib( serializationLib );
     Map<String, String> serDeParameters = new HashMap<String, String>();
@@ -262,14 +259,18 @@ public class HiveTableDescriptor implements Serializable
 
     if ( isPartitioned() )
       {
-      table.setPartitionKeys( getPartitionSchema() );
+      table.setPartitionKeys( createPartitionSchema() );
       table.setPartitionKeysIsSet( true );
       }
 
     return table;
     }
 
-  private List<FieldSchema> getPartitionSchema()
+  /***
+   * Creates a List of FieldSchema instances representing the partitions of the Hive Table.
+   * @return
+   */
+  private List<FieldSchema> createPartitionSchema()
     {
     List names = Arrays.asList( columnNames );
     List<FieldSchema> schema = new LinkedList<FieldSchema>();
@@ -294,7 +295,11 @@ public class HiveTableDescriptor implements Serializable
      }
 
 
-
+  /**
+   * Converts the HiveTableDescriptor to a Fields instance. If the table is partitioned only the columns not
+   * part of the partitioning will be returned.
+   * @return A Fields instance.
+   */
    public Fields toFields()
     {
     if ( !isPartitioned() )
@@ -333,7 +338,7 @@ public class HiveTableDescriptor implements Serializable
     {
     // TODO add smarts to return the right thing.
     Scheme scheme = new TextDelimited( false, getDelimiter() );
-    scheme.setSinkFields( toFields());
+    scheme.setSinkFields( toFields() );
     return scheme;
     }
 

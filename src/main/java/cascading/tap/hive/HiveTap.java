@@ -65,7 +65,7 @@ public class HiveTap extends Hfs
   /** HiveConf object */
   private transient HiveConf hiveConf;
 
-  /** strict mode enforces that an existing table has to match the given TableDescriptor*/
+  /** strict mode enforces that an existing table has to match the given TableDescriptor */
   private boolean strict;
 
   /** last modified time */
@@ -80,6 +80,7 @@ public class HiveTap extends Hfs
     {
     this( tableDesc, scheme, SinkMode.REPLACE, false );
     }
+
   /**
    * Constructs a new HiveTap instance.
    * @param tableDesc The HiveTableDescriptor for creating and validating Hive tables.
@@ -89,10 +90,9 @@ public class HiveTap extends Hfs
    */
   public HiveTap( HiveTableDescriptor tableDesc, Scheme scheme, SinkMode mode, boolean strict )
     {
-    super( scheme, "/", mode );
+    super( scheme, null, mode );
     this.tableDescriptor = tableDesc;
     this.strict = strict;
-
     setScheme( scheme );
 
     setStringPath( String.format( "%s/%s", getHiveConf().get( HiveConf.ConfVars.METASTOREWAREHOUSE.varname ),
@@ -170,6 +170,7 @@ public class HiveTap extends Hfs
           FieldSchema schema = schemaList.get( index );
           String expectedColumnName = tableDescriptor.getColumnNames()[ index ];
           String expectedColumnType = tableDescriptor.getColumnTypes()[ index ];
+          // this could be extended to the StorageDescriptor if necessary.
           if( !schema.getName().equals( expectedColumnName ) )
             throw new HiveTableValidationException( String.format(
               "hive schema mismatch: expected column name '%s', but found '%s'", expectedColumnName, schema.getName() ) );
@@ -232,6 +233,15 @@ public class HiveTap extends Hfs
     return true;
     }
 
+
+  /**
+   * Registers a new Partition of a HiveTable. If the Partition already exists, it is ignored. If the current
+   * table is not partitioned, the call is also ignored.
+   *
+   * @param conf  JobConf object of the current flow.
+   * @param partition The partition to register.
+   * @throws IOException In case any interaction with the HiveMetaStore fails
+   */
   void registerPartition( JobConf conf, Partition partition ) throws IOException
     {
     if ( !tableDescriptor.isPartitioned() )
@@ -269,10 +279,15 @@ public class HiveTap extends Hfs
       }
     }
 
-  HiveConf getHiveConf()
+  /**
+   * Returns the current HiveConf object.
+   *
+   * @return the HiveConf object.
+   * */
+  private HiveConf getHiveConf()
     {
     if ( hiveConf == null )
-      this.hiveConf = new HiveConf(  );
+      this.hiveConf = new HiveConf();
     return hiveConf;
     }
 
@@ -295,10 +310,11 @@ public class HiveTap extends Hfs
    */
   private IMetaStoreClient createMetaStoreClient() throws MetaException
     {
-    // it is a bit unclear if it is safe to re-use these, so we create a new one every time,
-    // to be sure
+    // it is a bit unclear if it is safe to re-use these instances, so we create a
+    // new one every time, to be sure
     if ( hiveConf == null )
-      hiveConf = new HiveConf(  );
+      hiveConf = new HiveConf();
+
     return RetryingMetaStoreClient.getProxy( hiveConf ,
       new HiveMetaHookLoader()
       {
