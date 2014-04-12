@@ -20,16 +20,20 @@
 
 package cascading.flow.hive;
 
+import java.util.Collection;
 import java.util.List;
 
 import cascading.flow.hadoop.ProcessFlow;
 import cascading.tap.Tap;
+import cascading.tap.hadoop.util.TempHfs;
+import cascading.tap.hive.HiveNullTap;
 
 /**
  * A subclass of ProcessFlow for running Hive queries.
  */
 public class HiveFlow extends ProcessFlow
   {
+
 
   /**
    * Constructs a new HiveFlow object with the given name, query, a list of source taps and sink.
@@ -39,16 +43,31 @@ public class HiveFlow extends ProcessFlow
    * @param sources The source taps of the query.
    * @param sink  The sink of the query.
    */
-  public HiveFlow( String name, String query, List<cascading.tap.Tap> sources, Tap sink)
+  public HiveFlow( String name, String query, Collection<cascading.tap.Tap> sources, Tap sink)
     {
     this( name, new HiveDriverFactory(), query, sources, sink );
     }
+
+
+  /**
+   * Constructs a new HiveFlow object with the given name, query, a list of source taps. This constructor can be
+   * used when the Flow does not really have
+   *
+   * @param name The name of the flow.
+   * @param query   The hive query to run.
+   * @param sources The source taps of the query.
+   */
+  public HiveFlow( String name, String query, Collection<Tap> sources)
+    {
+    this( name, new HiveDriverFactory(), query, sources, HiveNullTap.DEV_NULL );
+    }
+
 
   /**
    * Package private constructor which allows injecting a custom HiveDriverFactory during tests.
    *
    */
-  HiveFlow( String name, HiveDriverFactory driverFactory, String query, List<cascading.tap.Tap> sources, Tap sink)
+  HiveFlow( String name, HiveDriverFactory driverFactory, String query, Collection<cascading.tap.Tap> sources, Tap sink)
     {
     super( name, new HiveRiffle( driverFactory, query, sources, sink ) );
     }

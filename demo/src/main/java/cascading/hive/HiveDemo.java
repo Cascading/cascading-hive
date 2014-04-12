@@ -128,7 +128,6 @@ public class HiveDemo
     // finally read the data from the table, that was filled by cascading via the Hive JDBC driver
     Class.forName( "org.apache.hadoop.hive.jdbc.HiveDriver" );
 
-    // change the url, if you use hiveserver2
     Connection con = DriverManager.getConnection( "jdbc:hive://", "", "" );
     Statement stmt = con.createStatement();
 

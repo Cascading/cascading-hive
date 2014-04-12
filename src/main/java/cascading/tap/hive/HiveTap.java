@@ -34,6 +34,7 @@ import org.apache.hadoop.hive.metastore.HiveMetaHookLoader;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.RetryingMetaStoreClient;
+import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -105,10 +106,10 @@ public class HiveTap extends Hfs
     {
     if( !resourceExists( conf ) )
       {
-      FileSystem fs = FileSystem.get( conf );
-      if ( !fs.exists( getPath() ) )
-        FileSystem.get( conf ).mkdirs( getPath() );
-
+      Table hiveTable = tableDescriptor.toHiveTable();
+        FileSystem fs = FileSystem.get( conf );
+        if( !fs.exists( getPath() ) )
+          FileSystem.get( conf ).mkdirs( getPath() );
       IMetaStoreClient metaStoreClient = null;
       try
         {
@@ -120,13 +121,14 @@ public class HiveTap extends Hfs
         // there is no databaseExists method in hive 0.10, so we have to use exceptions for flow control.
         catch( NoSuchObjectException exception )
           {
-          LOG.info( "creating database {} at {} ", tableDescriptor.getDatabaseName(), getPath().getParent().toString() );
+          LOG.info( "creating database '{}' at '{}' ", tableDescriptor.getDatabaseName(), getPath().getParent().toString() );
           Database db = new Database( tableDescriptor.getDatabaseName(), "created by Cascading",
                                       getPath().getParent().toString(), null );
           metaStoreClient.createDatabase( db );
           }
-        LOG.info( "creating table {} at {} ", tableDescriptor.getDatabaseName(), getPath().toString() );
-        metaStoreClient.createTable( tableDescriptor.toHiveTable() );
+        LOG.info( "creating table '{}' at '{}' ", tableDescriptor.getTableName(), getPath().toString() );
+
+        metaStoreClient.createTable( hiveTable );
         modifiedTime = System.currentTimeMillis();
         return true;
         }
@@ -162,6 +164,10 @@ public class HiveTap extends Hfs
       if( strict )
         {
         LOG.info( "strict mode: comparing hive table with table descriptor" );
+        if ( !table.getTableType().equals( tableDescriptor.toHiveTable().getTableType() ) )
+          throw new HiveTableValidationException( String.format( "expected a table of type '%s' but found '%s'",
+            tableDescriptor.toHiveTable().getTableType(), table.getTableType() ) );
+
         List<FieldSchema> schemaList = table.getSd().getCols();
         if( schemaList.size() != tableDescriptor.getColumnNames().length )
           throw new HiveTableValidationException( "table in MetaStore does not match expectations" );

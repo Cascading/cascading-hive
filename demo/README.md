@@ -36,7 +36,7 @@ that will not happen.
 
     >  rm -rf metastore_db/ derby.log TempStatsStore/
 
-### cascading.hive.HivePartitionDemo
+## cascading.hive.HivePartitionDemo
 
 This demo shows how to create a partitioned hive table from a Cascading flow.
 
@@ -50,3 +50,16 @@ This demo shows how to create a partitioned hive table from a Cascading flow.
 This demo will only work if you are using a hosted HiveMetaStore since the
 Cascading flow has to be able to register partitions in the MetaStore as they
 are created.
+
+
+## cascading.hive.HiveViewDemo
+
+Demo that builds on top of the HivePartitionDemo, but creates a view via a
+HiveFlow and selects data via JDBC from that view
+
+### Running this application:
+
+    >  hadoop jar build/libs/cascading-hive-demo-1.0.jar cascading.hive.HiveViewDemo
+
+
+

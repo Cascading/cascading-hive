@@ -34,13 +34,13 @@ import cascading.tuple.TupleEntryIterator;
  * (sink) out of nothing. You can use {HiveNullTap.DEV_NULL} or {HiveNullTap.DEV_ZERO} for reading and writing. They simply
  * don't do anything.
  */
-class HiveNullTap extends Tap
+public class HiveNullTap extends Tap
   {
   /** a no-op sink tap */
-  static final HiveNullTap DEV_NULL = new HiveNullTap( "/dev/null" );
+  public static final HiveNullTap DEV_NULL = new HiveNullTap( "/dev/null" );
 
   /** a no-op source tap */
-  static final HiveNullTap DEV_ZERO = new HiveNullTap( "/dev/zero" );
+  public static final HiveNullTap DEV_ZERO = new HiveNullTap( "/dev/zero" );
 
   /**
    * Identifier of the tap.

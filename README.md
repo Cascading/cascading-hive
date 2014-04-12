@@ -7,6 +7,7 @@ has couple major features:
 - reading from Hive tables within a Cascading Flow
 - writing/creating Hive tables from a Cascading Flow
 - writing/creating partitioned Hive tables from a Cascading Flow
+- deconstructing a Hive view into Taps
 
 The `demo` sub-directory contains applications, which demonstrate those
 features.

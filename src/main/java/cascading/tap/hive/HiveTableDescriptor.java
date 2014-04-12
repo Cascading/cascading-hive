@@ -36,6 +36,7 @@ import cascading.tap.partition.Partition;
 import cascading.tuple.Fields;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
+import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
@@ -236,6 +237,7 @@ public class HiveTableDescriptor implements Serializable
     Table table = new Table();
     table.setDbName( getDatabaseName() );
     table.setTableName( tableName );
+    table.setTableType( TableType.MANAGED_TABLE.toString() );
 
     StorageDescriptor sd = new StorageDescriptor();
     List partitionColumns = Arrays.asList( partitionKeys );

@@ -24,13 +24,9 @@ import java.beans.ConstructorProperties;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import cascading.CascadingException;
 import cascading.tap.Tap;
-import org.apache.hadoop.hive.ql.CommandNeedRetryException;
-import org.apache.hadoop.hive.ql.Driver;
-import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import riffle.process.DependencyIncoming;
@@ -49,7 +45,7 @@ public class HiveRiffle
   private static final Logger LOG = LoggerFactory.getLogger( HiveRiffle.class );
 
   /** List of source taps */
-  private final List<Tap> sources;
+  private final Collection<Tap> sources;
 
   /** sink of the Riffle. */
   private final Tap sink;
@@ -69,7 +65,7 @@ public class HiveRiffle
    * @param sink  The sink of the query.
    */
   @ConstructorProperties({"hiveConf", "query", "sources", "sink"})
-  HiveRiffle( HiveDriverFactory driverFactory, String query, List<Tap> sources, Tap sink )
+  HiveRiffle( HiveDriverFactory driverFactory, String query, Collection<Tap> sources, Tap sink )
     {
     this.driverFactory = driverFactory;
     this.query = query;
@@ -100,26 +96,8 @@ public class HiveRiffle
   @ProcessComplete
   public void complete()
     {
-    Driver driver = null;
-    try
-      {
-      driver = driverFactory.createHiveDriver();
-      LOG.info( "running hive query: '{}'", query );
-      CommandProcessorResponse response = driver.run( this.query );
-      if( response.getResponseCode() != 0 )
-        {
-        throw new CascadingException( "hive error '" + response.getErrorMessage() + "' while running query " + query );
-        }
-      }
-    catch( CommandNeedRetryException exception )
-      {
-      throw new CascadingException( "problem while executing hive query: " + query, exception );
-      }
-    finally
-      {
-      if( driver != null )
-        driver.destroy();
-      }
+    HiveQueryRunner runner = new HiveQueryRunner( driverFactory, query );
+    runner.run();
     }
 
   @DependencyOutgoing

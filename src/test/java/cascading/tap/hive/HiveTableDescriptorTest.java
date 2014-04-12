@@ -34,6 +34,7 @@ import cascading.tuple.Fields;
 import junit.framework.Assert;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
+import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
@@ -83,6 +84,7 @@ public class HiveTableDescriptorTest
     Table table = descriptor.toHiveTable();
     assertEquals( "myTable", table.getTableName() );
     assertEquals( MetaStoreUtils.DEFAULT_DATABASE_NAME, table.getDbName() );
+    assertEquals( TableType.MANAGED_TABLE.toString(), table.getTableType() );
 
     StorageDescriptor sd = table.getSd();
     assertNotNull( sd );

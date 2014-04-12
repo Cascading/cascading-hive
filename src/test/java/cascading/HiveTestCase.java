@@ -24,8 +24,17 @@ import java.io.File;
 import java.io.IOException;
 
 import cascading.flow.hive.HiveDriverFactory;
+import cascading.flow.hive.HiveQueryRunner;
+import cascading.flow.hive.HiveQueryRunnerForTesting;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.HiveMetaHook;
+import org.apache.hadoop.hive.metastore.HiveMetaHookLoader;
+import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
+import org.apache.hadoop.hive.metastore.IMetaStoreClient;
+import org.apache.hadoop.hive.metastore.RetryingMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.junit.BeforeClass;
 
 /**
@@ -40,6 +49,8 @@ public class HiveTestCase extends PlatformTestCase
   public final static String HIVE_WAREHOUSE_DIR = CWD + "/build/test/hive";
 
   private HiveDriverFactory hiveDriverFactory = new HiveDriverFactoryForTesting( createHiveConf() );
+
+  private HiveConf hiveConf;
 
   @BeforeClass
   public static void beforeClass() throws IOException
@@ -58,14 +69,48 @@ public class HiveTestCase extends PlatformTestCase
    */
   public HiveConf createHiveConf()
     {
-    HiveConf conf = new HiveConf();
-    conf.set( HiveConf.ConfVars.METASTOREWAREHOUSE.varname, HIVE_WAREHOUSE_DIR );
-    return conf;
+    if ( hiveConf == null )
+      {
+      hiveConf = new HiveConf();
+      hiveConf.set( HiveConf.ConfVars.METASTOREWAREHOUSE.varname, HIVE_WAREHOUSE_DIR );
+      }
+      return hiveConf;
     }
 
+  /**
+   * Method for running ad-hoc query in tests.
+   * @param query
+   */
+  public void runHiveQuery( String query )
+    {
+    HiveQueryRunner runner = new HiveQueryRunnerForTesting( hiveDriverFactory, query );
+    runner.run();
+    }
+
+  /**
+   * Creates a new HiveDriverFactory for testing
+   */
   public HiveDriverFactory createHiveDriverFactory()
     {
     return hiveDriverFactory;
+    }
+
+  /**
+   * Creates a new IMetaStoreClient for interacting with the MetaStore created in tests.
+   *
+   * */
+  public IMetaStoreClient createMetaStoreClient() throws MetaException
+    {
+    return RetryingMetaStoreClient.getProxy( createHiveConf(),
+      new HiveMetaHookLoader()
+      {
+      @Override
+      public HiveMetaHook getHook( Table tbl ) throws MetaException
+        {
+        return null;
+        }
+      }, HiveMetaStoreClient.class.getName()
+    );
     }
 
   }
