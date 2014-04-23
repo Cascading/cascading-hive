@@ -45,6 +45,7 @@ public class HiveQueryRunner implements Runnable
 
   /**
    * Constructs a new HiveQueryRunner object with the given query.
+   *
    * @param query The hive query to run.
    */
   public HiveQueryRunner( String query )
@@ -54,10 +55,11 @@ public class HiveQueryRunner implements Runnable
 
   /**
    * Constructs a new HiveQeryRunner with the given HiveDriverFactory and query.
-   * @param driverFactory  The HiveDriverFactory to use.
-   * @param query  The query to run.
+   *
+   * @param driverFactory The HiveDriverFactory to use.
+   * @param query         The query to run.
    */
-   HiveQueryRunner( HiveDriverFactory driverFactory, String query )
+  HiveQueryRunner( HiveDriverFactory driverFactory, String query )
     {
     this.driverFactory = driverFactory;
     this.query = query;
@@ -73,9 +75,7 @@ public class HiveQueryRunner implements Runnable
       LOG.info( "running hive query: '{}'", query );
       CommandProcessorResponse response = driver.run( this.query );
       if( response.getResponseCode() != 0 )
-        {
         throw new CascadingException( "hive error '" + response.getErrorMessage() + "' while running query " + query );
-        }
       }
     catch( CommandNeedRetryException exception )
       {

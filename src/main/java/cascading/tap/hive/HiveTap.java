@@ -23,18 +23,16 @@ package cascading.tap.hive;
 import java.io.IOException;
 import java.util.List;
 
-import cascading.CascadingException;
 import cascading.scheme.Scheme;
 import cascading.tap.SinkMode;
+import cascading.tap.TapException;
 import cascading.tap.hadoop.Hfs;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaHook;
 import org.apache.hadoop.hive.metastore.HiveMetaHookLoader;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.RetryingMetaStoreClient;
-import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -43,8 +41,6 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.ql.metadata.Hive;
-import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
@@ -74,8 +70,9 @@ public class HiveTap extends Hfs
 
   /**
    * Constructs a new HiveTap instance.
+   *
    * @param tableDesc The HiveTableDescriptor for creating and validating Hive tables.
-   * @param scheme   The Scheme to be used by the Tap.
+   * @param scheme    The Scheme to be used by the Tap.
    */
   public HiveTap( HiveTableDescriptor tableDesc, Scheme scheme )
     {
@@ -84,10 +81,11 @@ public class HiveTap extends Hfs
 
   /**
    * Constructs a new HiveTap instance.
+   *
    * @param tableDesc The HiveTableDescriptor for creating and validating Hive tables.
-   * @param scheme   The Scheme to be used by the Tap.
-   * @param mode The SinkMode to use
-   * @param strict Enables and disables strict validation of hive tables.
+   * @param scheme    The Scheme to be used by the Tap.
+   * @param mode      The SinkMode to use
+   * @param strict    Enables and disables strict validation of hive tables.
    */
   public HiveTap( HiveTableDescriptor tableDesc, Scheme scheme, SinkMode mode, boolean strict )
     {
@@ -98,55 +96,55 @@ public class HiveTap extends Hfs
 
     setStringPath( String.format( "%s/%s", getHiveConf().get( HiveConf.ConfVars.METASTOREWAREHOUSE.varname ),
       tableDesc.getFilesystemPath() ) );
-
     }
 
   @Override
   public boolean createResource( JobConf conf ) throws IOException
     {
     if( !resourceExists( conf ) )
+      return createHiveTable();
+    return true;
+    }
+
+
+  private boolean createHiveTable() throws IOException
+    {
+    IMetaStoreClient metaStoreClient = null;
+    try
       {
+      metaStoreClient = createMetaStoreClient();
       Table hiveTable = tableDescriptor.toHiveTable();
-        FileSystem fs = FileSystem.get( conf );
-        if( !fs.exists( getPath() ) )
-          FileSystem.get( conf ).mkdirs( getPath() );
-      IMetaStoreClient metaStoreClient = null;
       try
         {
-        metaStoreClient = createMetaStoreClient();
-        try
-          {
-          metaStoreClient.getDatabase( tableDescriptor.getDatabaseName() );
-          }
-        // there is no databaseExists method in hive 0.10, so we have to use exceptions for flow control.
-        catch( NoSuchObjectException exception )
-          {
-          LOG.info( "creating database '{}' at '{}' ", tableDescriptor.getDatabaseName(), getPath().getParent().toString() );
-          Database db = new Database( tableDescriptor.getDatabaseName(), "created by Cascading",
-                                      getPath().getParent().toString(), null );
-          metaStoreClient.createDatabase( db );
-          }
-        LOG.info( "creating table '{}' at '{}' ", tableDescriptor.getTableName(), getPath().toString() );
+        metaStoreClient.getDatabase( tableDescriptor.getDatabaseName() );
+        }
+      // there is no databaseExists method in hive 0.10, so we have to use exceptions for flow control.
+      catch( NoSuchObjectException exception )
+        {
+        LOG.info( "creating database '{}' at '{}' ", tableDescriptor.getDatabaseName(), getPath().getParent().toString() );
+        Database db = new Database( tableDescriptor.getDatabaseName(), "created by Cascading",
+          getPath().getParent().toString(), null );
+        metaStoreClient.createDatabase( db );
+        }
+      LOG.info( "creating table '{}' at '{}' ", tableDescriptor.getTableName(), getPath().toString() );
 
-        metaStoreClient.createTable( hiveTable );
-        modifiedTime = System.currentTimeMillis();
-        return true;
-        }
-      catch( MetaException exception )
-        {
-        throw new IOException( exception );
-        }
-      catch( TException exception )
-        {
-        throw new IOException( exception );
-        }
-    finally
-        {
-        if( metaStoreClient != null )
-          metaStoreClient.close();
-        }
+      metaStoreClient.createTable( hiveTable );
+      modifiedTime = System.currentTimeMillis();
+      return true;
       }
-    return true;
+    catch( MetaException exception )
+      {
+      throw new IOException( exception );
+      }
+    catch( TException exception )
+      {
+      throw new IOException( exception );
+      }
+    finally
+      {
+      if( metaStoreClient != null )
+        metaStoreClient.close();
+      }
     }
 
 
@@ -158,13 +156,13 @@ public class HiveTap extends Hfs
       {
       metaStoreClient = createMetaStoreClient();
       Table table = metaStoreClient.getTable( tableDescriptor.getDatabaseName(),
-                                               tableDescriptor.getTableName() );
+        tableDescriptor.getTableName() );
       modifiedTime = table.getLastAccessTime();
       // check if the schema matches the table descriptor. If not, throw an exception.
       if( strict )
         {
         LOG.info( "strict mode: comparing hive table with table descriptor" );
-        if ( !table.getTableType().equals( tableDescriptor.toHiveTable().getTableType() ) )
+        if( !table.getTableType().equals( tableDescriptor.toHiveTable().getTableType() ) )
           throw new HiveTableValidationException( String.format( "expected a table of type '%s' but found '%s'",
             tableDescriptor.toHiveTable().getTableType(), table.getTableType() ) );
 
@@ -201,7 +199,7 @@ public class HiveTap extends Hfs
       }
     finally
       {
-      if ( metaStoreClient != null )
+      if( metaStoreClient != null )
         metaStoreClient.close();
       }
     }
@@ -209,8 +207,9 @@ public class HiveTap extends Hfs
   @Override
   public boolean deleteResource( JobConf conf ) throws IOException
     {
-    if ( !resourceExists( conf ) )
-      return true;
+    // clean up HDFS
+    super.deleteResource( conf );
+
     IMetaStoreClient metaStoreClient = null;
     try
       {
@@ -233,7 +232,7 @@ public class HiveTap extends Hfs
       }
     finally
       {
-      if (metaStoreClient != null )
+      if( metaStoreClient != null )
         metaStoreClient.close();
       }
     return true;
@@ -244,17 +243,17 @@ public class HiveTap extends Hfs
    * Registers a new Partition of a HiveTable. If the Partition already exists, it is ignored. If the current
    * table is not partitioned, the call is also ignored.
    *
-   * @param conf  JobConf object of the current flow.
+   * @param conf      JobConf object of the current flow.
    * @param partition The partition to register.
-   * @throws IOException In case any interaction with the HiveMetaStore fails
+   * @throws IOException In case any interaction with the HiveMetaStore fails.
    */
   void registerPartition( JobConf conf, Partition partition ) throws IOException
     {
-    if ( !tableDescriptor.isPartitioned() )
+    if( !tableDescriptor.isPartitioned() )
       return;
 
-    if ( !resourceExists( conf ) )
-      createResource( conf );
+    if( !resourceExists( conf ) )
+      createHiveTable();
 
     IMetaStoreClient metaStoreClient = null;
     try
@@ -280,26 +279,26 @@ public class HiveTap extends Hfs
       }
     finally
       {
-      if ( metaStoreClient != null );
+      if( metaStoreClient != null )
         metaStoreClient.close();
       }
     }
 
-  /**
-   * Returns the current HiveConf object.
-   *
-   * @return the HiveConf object.
-   * */
-  private HiveConf getHiveConf()
-    {
-    if ( hiveConf == null )
-      this.hiveConf = new HiveConf();
-    return hiveConf;
-    }
 
-  HiveTableDescriptor getTableDescriptor()
+  @Override
+  public boolean commitResource( JobConf conf ) throws IOException
     {
-    return tableDescriptor;
+    boolean result = true;
+    try
+      {
+      if ( !resourceExists( conf ) )
+        result =  createHiveTable();
+      }
+    catch( IOException exception )
+      {
+      throw new TapException( exception );
+      }
+    return super.commitResource( conf ) && result ;
     }
 
 
@@ -309,8 +308,33 @@ public class HiveTap extends Hfs
     return modifiedTime;
     }
 
-  /***
+  /**
+   * Returns the current HiveConf object.
+   *
+   * @return the HiveConf object.
+   */
+  private HiveConf getHiveConf()
+    {
+    if( hiveConf == null )
+      this.hiveConf = new HiveConf();
+    return hiveConf;
+    }
+
+
+  /**
+   * Internal method to get access to the HiveTableDescriptor of the HiveTap.
+   *
+   * @return The HiveTableDescriptor.
+   */
+  HiveTableDescriptor getTableDescriptor()
+    {
+    return tableDescriptor;
+    }
+
+
+  /**
    * Private helper method to create a IMetaStore client.
+   *
    * @return a new IMetaStoreClient
    * @throws MetaException in case the creation fails.
    */
@@ -318,10 +342,10 @@ public class HiveTap extends Hfs
     {
     // it is a bit unclear if it is safe to re-use these instances, so we create a
     // new one every time, to be sure
-    if ( hiveConf == null )
+    if( hiveConf == null )
       hiveConf = new HiveConf();
 
-    return RetryingMetaStoreClient.getProxy( hiveConf ,
+    return RetryingMetaStoreClient.getProxy( hiveConf,
       new HiveMetaHookLoader()
       {
       @Override
@@ -329,6 +353,7 @@ public class HiveTap extends Hfs
         {
         return null;
         }
-      }, HiveMetaStoreClient.class.getName() );
+      }, HiveMetaStoreClient.class.getName()
+    );
     }
   }

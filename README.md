@@ -1,7 +1,7 @@
 # cascading-hive
 
 Cascading-hive is an integration between Apache Hive and Cascading. It currently
-has couple major features:
+has the following major features:
 
 - ability to run Hive queries within a Cascade
 - reading from Hive tables within a Cascading Flow
@@ -39,4 +39,4 @@ read from that within your Cascading Flow. This restriction might change in the
 future.
 
 Please also note also that Hive relies on the `hadoop` command being present in
-your `PATH` when it runs the queries on the Hadoop cluster.
+your `PATH` when it executes the queries on the Hadoop cluster.
