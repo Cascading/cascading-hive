@@ -29,12 +29,16 @@ import cascading.flow.Flow;
 import cascading.flow.FlowProcess;
 import cascading.flow.hadoop.HadoopFlowConnector;
 import cascading.operation.BaseOperation;
+import cascading.operation.Filter;
+import cascading.operation.FilterCall;
 import cascading.operation.Function;
 import cascading.operation.FunctionCall;
 import cascading.pipe.Each;
 import cascading.pipe.Pipe;
+import cascading.pipe.assembly.Retain;
 import cascading.property.AppProps;
 import cascading.scheme.hadoop.TextDelimited;
+import cascading.tap.SinkMode;
 import cascading.tap.Tap;
 import cascading.tap.hadoop.Hfs;
 import cascading.tap.hive.HivePartitionTap;
@@ -42,6 +46,7 @@ import cascading.tap.hive.HiveTableDescriptor;
 import cascading.tap.hive.HiveTap;
 import cascading.tuple.Fields;
 import cascading.tuple.TupleEntry;
+import cascading.tuple.TupleEntryIterator;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
@@ -60,7 +65,6 @@ public class HivePartitionDemo
     AppProps.setApplicationName( properties, "cascading hive partitioning demo" );
 
     JobConf jobConf = new JobConf();
-
     FileSystem fs = FileSystem.get( jobConf );
     fs.copyFromLocalFile( false, true, new Path( accessLog ), new Path( "/tmp/access.log" ) );
 
@@ -73,7 +77,7 @@ public class HivePartitionDemo
 
     HiveTap hiveTap = new HiveTap( partitionedDescriptor, partitionedDescriptor.toScheme() );
 
-    Tap outputTap = new HivePartitionTap( hiveTap );
+    Tap partitionTap = new HivePartitionTap( hiveTap );
 
     Fields allFields = new Fields( columnNames );
 
@@ -97,7 +101,7 @@ public class HivePartitionDemo
     Pipe pipe = new Each( " echo ", allFields,
       new Echo( allFields ), Fields.RESULTS );
 
-    Flow flow = new HadoopFlowConnector().connect( input, outputTap, pipe );
+    Flow flow = new HadoopFlowConnector().connect( input, partitionTap, pipe );
 
     flow.complete();
 
@@ -112,7 +116,7 @@ public class HivePartitionDemo
     System.out.println( "----------------------Hive JDBC--------------------------" );
     while( rs.next() )
       {
-      StringBuffer buf = new StringBuffer();
+      StringBuffer buf = new StringBuffer( "JDBC>>> " );
       for( int i = 0; i < names.length; i++ )
         {
         String name = names[ i ];
@@ -123,6 +127,42 @@ public class HivePartitionDemo
     System.out.println( "---------------------------------------------------------" );
     stmt.close();
     con.close();
+
+    // do the same as the JDBC above, but in Cascading.
+
+    class RegionFilter extends BaseOperation implements Filter
+      {
+      final String region;
+      public RegionFilter( String region )
+        {
+        this.region = region;
+        }
+
+      @Override
+      public boolean isRemove( FlowProcess flowProcess, FilterCall filterCall )
+        {
+        if ( filterCall.getArguments().getString( "region" ).equals( this.region ) )
+          return false;
+        return true;
+        }
+      }
+
+    Tap requestsInAsiaSink = new Hfs( new TextDelimited( allFields), "hdfs:/tmp/requests-from-asia", SinkMode.REPLACE );
+
+    Pipe headPipe = new Each( "requests from ASIA", allFields, new RegionFilter( "ASIA" ) );
+
+    Flow headFlow = new HadoopFlowConnector().connect( partitionTap, requestsInAsiaSink, headPipe );
+
+    headFlow.complete();
+
+    TupleEntryIterator tupleEntryIterator = requestsInAsiaSink.openForRead( headFlow.getFlowProcess() );
+
+    while( tupleEntryIterator.hasNext() )
+      {
+      TupleEntry tupleEntry = tupleEntryIterator.next();
+      System.out.println( "Cascading>>> " + tupleEntry );
+      }
+    tupleEntryIterator.close();
     }
 
   }
