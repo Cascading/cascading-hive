@@ -20,8 +20,10 @@
 
 package cascading.flow.hive;
 
+import java.io.IOException;
 import java.util.Collection;
 
+import cascading.CascadingException;
 import cascading.flow.hadoop.ProcessFlow;
 import cascading.tap.Tap;
 import cascading.tap.hive.HiveNullTap;
@@ -68,4 +70,19 @@ public class HiveFlow extends ProcessFlow
     super( name, new HiveRiffle( driverFactory, query, sources, sink ) );
     }
 
+
+  @Override
+  public void complete()
+    {
+    try
+      {
+      if ( !getSink().createResource( getConfigCopy() ) )
+        throw new CascadingException( "failed to register table in MetaStore." );
+      }
+    catch( IOException exception )
+      {
+      throw new CascadingException( exception );
+      }
+    super.complete();
+    }
   }
