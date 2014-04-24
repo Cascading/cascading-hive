@@ -26,11 +26,13 @@ import cascading.CascadingException;
 import cascading.flow.FlowProcess;
 import cascading.flow.hadoop.HadoopFlowProcess;
 import cascading.scheme.NullScheme;
+import cascading.tap.SinkMode;
 import cascading.tuple.TupleEntryCollector;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
@@ -47,8 +49,9 @@ public class HivePartitionTapTest
                                                                 new String[]{"int", "string"},
                                                                 new String[]{"key"} );
     HiveTap tap = new HiveTap( desc, new NullScheme(  ) );
-    HivePartitionTap partitionTap =  new HivePartitionTap( tap );
+    HivePartitionTap partitionTap =  new HivePartitionTap( tap, SinkMode.UPDATE );
     assertSame( partitionTap.getParent(), tap );
+    assertEquals( SinkMode.UPDATE, partitionTap.getSinkMode() );
     }
 
   @Test

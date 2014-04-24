@@ -76,7 +76,7 @@ public class HiveTap extends Hfs
    */
   public HiveTap( HiveTableDescriptor tableDesc, Scheme scheme )
     {
-    this( tableDesc, scheme, SinkMode.REPLACE, false );
+    this( tableDesc, scheme, SinkMode.KEEP, false );
     }
 
   /**

@@ -23,6 +23,7 @@ package cascading.tap.hive;
 import java.io.IOException;
 
 import cascading.CascadingException;
+import cascading.tap.SinkMode;
 import cascading.flow.FlowProcess;
 import cascading.tap.hadoop.PartitionTap;
 import cascading.tuple.TupleEntry;
@@ -38,13 +39,22 @@ public class HivePartitionTap extends PartitionTap
   {
   /**
    * Constructs a new HivePartitionTap with the given HiveTap as the parent directory.
-   * @param parent
+   * @param parent The parent directory.
    */
   public HivePartitionTap( HiveTap parent )
     {
     super( parent, parent.getTableDescriptor().getPartition() );
     }
 
+  /**
+   * Constructs a new HivePartitionTap with the given HiveTap as the parent directory and the given SinkMode.
+   * @param parent The parent directory.
+   * @param sinkMode The sinkMode of this tap.
+   */
+  public HivePartitionTap( HiveTap parent, SinkMode sinkMode )
+    {
+    super( parent, parent.getTableDescriptor().getPartition(), sinkMode );
+    }
 
   /**
    * Subclass of PartitionCollector, which will register each partition in the HiveMetaStore on the fly.
