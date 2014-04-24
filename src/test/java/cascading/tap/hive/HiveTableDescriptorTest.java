@@ -80,7 +80,7 @@ public class HiveTableDescriptorTest
   public void testToHiveTable()
     {
     HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"key", "value"},
-      new String[]{"int", "string"} );
+      new String[]{"int", "STRING"} );
     Table table = descriptor.toHiveTable();
     assertEquals( "myTable", table.getTableName() );
     assertEquals( MetaStoreUtils.DEFAULT_DATABASE_NAME, table.getDbName() );

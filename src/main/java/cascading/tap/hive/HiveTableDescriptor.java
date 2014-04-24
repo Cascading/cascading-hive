@@ -242,7 +242,8 @@ public class HiveTableDescriptor implements Serializable
       {
       String columnName = columnNames[ index ];
       if ( !caseInsensitiveContains(partitionKeys, columnName ) )
-        sd.addToCols( new FieldSchema( columnName, columnTypes[ index ], "created by Cascading" ) );
+        // calling toLowerCase() on the type to match the behaviour of the hive console
+        sd.addToCols( new FieldSchema( columnName, columnTypes[ index ].toLowerCase(), "created by Cascading" ) );
       }
     SerDeInfo serDeInfo = new SerDeInfo();
     serDeInfo.setSerializationLib( serializationLib );
