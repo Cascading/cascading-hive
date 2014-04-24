@@ -23,6 +23,7 @@ package cascading.tap.hive;
 import java.io.IOException;
 import java.util.List;
 
+import cascading.CascadingException;
 import cascading.scheme.Scheme;
 import cascading.tap.SinkMode;
 import cascading.tap.TapException;
@@ -93,9 +94,9 @@ public class HiveTap extends Hfs
     this.tableDescriptor = tableDesc;
     this.strict = strict;
     setScheme( scheme );
+    setFilesystemLocation();
 
-    setStringPath( String.format( "%s/%s", getHiveConf().get( HiveConf.ConfVars.METASTOREWAREHOUSE.varname ),
-      tableDesc.getFilesystemPath() ) );
+
     }
 
   @Override
@@ -106,7 +107,12 @@ public class HiveTap extends Hfs
     return true;
     }
 
-
+  /**
+   * Private method to create Hive table in the MetaStore.
+   *
+   * @return true, if the table has been created successfully.
+   * @throws IOException In case an interaction with the Hive metastore fails.
+   */
   private boolean createHiveTable() throws IOException
     {
     IMetaStoreClient metaStoreClient = null;
@@ -330,6 +336,45 @@ public class HiveTap extends Hfs
     {
     return tableDescriptor;
     }
+
+  /**
+   * Private method that sets the correct location of the files on HDFS. For an existing table
+   * it uses the value from the Hive MetaStore. Otherwise it uses the default location for Hive.
+   *
+   * */
+  private void setFilesystemLocation(  )
+    {
+    // If the table already exists get the location otherwise use the location from the table descriptor.
+    IMetaStoreClient metaStoreClient = null;
+    try
+      {
+      metaStoreClient = createMetaStoreClient();
+      Table table = metaStoreClient.getTable( tableDescriptor.getDatabaseName(),
+        tableDescriptor.getTableName() );
+      String path = table.getSd().getLocation();
+      setStringPath( path );
+      }
+    catch( MetaException exception )
+      {
+      throw new CascadingException( exception );
+      }
+    catch( NoSuchObjectException exception )
+      {
+      setStringPath( String.format( "%s/%s", hiveConf.get( HiveConf.ConfVars.METASTOREWAREHOUSE.varname ),
+        tableDescriptor.getFilesystemPath() ) );
+      }
+    catch( TException exception )
+      {
+      throw new CascadingException( exception );
+      }
+    finally
+      {
+      if( metaStoreClient != null )
+        metaStoreClient.close();
+      }
+    }
+
+
 
 
   /**

@@ -159,11 +159,23 @@ public class HiveTapTest extends HiveTestCase
 
     }
 
+  @Test
+  public void testGetPathWithExistingTableInDifferentLocation()
+    {
+    runHiveQuery( "create table myTable7 (one string, two string) location '/tmp/myLocation'" );
+    HiveTableDescriptor desc = new HiveTableDescriptor( "myTable7", new String[]{"one", "two"},
+      new String[]{"string", "string"}, new String[]{"two"} );
+    HiveTap tap = new HiveTap( desc, new NullScheme() );
+    assertEquals( "file:/tmp/myLocation", tap.getPath().toString() );
+    }
+
   private void assertTableExists( HiveTableDescriptor descriptor ) throws Exception
     {
     IMetaStoreClient client = createMetaStoreClient();
     assertTrue( client.tableExists( descriptor.getDatabaseName(), descriptor.getTableName() ) );
     client.close();
     }
+
+
 
   }
