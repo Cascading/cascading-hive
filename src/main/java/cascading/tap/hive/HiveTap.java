@@ -181,10 +181,10 @@ public class HiveTap extends Hfs
           String expectedColumnName = tableDescriptor.getColumnNames()[ index ];
           String expectedColumnType = tableDescriptor.getColumnTypes()[ index ];
           // this could be extended to the StorageDescriptor if necessary.
-          if( !schema.getName().equals( expectedColumnName ) )
+          if( !schema.getName().equalsIgnoreCase( expectedColumnName ) )
             throw new HiveTableValidationException( String.format(
               "hive schema mismatch: expected column name '%s', but found '%s'", expectedColumnName, schema.getName() ) );
-          if( !schema.getType().equals( expectedColumnType ) )
+          if( !schema.getType().equalsIgnoreCase( expectedColumnType ) )
             throw new HiveTableValidationException( String.format(
               "hive schema mismatch: expected column type '%s', but found '%s'", expectedColumnType, schema.getType() ) );
           }
@@ -307,25 +307,11 @@ public class HiveTap extends Hfs
     return super.commitResource( conf ) && result ;
     }
 
-
   @Override
   public long getModifiedTime( JobConf conf ) throws IOException
     {
     return modifiedTime;
     }
-
-  /**
-   * Returns the current HiveConf object.
-   *
-   * @return the HiveConf object.
-   */
-  private HiveConf getHiveConf()
-    {
-    if( hiveConf == null )
-      this.hiveConf = new HiveConf();
-    return hiveConf;
-    }
-
 
   /**
    * Internal method to get access to the HiveTableDescriptor of the HiveTap.
@@ -373,8 +359,6 @@ public class HiveTap extends Hfs
         metaStoreClient.close();
       }
     }
-
-
 
 
   /**

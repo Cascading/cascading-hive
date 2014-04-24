@@ -192,14 +192,14 @@ public class HiveTableDescriptorTest
   @Test
   public void testHashCodeEquals()
     {
-    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "mytable", new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"} );
 
-    HiveTableDescriptor descriptor2 = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
+    HiveTableDescriptor descriptor2 = new HiveTableDescriptor( "MYTABLE", new String[]{"ONE", "two", "three"},
       new String[]{"int", "string", "boolean"} );
 
     HiveTableDescriptor descriptor3 = new HiveTableDescriptor( "myTable", new String[]{"one", "three", "two"},
-      new String[]{"int", "boolean", "string"} );
+      new String[]{"int", "BOOLEAN", "string"} );
 
     assertEquals( descriptor, descriptor2 );
     assertFalse( descriptor.equals( descriptor3 ) );

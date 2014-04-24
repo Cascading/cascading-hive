@@ -104,7 +104,6 @@ public class HiveTapTest extends HiveTestCase
 
     tap = new HiveTap( mismatch, new NullScheme(  ), SinkMode.REPLACE, true );
     tap.resourceExists( new JobConf(  ) );
-
     }
 
   @Test(expected = HiveTableValidationException.class)
@@ -117,6 +116,19 @@ public class HiveTapTest extends HiveTestCase
     HiveTableDescriptor mismatch = new HiveTableDescriptor( "myTable5", new String[]{"key"}, new String[]{"int"} );
     tap = new HiveTap( mismatch, new NullScheme(  ), SinkMode.REPLACE, true );
     tap.resourceExists( new JobConf(  ) );
+    }
+
+  @Test
+  public void testResourceExistsStrictModeCaseInsensitivity() throws IOException
+    {
+    HiveTableDescriptor desc = new HiveTableDescriptor( "myTable4", new String[]{"key"}, new String[]{"string"} );
+    HiveTap tap = new HiveTap( desc, new NullScheme() );
+    tap.createResource( new JobConf() );
+
+    HiveTableDescriptor mismatch = new HiveTableDescriptor( "MYTABLE4", new String[]{"KeY"}, new String[]{"StRinG"} );
+
+    tap = new HiveTap( mismatch, new NullScheme(  ), SinkMode.REPLACE, true );
+    assertTrue( tap.resourceExists( new JobConf(  ) ) );
     }
 
   @Test

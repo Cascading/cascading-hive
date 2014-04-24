@@ -217,15 +217,13 @@ public class HiveTableDescriptor implements Serializable
    */
   private void verifyPartitionKeys()
     {
-    List names = Arrays.asList( columnNames );
     for( int index = 0; index < partitionKeys.length; index++ )
       {
-      String key = partitionKeys[ index ];
-      if( !names.contains( key ) )
+      String key    = partitionKeys[ index ];
+      if( !caseInsensitiveContains( columnNames, key ) )
         throw new IllegalArgumentException( String.format( "Given partition key '%s' not present in column names", key ) );
       }
     }
-
 
   /**
    * Converts the instance to a Hive Table object, which can be used with the MetaStore API.
@@ -240,11 +238,10 @@ public class HiveTableDescriptor implements Serializable
     table.setTableType( TableType.MANAGED_TABLE.toString() );
 
     StorageDescriptor sd = new StorageDescriptor();
-    List partitionColumns = Arrays.asList( partitionKeys );
     for( int index = 0; index < columnNames.length; index++ )
       {
       String columnName = columnNames[ index ];
-      if ( !partitionColumns.contains( columnName ) )
+      if ( !caseInsensitiveContains(partitionKeys, columnName ) )
         sd.addToCols( new FieldSchema( columnName, columnTypes[ index ], "created by Cascading" ) );
       }
     SerDeInfo serDeInfo = new SerDeInfo();
@@ -383,44 +380,26 @@ public class HiveTableDescriptor implements Serializable
   public boolean equals( Object object )
     {
     if( this == object )
-      {
       return true;
-      }
     if( object == null || getClass() != object.getClass() )
-      {
       return false;
-      }
 
     HiveTableDescriptor that = (HiveTableDescriptor) object;
 
-    if( !Arrays.equals( columnNames, that.columnNames ) )
-      {
+    if( !arraysEqualCaseInsensitive( columnNames, that.columnNames ) )
       return false;
-      }
-    if( !Arrays.equals( columnTypes, that.columnTypes ) )
-      {
+    if( !arraysEqualCaseInsensitive( columnTypes, that.columnTypes ) )
       return false;
-      }
-    if( databaseName != null ? !databaseName.equals( that.databaseName ) : that.databaseName != null )
-      {
+    if( databaseName != null ? !databaseName.equalsIgnoreCase( that.databaseName ) : that.databaseName != null )
       return false;
-      }
     if( delimiter != null ? !delimiter.equals( that.delimiter ) : that.delimiter != null )
-      {
       return false;
-      }
-    if( !Arrays.equals( partitionKeys, that.partitionKeys ) )
-      {
+    if( !arraysEqualCaseInsensitive( partitionKeys, that.partitionKeys ) )
       return false;
-      }
     if( serializationLib != null ? !serializationLib.equals( that.serializationLib ) : that.serializationLib != null )
-      {
       return false;
-      }
-    if( tableName != null ? !tableName.equals( that.tableName ) : that.tableName != null )
-      {
+    if( tableName != null ? !tableName.equalsIgnoreCase( that.tableName ) : that.tableName != null )
       return false;
-      }
 
     return true;
     }
@@ -428,12 +407,12 @@ public class HiveTableDescriptor implements Serializable
   @Override
   public int hashCode()
     {
-    int result = partitionKeys != null ? Arrays.hashCode( partitionKeys ) : 0;
+    int result = partitionKeys != null ? arraysHashCodeCaseInsensitive( partitionKeys ) : 0;
     result = 31 * result + ( delimiter != null ? delimiter.hashCode() : 0 );
-    result = 31 * result + ( tableName != null ? tableName.hashCode() : 0 );
-    result = 31 * result + ( databaseName != null ? databaseName.hashCode() : 0 );
-    result = 31 * result + ( columnNames != null ? Arrays.hashCode( columnNames ) : 0 );
-    result = 31 * result + ( columnTypes != null ? Arrays.hashCode( columnTypes ) : 0 );
+    result = 31 * result + ( tableName != null ? tableName.toLowerCase().hashCode() : 0 );
+    result = 31 * result + ( databaseName != null ? databaseName.toLowerCase().hashCode() : 0 );
+    result = 31 * result + ( columnNames != null ? arraysHashCodeCaseInsensitive( columnNames ) : 0 );
+    result = 31 * result + ( columnTypes != null ? arraysHashCodeCaseInsensitive( columnTypes ) : 0 );
     result = 31 * result + ( serializationLib != null ? serializationLib.hashCode() : 0 );
     return result;
     }
@@ -450,5 +429,37 @@ public class HiveTableDescriptor implements Serializable
       ", columnTypes=" + Arrays.toString( columnTypes ) +
       ", serializationLib='" + serializationLib + '\'' +
       '}';
+    }
+
+  private static boolean arraysEqualCaseInsensitive( String[] left, String[] right )
+    {
+    if( left.length != right.length )
+      return false;
+
+    for( int index = 0; index < left.length; index++ )
+      if( !left[ index ].equalsIgnoreCase( right[ index ] ) )
+        return false;
+
+    return true;
+    }
+
+  private boolean caseInsensitiveContains( String[] data, String key)
+    {
+    boolean found = false;
+    for( int i = 0; i < data.length && !found; i++ )
+      {
+      if( data[i].equalsIgnoreCase( key ) )
+        found = true;
+      }
+    return found;
+    }
+
+  private static int arraysHashCodeCaseInsensitive( String[] strings )
+    {
+    String[] lower = new String[ strings.length ];
+    for ( int index = 0; index < strings.length; index++ )
+      lower[ index ] = strings[ index ].toLowerCase();
+
+    return Arrays.hashCode( lower );
     }
   }
