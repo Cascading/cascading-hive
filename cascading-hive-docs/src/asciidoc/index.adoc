@@ -1,5 +1,4 @@
-[id="top"]
-Cascading-hive - Integrate Cascading and Apache Hive
+Cascading-hive - Integration for Cascading and Apache Hive
 ====================================================
 
 Introduction to Cascading-hive
@@ -14,29 +13,36 @@ having Hive queries participating in a http://docs.cascading.org/cascading/2.5/u
 The features of `Cascading-hive` include:
 
 - run Hive queries within a Cascade (`HiveFlow`)
-- read and write  Hive tables within a Cascading Flow (`HiveTap`, `HiveTableDescriptor`)
+- read and write Hive tables within a Cascading Flow (`HiveTap`, `HiveTableDescriptor`)
 - read and write partitioned Hive tables from a Cascading Flow (`HivePartitionTap`)
 - deconstructing a Hive view into Taps (`HiveViewAnalyzer`)
 
 With these features it is possible to combine existing Hive queries with new Cascading code and having the Cascading
 planner run everything in the correct order.
 
-The project maps Hive concepts like tables queries onto Cascading concepts like `Taps` and `Flows`. The core classes of
+The project maps Hive concepts like tables and running queries onto Cascading concepts like `Taps` and `Flows`.
 
 The code of `Cascading-hive` is available on https://github.com/Cascading/cascading-hive/[github] and the jars are
 deployed to http://conjars.org/repo/cascading/cascading-hive/[conjars].
+
+
+Hive dependencies
+-----------------
+
+`Cascading-hive` works with hive-0.10+. When using the maven dependency you have to specify the version of Hive you are
+using as a runtime dependency yourself.  This is done to avoid classpath issues with the various Hadoop and Hive
+distributions in existence. The `demo` project introduced below contains an example of that.
 
 
 Demo applications
 -----------------
 
 The https://github.com/Cascading/cascading-hive/tree/wip-1.0/demo[demo] directory of the project contains 3 applications
-using `Cascading-hive` and demonstrating the usage of the core classes to build applications with Cascading and Apache
-Hive.
+using `Cascading-hive` demonstrating the usage of the core classes to build applications with Cascading and Apache Hive.
 
 .Hive MetaStore.
 ****
-Please note that some features of Cascading-hive require a hosted Hive MetaStore, so it is a good idea to
+Please note that some features of Cascading-hive require a hosted Hive MetaStore. Therefore you should
 https://cwiki.apache.org/confluence/display/Hive/AdminManual+MetastoreAdmin[configure one] before running any of the
 demo applications.
 ****
@@ -54,7 +60,7 @@ Running the demo apps follows the standard hadoop way of running applications:
 
 
 cascading.hive.HiveDemo
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 https://github.com/Cascading/cascading-hive/blob/wip-1.0/demo/src/main/java/cascading/hive/HiveDemo.java[This demo]
 shows how Cascading based data processing and Hive based processing can be combined to build one app based on
@@ -63,21 +69,21 @@ both technologies. The application does the following list of things:
 1. define and create a table called `dual`
 2. load existing data into `dual`
 3. create a second table called `keyvalue`
-4. populate the second table via HiveQL
+4. populate the second table via SQL
 5. create a third table called `keyvalue2`
 6. populate `keyvalue2` with a pure Cascading flow that reads from `keyvalue`
 7. use `JDBC` to read the data back from `keyvalue2`
 
 All these steps, except the last, are happening in the same `Cascade`. Cascading can determine the dependencies between
-the Hive flows and the Cascading flows and enables you to build more complex applications using both technologies.
+the Hive flows and the Cascading flows and enables you to build more complex applications using Cascading and Hive.
 
 cascading.hive.HivePartitionDemo
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------
 
-https://github.com/Cascading/cascading-hive/blob/wip-1.0/demo/src/main/java/cascading/hive/HivePartitionDemo.java[This demo]
-focusses on the support for partitioned tables. The log is a tab separated file of a simulated cloud service
-logging customers in regions. The goal is to create a Hive table that is partitioned based on the region where a
-customer interaction happened. The following steps are involved:
+https://github.com/Cascading/cascading-hive/blob/wip-1.0/demo/src/main/java/cascading/hive/HivePartitionDemo.java[This
+demo] focusses on the support for partitioned tables. The app is dealing with a tab separated log file of a simulated
+cloud service logging customers in regions. The goal is to create a Hive table that is partitioned based on the region
+where a customer interaction happened. The following steps are involved:
 
 1. load the log file onto HDFS
 2. create a partitioned Hive table, that uses `region` as the partitioning column
@@ -90,7 +96,7 @@ The app creates and reads a partitioned table and uses it via `JDBC` to demonstr
 cascading-hive.
 
 cascading.hive.HiveViewDemo
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 
 https://github.com/Cascading/cascading-hive/blob/wip-1.0/demo/src/main/java/cascading/hive/HiveViewDemo.java[This demo]
 shows how to create a view within a Cascading based application. The application creates a view based on a
@@ -98,12 +104,13 @@ partitioned table (similar to `HivePartitionDemo`) and queries the view via `JDB
 
 .Hive views vs. Cascading.
 ****
-Views are an interesting construct since the form a hybrid of a ressource and computation. When writing SQL, they behave
-as if they were a ressource, yet in reality they are ad-hoc computation. Mapping these concepts onto the Cascading world
-is problematic, since a ressource is represented by a `Tap` and computation is represented by a `Flow`. Currently there
-is no clean way of representing Views in Cascading, which is why the support is not as prominent as for regular tables.
+Views are an interesting construct since they form a hybrid of a ressource and computation. When writing SQL, they
+behave as if they were a ressource, yet in reality they are ad-hoc computation. Mapping these concepts onto the
+Cascading world is not easy, since a ressource is represented by a `Tap` and computation is represented by a `Flow`.
+Currently there is no clean way of representing views in Cascading, which is why the support is not as prominent as for
+regular tables.
 
-Nevertheless has `cascading-hive` a set of helper classes, which enable you to let view based Hive queries be part of a
+Nevertheless has `cascading-hive` a set of helper classes, which enable you to let view-based Hive queries be part of a
 `Cascade`.
 ****
 

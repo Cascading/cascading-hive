@@ -16,12 +16,13 @@ The code will pick up the configuration for a remote Hive MetaStore
 automatically, as long as it is present in your hive or hadoop configuration
 files.
 
-## Hive version
+## Hive dependency
 
-Currently this project targets Hive 0.10. If you are using a newer version, you
-have to change the `build.gradle` file and recompile the project. This is due to
-the fact that the Hive MetaStore APIs are incompatible between Hive versions and
-cause crashes at runtime when versions are mixed.
+Cascading-hive works with hive-0.10+. When using the maven dependency you have
+to specify the version of Hive you are using as a runtime dependency yourself.
+This is done to avoid classpath issues with the various Hadoop and Hive
+distributions in existence. See the `demo` project for an example.
+
 
 ## Installing
 

@@ -21,6 +21,7 @@
 import java.text.SimpleDateFormat
 
 apply plugin: 'java'
+apply plugin: 'jacoco'
 apply plugin: 'maven'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
@@ -31,7 +32,7 @@ apply plugin: 'propdeps-maven'
 
 ext.cascadingVersion = '2.5.4-wip-+'
 ext.hadoopVersion = '1.2.1'
-ext.hiveVersion = '0.10.0'
+ext.hiveVersion = '0.13.0'
 
 apply from: "etc/properties.gradle"
 apply from: "etc/version.gradle"
@@ -72,12 +73,14 @@ repositories {
 }
 
 dependencies {
-  compile group: 'org.apache.hive', name: 'hive-exec', version: hiveVersion
-  // newer versions of hive no longer have a builtins project. remove when we
-  // move to hive 0.11+
-  compile group: 'org.apache.hive', name: 'hive-builtins', version: hiveVersion
 
   compile group: 'cascading', name: 'cascading-hadoop', version: cascadingVersion, changing: true
+
+  provided (group: 'org.apache.hive', name: 'hive-exec', version: hiveVersion){
+      exclude group: 'com.google.guava'
+  }
+  //provided group: 'com.google.guava', name: 'guava', version: '11.0'
+
   runtime group: 'xerces', name: 'xercesImpl', version: '2.9.1'
   runtime group: 'xalan', name: 'xalan', version: '2.7.1'
 
