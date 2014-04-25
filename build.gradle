@@ -152,7 +152,7 @@ uploadArchives {
       inceptionYear '2014'
       url 'http://cascading.org/'
       scm {
-        url 'https://github.com/ConcurrentCore/cascading-hive.git'
+        url 'https://github.com/Cascading/cascading-hive.git'
       }
       licenses {
         license {
