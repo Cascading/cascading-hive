@@ -14,4 +14,4 @@ TempStatsStore
 derby.log
 metastore_db
 *.dot
-
+*.sw[a-z]

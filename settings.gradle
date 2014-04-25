@@ -18,3 +18,5 @@
  * limitations under the License.
  */
 rootProject.name = 'cascading-hive'
+
+include 'cascading-hive-docs'

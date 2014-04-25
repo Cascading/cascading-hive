@@ -35,6 +35,7 @@ ext.hiveVersion = '0.10.0'
 
 apply from: "etc/properties.gradle"
 apply from: "etc/version.gradle"
+apply from: "etc/s3Upload.gradle"
 
 def versionProperties = new Properties()
 file( 'version.properties' ).withInputStream { versionProperties.load( it ) }
@@ -42,7 +43,9 @@ file( 'version.properties' ).withInputStream { versionProperties.load( it ) }
 group = 'cascading'
 version = releaseVersion
 
+
 ext.timestamp = new SimpleDateFormat( "yyyyMMdd" ).format( new Date() )
+ext.buildDate = timestamp
 
 buildscript {
   repositories {

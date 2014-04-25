@@ -61,5 +61,3 @@ HiveFlow and selects data via JDBC from that view
 
     >  hadoop jar build/libs/cascading-hive-demo-1.0.jar cascading.hive.HiveViewDemo
 
-
-
