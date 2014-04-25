@@ -167,14 +167,17 @@ public class HiveTap extends Hfs
       // check if the schema matches the table descriptor. If not, throw an exception.
       if( strict )
         {
-        LOG.info( "strict mode: comparing hive table with table descriptor" );
+        LOG.info( "strict mode: comparing existing hive table with table descriptor" );
         if( !table.getTableType().equals( tableDescriptor.toHiveTable().getTableType() ) )
           throw new HiveTableValidationException( String.format( "expected a table of type '%s' but found '%s'",
             tableDescriptor.toHiveTable().getTableType(), table.getTableType() ) );
 
         List<FieldSchema> schemaList = table.getSd().getCols();
-        if( schemaList.size() != tableDescriptor.getColumnNames().length )
-          throw new HiveTableValidationException( "table in MetaStore does not match expectations" );
+        if( schemaList.size() != tableDescriptor.getColumnNames().length - tableDescriptor.getPartitionKeys().length )
+          throw new HiveTableValidationException( String.format(
+            "table in MetaStore does not have same number of columns. expected %d got %d",
+            tableDescriptor.getColumnNames().length - tableDescriptor.getPartitionKeys().length,
+            schemaList.size() ) );
         for( int index = 0; index < schemaList.size(); index++ )
           {
           FieldSchema schema = schemaList.get( index );
@@ -187,6 +190,26 @@ public class HiveTap extends Hfs
           if( !schema.getType().equalsIgnoreCase( expectedColumnType ) )
             throw new HiveTableValidationException( String.format(
               "hive schema mismatch: expected column type '%s', but found '%s'", expectedColumnType, schema.getType() ) );
+          }
+        List<FieldSchema> schemaPartitions = table.getPartitionKeys();
+        if( schemaPartitions.size() != tableDescriptor.getPartitionKeys().length )
+          throw new HiveTableValidationException( String.format(
+            "table in MetaStore does not have same number of partition columns. expected %d got %d",
+            tableDescriptor.getPartitionKeys().length,
+            schemaPartitions.size() ) );
+        int offset = tableDescriptor.getColumnNames().length - tableDescriptor.getPartitionKeys().length;
+        for( int index = 0; index < schemaPartitions.size(); index++ )
+          {
+          FieldSchema schema = schemaPartitions.get( index );
+          String expectedColumnName = tableDescriptor.getColumnNames()[ index + offset ];
+          String expectedColumnType = tableDescriptor.getColumnTypes()[ index + offset ];
+          // this could be extended to the StorageDescriptor if necessary.
+          if( !schema.getName().equalsIgnoreCase( expectedColumnName ) )
+            throw new HiveTableValidationException( String.format(
+              "hive partition schema mismatch: expected column name '%s', but found '%s'", expectedColumnName, schema.getName() ) );
+          if( !schema.getType().equalsIgnoreCase( expectedColumnType ) )
+            throw new HiveTableValidationException( String.format(
+              "hive partition schema mismatch: expected column type '%s', but found '%s'", expectedColumnType, schema.getType() ) );
           }
         }
       return true;

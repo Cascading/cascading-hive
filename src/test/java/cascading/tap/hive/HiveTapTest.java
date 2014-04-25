@@ -132,6 +132,24 @@ public class HiveTapTest extends HiveTestCase
     }
 
   @Test
+  public void testResourceExistsStrictModeWithPartitionedTable() throws IOException
+    {
+    HiveTableDescriptor desc = new HiveTableDescriptor( "myTable8", new String[]{"name", "id"},
+       new String[]{"string", "string"},
+       new String [] {"id"} );
+    HiveTap tap = new HiveTap( desc, new NullScheme() );
+    tap.createResource( new JobConf() );
+
+    HiveTableDescriptor mismatch = new HiveTableDescriptor( "MYTABLE8", new String[]{"NAME", "ID"},
+      new String[]{"StRinG", "string"},
+      new String[]{"ID"} );
+
+    tap = new HiveTap( mismatch, new NullScheme(  ), SinkMode.REPLACE, true );
+    assertTrue( tap.resourceExists( new JobConf(  ) ) );
+    }
+
+
+  @Test
   public void testDeleteRessource() throws Exception
     {
     HiveTableDescriptor desc = new HiveTableDescriptor( "myTable5", new String[]{"key"}, new String[]{"string"} );

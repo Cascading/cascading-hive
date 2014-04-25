@@ -137,6 +137,15 @@ public class HiveTableDescriptorTest
     }
 
   @Test
+  public void testToFieldsWithPartitionedTable()
+    {
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
+      new String[]{"int", "string", "boolean"}, new String[] {"three"});
+    assertEquals( new Fields( "one", "two" ), descriptor.toFields() );
+    }
+
+
+  @Test
   public void testToSchemeWithDefaultDelimiter()
     {
     HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
