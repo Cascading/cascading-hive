@@ -57,7 +57,7 @@ public class HiveDriverFactory implements Serializable
   private HiveConf getHiveConf()
     {
     if ( this.hiveConf == null )
-      this.hiveConf = new HiveConf(  );
+      this.hiveConf = new HiveConf();
     return this.hiveConf;
     }
 

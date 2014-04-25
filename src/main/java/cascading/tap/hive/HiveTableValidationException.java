@@ -28,7 +28,7 @@ import cascading.CascadingException;
 public class HiveTableValidationException extends CascadingException
   {
   /**
-   * Constructs a new HiveTableValidationExcpetion witht he given message.
+   * Constructs a new HiveTableValidationException with he given message.
    * @param message The Exception message.
    */
   public HiveTableValidationException( String message )

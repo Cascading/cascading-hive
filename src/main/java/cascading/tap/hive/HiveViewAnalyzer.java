@@ -42,7 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The HiveViewAnalzyer can take a query representing a HiveView and find the underlying tables on HDFS. This works in a
+ * The HiveViewAnalyzer can take a query representing a Hive view and find the underlying tables on HDFS. This works in a
  * recursive way so that views, based on views, based on views etc. can be deconstructed into the participating tables.
  * This is useful when running a query on a view, which is meant to participate in a Cascade.
  */

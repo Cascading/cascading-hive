@@ -93,6 +93,7 @@ public class HivePartitionTap extends PartitionTap
         }
       }
     }
+
   @Override
   public TupleEntryCollector openForWrite( FlowProcess<JobConf> flowProcess, OutputCollector output ) throws IOException
     {

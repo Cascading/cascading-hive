@@ -272,7 +272,7 @@ public class HiveTableDescriptor implements Serializable
    */
   private List<FieldSchema> createPartitionSchema()
     {
-    List names = Arrays.asList( columnNames );
+    List<String> names = Arrays.asList( columnNames );
     List<FieldSchema> schema = new LinkedList<FieldSchema>();
     for( int i = 0; i < partitionKeys.length; i++ )
       {
@@ -305,13 +305,11 @@ public class HiveTableDescriptor implements Serializable
     if ( !isPartitioned() )
       return new Fields( columnNames );
 
-    List names =  new ArrayList( Arrays.asList( columnNames ) );
+    List<String> names =  new ArrayList<String>( Arrays.asList( columnNames ) );
+    names.removeAll( Arrays.asList( getPartitionKeys() ) );
 
-    for ( String partName: getPartitionKeys())
-      names.remove( partName );
     Comparable [] comparables = new Comparable[names.size()];
     return new Fields( (Comparable[]) names.toArray( comparables ) );
-
     }
 
 
