@@ -1,5 +1,5 @@
 Cascading-hive - Integration for Cascading and Apache Hive
-====================================================
+==========================================================
 
 Introduction to Cascading-hive
 ------------------------------
@@ -60,7 +60,7 @@ Running the demo apps follows the standard hadoop way of running applications:
 
 
 cascading.hive.HiveDemo
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 https://github.com/Cascading/cascading-hive/blob/wip-1.0/demo/src/main/java/cascading/hive/HiveDemo.java[This demo]
 shows how Cascading based data processing and Hive based processing can be combined to build one app based on
@@ -78,7 +78,7 @@ All these steps, except the last, are happening in the same `Cascade`. Cascading
 the Hive flows and the Cascading flows and enables you to build more complex applications using Cascading and Hive.
 
 cascading.hive.HivePartitionDemo
---------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 https://github.com/Cascading/cascading-hive/blob/wip-1.0/demo/src/main/java/cascading/hive/HivePartitionDemo.java[This
 demo] focusses on the support for partitioned tables. The app is dealing with a tab separated log file of a simulated
@@ -96,7 +96,7 @@ The app creates and reads a partitioned table and uses it via `JDBC` to demonstr
 cascading-hive.
 
 cascading.hive.HiveViewDemo
----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 https://github.com/Cascading/cascading-hive/blob/wip-1.0/demo/src/main/java/cascading/hive/HiveViewDemo.java[This demo]
 shows how to create a view within a Cascading based application. The application creates a view based on a
