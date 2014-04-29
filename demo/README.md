@@ -15,11 +15,11 @@
 
 ## cascading.hive.HiveDemo
 
-This is a demo application showing you how to integrate hive with cascading. The
+This is a demo application showing you how to integrate Hive with Cascading. The
 application creates a hive table, then populates it with data from
 the local file system. Then it uses the table to bootstrap a second table which
-is read by a pure cascading flow and written to a third table. Finally the data
-from the third table is read back via Hives JDBC support to show the seamless
+is read by a pure Cascading flow and written to a third table. Finally the data
+from the third table is read back via Hive's JDBC support to show the seamless
 integration between the two.
 
 

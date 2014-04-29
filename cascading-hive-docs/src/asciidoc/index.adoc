@@ -1,35 +1,34 @@
-Cascading-hive - Integration for Cascading and Apache Hive
+Cascading-Hive - Integration for Cascading and Apache Hive
 ==========================================================
 
-Introduction to Cascading-hive
+Introduction to Cascading-Hive
 ------------------------------
 
-`Cascading-hive` provides integration between http://cascading.org[Cascading] and http://hive.apache.org[Apache Hive].
+`Cascading-Hive` provides integration between http://cascading.org[Cascading] and http://hive.apache.org[Apache Hive].
 
-Many organizations have adopted Apache Hive, but until now one could not combine Hive based processes with Cascading
-Apps. This project bridges the gap by making it possible to read and write Hive tables from within Cascading flows and
+This project bridges the gap by making it possible to read and write Hive tables from within Cascading flows and
 having Hive queries participating in a http://docs.cascading.org/cascading/2.5/userguide/html/ch03s09.html[`Cascade`].
 
-The features of `Cascading-hive` include:
+The features of `Cascading-Hive` include:
 
 - run Hive queries within a Cascade (`HiveFlow`)
 - read and write Hive tables within a Cascading Flow (`HiveTap`, `HiveTableDescriptor`)
 - read and write partitioned Hive tables from a Cascading Flow (`HivePartitionTap`)
-- deconstructing a Hive view into Taps (`HiveViewAnalyzer`)
+- deconstruct a Hive view into Taps (`HiveViewAnalyzer`)
 
 With these features it is possible to combine existing Hive queries with new Cascading code and having the Cascading
 planner run everything in the correct order.
 
 The project maps Hive concepts like tables and running queries onto Cascading concepts like `Taps` and `Flows`.
 
-The code of `Cascading-hive` is available on https://github.com/Cascading/cascading-hive/[github] and the jars are
+The code of `Cascading-Hive` is available on https://github.com/Cascading/cascading-hive/[github] and the jars are
 deployed to http://conjars.org/repo/cascading/cascading-hive/[conjars].
 
 
 Hive dependencies
 -----------------
 
-`Cascading-hive` works with hive-0.10+. When using the maven dependency you have to specify the version of Hive you are
+`Cascading-Hive` works with hive-0.10+. When using the maven dependency you have to specify the version of Hive you are
 using as a runtime dependency yourself.  This is done to avoid classpath issues with the various Hadoop and Hive
 distributions in existence. The `demo` project introduced below contains an example of that.
 
@@ -38,11 +37,11 @@ Demo applications
 -----------------
 
 The https://github.com/Cascading/cascading-hive/tree/wip-1.0/demo[demo] directory of the project contains 3 applications
-using `Cascading-hive` demonstrating the usage of the core classes to build applications with Cascading and Apache Hive.
+using `Cascading-Hive` demonstrating the usage of the core classes to build applications with Cascading and Apache Hive.
 
 .Hive MetaStore.
 ****
-Please note that some features of Cascading-hive require a hosted Hive MetaStore. Therefore you should
+Please note that some features of Cascading-Hive require a hosted Hive MetaStore. Therefore you should
 https://cwiki.apache.org/confluence/display/Hive/AdminManual+MetastoreAdmin[configure one] before running any of the
 demo applications.
 ****
@@ -63,7 +62,7 @@ cascading.hive.HiveDemo
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 https://github.com/Cascading/cascading-hive/blob/wip-1.0/demo/src/main/java/cascading/hive/HiveDemo.java[This demo]
-shows how Cascading based data processing and Hive based processing can be combined to build one app based on
+shows how Cascading-based data processing and Hive-based processing can be combined to build one app based on
 both technologies. The application does the following list of things:
 
 1. define and create a table called `dual`
@@ -93,7 +92,7 @@ where a customer interaction happened. The following steps are involved:
 
 
 The app creates and reads a partitioned table and uses it via `JDBC` to demonstrate the support for partitioned tables in
-cascading-hive.
+Cascading-Hive.
 
 cascading.hive.HiveViewDemo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -110,14 +109,14 @@ Cascading world is not easy, since a ressource is represented by a `Tap` and com
 Currently there is no clean way of representing views in Cascading, which is why the support is not as prominent as for
 regular tables.
 
-Nevertheless has `cascading-hive` a set of helper classes, which enable you to let view-based Hive queries be part of a
+Nevertheless has `Cascading-Hive` a set of helper classes, which enable you to let view-based Hive queries be part of a
 `Cascade`.
 ****
 
 Testing
 -------
 
-`Cascading-hive` also provides useful classes, which you can use in your tests, when writing hybrid Hive and
+`Cascading-Hive` also provides useful classes, which you can use in your tests, when writing hybrid Hive and
 Cascading applictions. Using
 https://github.com/ConcurrentCore/cascading-hive/blob/wip-1.0/src/test/java/cascading/HiveTestCase.java[`HiveTestCase`]
-as a base class for such a test is probably a good idea. Most of the tests in `cascading-hive` are using it.
+as a base class for such a test is probably a good idea. Most of the tests in `Cascading-Hive` are using it.
