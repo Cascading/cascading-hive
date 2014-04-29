@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
 public class HiveViewAnalyzer implements Closeable
   {
   /** Field LOG */
-  private static final Logger LOG = LoggerFactory.getLogger( HiveTap.class );
+  private static final Logger LOG = LoggerFactory.getLogger( HiveViewAnalyzer.class );
   /** a stack of views. */
   private Deque<String> viewDefinitions;
   /** The Taps (Hive tables), which represent the view. */
@@ -70,7 +70,7 @@ public class HiveViewAnalyzer implements Closeable
   /**
    * Analyzes a query involving Views and returns a Collection of Taps, which are used to compose the view.
    *
-   * @param query The hive query to analzye.
+   * @param query The hive query to analyze.
    * @return a Collection of Taps.
    */
   public Collection<Tap> asTaps( String query )
@@ -79,13 +79,14 @@ public class HiveViewAnalyzer implements Closeable
     while( !viewDefinitions.isEmpty() )
       {
       String sql = viewDefinitions.pop();
+      LOG.debug( "compiling view definition '{}'", sql );
       int result = driver.compile( sql );
       if( result != 0 )
         {
-        throw new CascadingException( "unable to compile query " + sql );
+        throw new CascadingException( "unable to compile query '" + sql  + "'. Make sure that all tables in the view are" +
+          "already registered in the Hive MetaStore ");
         }
       // the plan and the schema contain what we need to build proper taps/schemes/fields
-      //Schema schema = driver.getSchema();
       QueryPlan plan = driver.getPlan();
       extractTaps( plan );
       }
@@ -93,7 +94,7 @@ public class HiveViewAnalyzer implements Closeable
     }
 
   /**
-   * Constructs Tap instances based on the pathes on HDFS for the underlying tables.
+   * Constructs Tap instances based on the paths on HDFS for the underlying tables.
    *
    * @param plan The hive plan to analyze.
    */

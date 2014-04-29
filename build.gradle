@@ -73,7 +73,7 @@ repositories {
 
 dependencies {
 
-  compile group: 'cascading', name: 'cascading-hadoop', version: cascadingVersion, changing: true
+  compile group: 'cascading', name: 'cascading-hadoop2-mr1', version: cascadingVersion, changing: true
 
   provided (group: 'org.apache.hive', name: 'hive-exec', version: hiveVersion){
       exclude group: 'com.google.guava'
