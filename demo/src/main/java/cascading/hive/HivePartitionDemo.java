@@ -98,7 +98,7 @@ public class HivePartitionDemo
         }
       }
 
-    Pipe pipe = new Each( " echo ", allFields,
+    Pipe pipe = new Each( " import ", allFields,
       new Echo( allFields ), Fields.RESULTS );
 
     Flow flow = new HadoopFlowConnector().connect( input, partitionTap, pipe );

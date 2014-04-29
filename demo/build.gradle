@@ -30,7 +30,7 @@ apply plugin: 'propdeps-idea'
 apply plugin: 'propdeps-eclipse'
 apply plugin: 'propdeps-maven'
 
-ext.hadoopVersion = '1.2.1'
+ext.hadoopVersion = '2.2.0'
 ext.hiveVersion = '0.13.0'
 
 group = "cascading"
@@ -76,7 +76,8 @@ dependencies {
   // add the line below, if you use hive 0.10
   //compile group: 'org.apache.hive', name: 'hive-builtins', version: hiveVersion
 
-  provided group: 'org.apache.hadoop', name: 'hadoop-core', version: hadoopVersion
+  provided group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
+  provided group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
   provided group: 'org.slf4j', name: 'slf4j-api', version: '1.6.1'
   provided group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.6.1'
   provided group: 'log4j', name: 'log4j', version: '1.2.17'

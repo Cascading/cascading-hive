@@ -21,7 +21,6 @@
 import java.text.SimpleDateFormat
 
 apply plugin: 'java'
-apply plugin: 'jacoco'
 apply plugin: 'maven'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
@@ -31,7 +30,7 @@ apply plugin: 'propdeps-eclipse'
 apply plugin: 'propdeps-maven'
 
 ext.cascadingVersion = '2.5.4-wip-+'
-ext.hadoopVersion = '1.2.1'
+ext.hadoopVersion = '2.3.0'
 ext.hiveVersion = '0.13.0'
 
 apply from: "etc/properties.gradle"
@@ -84,14 +83,15 @@ dependencies {
   runtime group: 'xerces', name: 'xercesImpl', version: '2.9.1'
   runtime group: 'xalan', name: 'xalan', version: '2.7.1'
 
-  provided group: 'org.apache.hadoop', name: 'hadoop-core', version: hadoopVersion
+  provided group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
+  provided group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
   provided group: 'org.slf4j', name: 'slf4j-api', version: '1.6.1'
   provided group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.6.1'
   provided group: 'log4j', name: 'log4j', version: '1.2.17'
 
-  testCompile group: 'cascading', name: 'cascading-hadoop', version: cascadingVersion, changing: true
+  testCompile group: 'cascading', name: 'cascading-hadoop2-mr1', version: cascadingVersion, changing: true
   testCompile group: 'cascading', name: 'cascading-core', version: cascadingVersion, classifier: 'tests', changing: true
-  testCompile group: 'cascading', name: 'cascading-hadoop', version: cascadingVersion, classifier: 'tests', changing: true
+  testCompile group: 'cascading', name: 'cascading-hadoop2-mr1', version: cascadingVersion, classifier: 'tests', changing: true
   testCompile group: 'cascading', name: 'cascading-platform', version: cascadingVersion, classifier: 'tests', changing: true
   testCompile group: 'junit', name: 'junit', version: '4.11'
   testCompile group: 'org.mockito', name: 'mockito-all', version: '1.9.5'
