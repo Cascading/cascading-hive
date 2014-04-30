@@ -29,7 +29,7 @@ apply plugin: 'propdeps-idea'
 apply plugin: 'propdeps-eclipse'
 apply plugin: 'propdeps-maven'
 
-ext.cascadingVersion = '2.5.4-wip-+'
+ext.cascadingVersion = '2.5.4'
 ext.hadoopVersion = '2.3.0'
 ext.hiveVersion = '0.13.0'
 
