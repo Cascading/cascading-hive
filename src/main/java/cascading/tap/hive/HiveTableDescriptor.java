@@ -18,7 +18,6 @@
 * limitations under the License.
 */
 
-
 package cascading.tap.hive;
 
 import java.io.Serializable;
@@ -219,7 +218,7 @@ public class HiveTableDescriptor implements Serializable
     {
     for( int index = 0; index < partitionKeys.length; index++ )
       {
-      String key    = partitionKeys[ index ];
+      String key = partitionKeys[ index ];
       if( !caseInsensitiveContains( columnNames, key ) )
         throw new IllegalArgumentException( String.format( "Given partition key '%s' not present in column names", key ) );
       }
@@ -266,9 +265,9 @@ public class HiveTableDescriptor implements Serializable
     return table;
     }
 
-  /***
+  /**
    * Creates a List of FieldSchema instances representing the partitions of the Hive Table.
-   * @return
+   * @return a List of FieldSchema instances.
    */
   private List<FieldSchema> createPartitionSchema()
     {
@@ -323,7 +322,6 @@ public class HiveTableDescriptor implements Serializable
       return getTableName();
     else
       return String.format( "%s.db/%s", getDatabaseName(), getTableName() );
-
     }
 
 

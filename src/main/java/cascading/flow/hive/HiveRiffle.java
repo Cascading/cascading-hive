@@ -41,9 +41,6 @@ import riffle.process.ProcessStop;
 @riffle.process.Process
 public class HiveRiffle
   {
-  /** Field LOG */
-  private static final Logger LOG = LoggerFactory.getLogger( HiveRiffle.class );
-
   /** List of source taps */
   private final Collection<Tap> sources;
 

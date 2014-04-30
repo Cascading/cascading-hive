@@ -87,7 +87,6 @@ class HivePartition extends DelimitedPartition
     return builder.toString();
     }
 
-
   /**
    * Parses a given partition String in the format '/key=value/otherKey=otherValue/' and returns the
    * values as an array of Strings in order of appearance.

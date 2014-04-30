@@ -54,7 +54,7 @@ public class HiveQueryRunner implements Runnable
     }
 
   /**
-   * Constructs a new HiveQeryRunner with the given HiveDriverFactory and query.
+   * Constructs a new HiveQueryRunner with the given HiveDriverFactory and query.
    *
    * @param driverFactory The HiveDriverFactory to use.
    * @param query         The query to run.
