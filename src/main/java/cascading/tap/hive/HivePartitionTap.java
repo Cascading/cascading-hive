@@ -100,4 +100,10 @@ public class HivePartitionTap extends PartitionTap
     return new HivePartitionCollector( flowProcess );
     }
 
+  @Override
+  public String getFullIdentifier(JobConf conf)
+    {
+    return parent.getFullIdentifier(conf);
+    }
+
   }
