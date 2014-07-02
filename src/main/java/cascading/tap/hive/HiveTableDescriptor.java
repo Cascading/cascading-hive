@@ -195,8 +195,8 @@ public class HiveTableDescriptor implements Serializable
     if ( databaseName == null || tableName.isEmpty() )
       this.databaseName = HIVE_DEFAULT_DATABASE_NAME;
     else
-      this.databaseName = databaseName;
-    this.tableName = tableName;
+      this.databaseName = databaseName.toLowerCase();
+    this.tableName = tableName.toLowerCase();
     this.columnNames = columnNames;
     this.columnTypes = columnTypes;
     this.partitionKeys = partitionKeys;

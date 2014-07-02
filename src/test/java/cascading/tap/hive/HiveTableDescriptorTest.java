@@ -82,7 +82,7 @@ public class HiveTableDescriptorTest
     HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"key", "value"},
       new String[]{"int", "STRING"} );
     Table table = descriptor.toHiveTable();
-    assertEquals( "myTable", table.getTableName() );
+    assertEquals( "mytable", table.getTableName() );
     assertEquals( MetaStoreUtils.DEFAULT_DATABASE_NAME, table.getDbName() );
     assertEquals( TableType.MANAGED_TABLE.toString(), table.getTableType() );
 
@@ -105,11 +105,11 @@ public class HiveTableDescriptorTest
   @Test
   public void testToHiveTableWithPartitioning()
     {
-    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"key", "value"},
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "mytable", new String[]{"key", "value"},
       new String[]{"int", "string"}, new String[]{"key"} );
     assertTrue( descriptor.isPartitioned() );
     Table table = descriptor.toHiveTable();
-    assertEquals( "myTable", table.getTableName() );
+    assertEquals( "mytable", table.getTableName() );
     assertEquals( MetaStoreUtils.DEFAULT_DATABASE_NAME, table.getDbName() );
 
     StorageDescriptor sd = table.getSd();
@@ -131,7 +131,7 @@ public class HiveTableDescriptorTest
   @Test
   public void testToFields()
     {
-    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "mytable", new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"} );
     assertEquals( new Fields( "one", "two", "three" ), descriptor.toFields() );
     }
@@ -139,7 +139,7 @@ public class HiveTableDescriptorTest
   @Test
   public void testToFieldsWithPartitionedTable()
     {
-    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "mytable", new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"}, new String[] {"three"});
     assertEquals( new Fields( "one", "two" ), descriptor.toFields() );
     }
@@ -148,7 +148,7 @@ public class HiveTableDescriptorTest
   @Test
   public void testToSchemeWithDefaultDelimiter()
     {
-    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "mytable", new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"} );
     Scheme scheme = descriptor.toScheme();
     assertNotNull( scheme );
@@ -159,7 +159,7 @@ public class HiveTableDescriptorTest
   public void testToSchemeWithCustomDelimiter()
     {
     String delim = "\\t";
-    HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "myTable",
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "mytable",
       new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"}, new String[]{},
       delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME );
@@ -172,7 +172,7 @@ public class HiveTableDescriptorTest
   public void testCustomDelimiterInSerdeParameters()
     {
     String delim = "\\t";
-    HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "myTable",
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "mytable",
       new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"}, new String[]{},
       delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME );
@@ -188,7 +188,7 @@ public class HiveTableDescriptorTest
   public void testToSchemeWithNullDelimiter()
     {
     String delim = null;
-    HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "myTable",
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "mytable",
       new String[]{"one", "two", "three"},
       new String[]{"int", "string",
                    "boolean"}, new String[]{}, delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME
@@ -227,7 +227,7 @@ public class HiveTableDescriptorTest
   @Test
   public void testToString()
     {
-    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "mytable", new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"} );
     assertNotNull( descriptor.toString() );
     }
@@ -237,7 +237,7 @@ public class HiveTableDescriptorTest
     {
     HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"} );
-    assertEquals( "myTable", descriptor.getFilesystemPath() );
+    assertEquals( "mytable", descriptor.getFilesystemPath() );
     }
 
   @Test
@@ -245,7 +245,7 @@ public class HiveTableDescriptorTest
     {
     HiveTableDescriptor descriptor = new HiveTableDescriptor( "myDB", "myTable", new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"} );
-    assertEquals( "myDB.db/myTable", descriptor.getFilesystemPath() );
+    assertEquals( "mydb.db/mytable", descriptor.getFilesystemPath() );
     }
   }
 
