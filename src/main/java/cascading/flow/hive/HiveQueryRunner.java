@@ -20,7 +20,9 @@
 
 package cascading.flow.hive;
 
+
 import cascading.CascadingException;
+import java.util.Arrays;
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
@@ -28,8 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Class for running ad-hoc Hive queries. The class is meant as a convenience class for cases where a hive query
- * does not fit into the Cascading processing model. It also implements the Runnable interface so that a query can be
+ * Class for running ad-hoc Hive queries. The class is meant as a convenience class for cases where the hive queries
+ * do not fit into the Cascading processing model. It also implements the Runnable interface so that the queries can be
  * submitted to a CompletionService.
  */
 public class HiveQueryRunner implements Runnable
@@ -37,49 +39,63 @@ public class HiveQueryRunner implements Runnable
   /** Field LOG */
   private static final Logger LOG = LoggerFactory.getLogger( HiveQueryRunner.class );
 
-  /** The hive query to run. */
-  private final String query;
+  /** The hive queries to run. */
+  private final String queries[];
 
   /** Factory for creating Driver instances. */
   private final HiveDriverFactory driverFactory;
 
   /**
-   * Constructs a new HiveQueryRunner object with the given query.
+   * Constructs a new HiveQueryRunner object with the given queries.
    *
-   * @param query The hive query to run.
+   * @param queries The hive queries to run.
    */
-  public HiveQueryRunner( String query )
+  public HiveQueryRunner( String queries[] )
     {
-    this( new HiveDriverFactory(), query );
+    this( new HiveDriverFactory(), queries );
     }
 
   /**
-   * Constructs a new HiveQueryRunner with the given HiveDriverFactory and query.
+   * Constructs a new HiveQueryRunner with the given HiveDriverFactory and queries.
    *
    * @param driverFactory The HiveDriverFactory to use.
-   * @param query         The query to run.
+   * @param queries       The queries to run.
    */
-  HiveQueryRunner( HiveDriverFactory driverFactory, String query )
+  HiveQueryRunner( HiveDriverFactory driverFactory, String queries[] )
     {
     this.driverFactory = driverFactory;
-    this.query = query;
+    this.queries = queries;
     }
 
   @Override
   public void run()
     {
     Driver driver = null;
+    String currentQuery = null;
     try
       {
       driver = driverFactory.createHiveDriver();
-      LOG.info( "running hive query: '{}'", query );
-      CommandProcessorResponse response = driver.run( this.query );
-      if( response.getResponseCode() != 0 )
-        throw new CascadingException( "hive error '" + response.getErrorMessage() + "' while running query " + query );
-      }
+
+      for (String subquery : queries )
+        {
+        LOG.info( "running hive query: '{}'", subquery );
+        currentQuery = subquery;
+        CommandProcessorResponse response = driver.run( currentQuery );
+        if( response.getResponseCode() != 0 )
+          throw new CascadingException( "hive error '" + response.getErrorMessage() + "' while running query " + currentQuery );
+        }
+      }  
     catch( CommandNeedRetryException exception )
       {
-      throw new CascadingException( "problem while executing hive query: " + query, exception );
+      if (currentQuery == null)
+        {
+            throw new CascadingException( "problem while executing hive queries: " + Arrays.toString(queries), exception );
+        }
+      else
+        {
+        throw new CascadingException( "problem while executing hive query: " + currentQuery, exception );
+        }
+            
       }
     finally
       {

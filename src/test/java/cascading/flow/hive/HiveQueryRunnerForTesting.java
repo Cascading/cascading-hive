@@ -22,8 +22,8 @@ package cascading.flow.hive;
 
 public class HiveQueryRunnerForTesting extends HiveQueryRunner
   {
-  public HiveQueryRunnerForTesting( HiveDriverFactory driverFactory, String query )
+  public HiveQueryRunnerForTesting( HiveDriverFactory driverFactory, String queries[] )
     {
-    super(driverFactory, query );
+    super(driverFactory, queries );
     }
   }

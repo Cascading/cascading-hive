@@ -53,7 +53,7 @@ public class HiveRiffleTest extends HiveTestCase
     {
     Tap mockSource = Mockito.mock( Tap.class );
     Tap mockSink = Mockito.mock( Tap.class );
-    HiveRiffle riffle = new HiveRiffle( createHiveDriverFactory(), "creat table foo (key string)",
+    HiveRiffle riffle = new HiveRiffle( createHiveDriverFactory(), new String[]{"creat table foo (key string)"},
       Arrays.asList( mockSource ), mockSink );
     riffle.complete();
     }
@@ -62,7 +62,7 @@ public class HiveRiffleTest extends HiveTestCase
   public void testEmptySources()
     {
     Tap mockSink = Mockito.mock( Tap.class );
-    new HiveRiffle( createHiveDriverFactory(), "create table foo (key string)",
+    new HiveRiffle( createHiveDriverFactory(), new String[]{"create table foo (key string)"},
       new ArrayList<Tap>(  ), mockSink );
     }
 
@@ -70,7 +70,7 @@ public class HiveRiffleTest extends HiveTestCase
   public void testNullSources()
     {
     Tap mockSink = Mockito.mock( Tap.class );
-    new HiveRiffle( createHiveDriverFactory(), "create table foo (key string)",
+    new HiveRiffle( createHiveDriverFactory(), new String[]{"create table foo (key string)"},
       null, mockSink );
     }
 
@@ -82,7 +82,7 @@ public class HiveRiffleTest extends HiveTestCase
     incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
     Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(  ), "/out" );
 
-    HiveRiffle riffle = new HiveRiffle( createHiveDriverFactory(), "create table foo (key string)",
+    HiveRiffle riffle = new HiveRiffle( createHiveDriverFactory(), new String[]{"create table foo (key string)"},
       incoming, outgoing );
     assertEquals( incoming, riffle.getIncoming() );
     assertEquals( 1, riffle.getOutgoing().size() );
@@ -102,7 +102,7 @@ public class HiveRiffleTest extends HiveTestCase
     incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
     Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(  ), "/out" );
 
-    HiveRiffle riffle = new HiveRiffle( factory, "creat table foo (key string)",
+    HiveRiffle riffle = new HiveRiffle( factory, new String[]{"creat table foo (key string)"},
       incoming, outgoing );
     riffle.complete();
     verify( mockDriver ).destroy();
@@ -121,7 +121,7 @@ public class HiveRiffleTest extends HiveTestCase
     incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
     Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(  ), "/out" );
 
-    HiveRiffle riffle = new HiveRiffle( factory, "creat table foo (key string)",
+    HiveRiffle riffle = new HiveRiffle( factory, new String[]{"creat table foo (key string)"},
       incoming, outgoing );
     riffle.complete();
     verify( mockDriver ).destroy();
@@ -141,7 +141,7 @@ public class HiveRiffleTest extends HiveTestCase
     incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
     Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(  ), "/out" );
 
-    HiveRiffle riffle = new HiveRiffle( factory, "creat table foo (key string)",
+    HiveRiffle riffle = new HiveRiffle( factory, new String[]{"creat table foo (key string)"},
       incoming, outgoing );
     riffle.complete();
     verify( mockDriver ).destroy();
@@ -158,7 +158,7 @@ public class HiveRiffleTest extends HiveTestCase
     incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
     Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(  ), "/out" );
 
-    HiveRiffle riffle = new HiveRiffle( factory, "creat table foo (key string)",
+    HiveRiffle riffle = new HiveRiffle( factory, new String[]{"creat table foo (key string)"},
       incoming, outgoing );
     riffle.complete();
     }
