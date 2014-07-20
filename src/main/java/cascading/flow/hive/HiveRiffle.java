@@ -50,22 +50,22 @@ public class HiveRiffle
   /** a hive driver factory */
   private final HiveDriverFactory driverFactory;
 
-  /** The hive query to run */
-  private String query;
+  /** The hive queries to run */
+  private String queries[];
 
   /**
-   * Constructs a new HiveRiffle with the given HiveConf object, query, a list of source taps and a sink.
+   * Constructs a new HiveRiffle with the given HiveConf object, queries, a list of source taps and a sink.
    *
    * @param driverFactory a factory for creating Driver instances.
-   * @param query    The hive query to run.
-   * @param sources The source taps of the query.
-   * @param sink  The sink of the query.
+   * @param queries    The hive queries to run.
+   * @param sources The source taps of the queries.
+   * @param sink  The sink of the queries.
    */
-  @ConstructorProperties({"hiveConf", "query", "sources", "sink"})
-  HiveRiffle( HiveDriverFactory driverFactory, String query, Collection<Tap> sources, Tap sink )
+  @ConstructorProperties({"hiveConf", "queries", "sources", "sink"})
+  HiveRiffle( HiveDriverFactory driverFactory, String queries[], Collection<Tap> sources, Tap sink )
     {
     this.driverFactory = driverFactory;
-    this.query = query;
+    this.queries = queries;
     if ( sources == null || sources.isEmpty() )
       throw new CascadingException( "sources cannot be null or empty" );
     this.sources = sources;
@@ -93,7 +93,7 @@ public class HiveRiffle
   @ProcessComplete
   public void complete()
     {
-    HiveQueryRunner runner = new HiveQueryRunner( driverFactory, query );
+    HiveQueryRunner runner = new HiveQueryRunner( driverFactory, queries );
     runner.run();
     }
 

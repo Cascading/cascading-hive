@@ -41,7 +41,27 @@ public class HiveFlowTest extends HiveTestCase
     {
     Tap sink = new Hfs( new NullScheme(), "/foo" );
     List<Tap> sources = Arrays.asList( (Tap) new Hfs( new NullScheme(), "/bar" ) );
-    HiveFlow flow = new HiveFlow( "some name", createHiveDriverFactory(), "select * from foo", sources, sink );
+    HiveFlow flow = new HiveFlow( "some name", createHiveDriverFactory(),
+                                  "select * from foo", sources, sink );
+    assertEquals( sink, flow.getSink() );
+    Map<String, Tap> expectedSources = new HashMap<String, Tap>(  );
+    expectedSources.put( "/bar", sources.get( 0 ) );
+    assertEquals( expectedSources, flow.getSources() );
+    assertEquals( "some name", flow.getName() );
+    }
+
+  @Test
+  public void testConstructionMultiple()
+    {
+    String queries[] = {
+        "select * from foo",
+        "select count(*) from foo"
+    };
+
+    Tap sink = new Hfs( new NullScheme(), "/foo" );
+    List<Tap> sources = Arrays.asList( (Tap) new Hfs( new NullScheme(), "/bar" ) );
+    HiveFlow flow = new HiveFlow( "some name", createHiveDriverFactory(),
+                                  queries, sources, sink );
     assertEquals( sink, flow.getSink() );
     Map<String, Tap> expectedSources = new HashMap<String, Tap>(  );
     expectedSources.put( "/bar", sources.get( 0 ) );
