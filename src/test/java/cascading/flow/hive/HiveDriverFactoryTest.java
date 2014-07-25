@@ -21,7 +21,12 @@
 package cascading.flow.hive;
 
 import cascading.HiveTestCase;
+import java.util.Map;
+import java.util.Collections;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.Driver;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.junit.Test;
 
 /**
@@ -36,4 +41,17 @@ public class HiveDriverFactoryTest extends HiveTestCase
     assertNotNull( driver );
     driver.destroy();
     }
+
+    @Test
+    public void testAddingProperties()
+      {
+      String TESTVAL = "10";
+      Map<String, String> properties = Collections.singletonMap( ConfVars.DYNAMICPARTITIONMAXPARTS.varname, TESTVAL );
+      Driver driver = new HiveDriverFactory( properties ).createHiveDriver();
+      SessionState session = SessionState.get();
+      HiveConf conf = session.getConf();
+      driver.destroy();
+
+      assertEquals( TESTVAL, conf.getVar( ConfVars.DYNAMICPARTITIONMAXPARTS ) );
+      }
   }
