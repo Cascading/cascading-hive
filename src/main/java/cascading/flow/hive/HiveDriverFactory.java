@@ -20,6 +20,8 @@
 package cascading.flow.hive;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.Map;
 
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.Driver;
@@ -31,9 +33,28 @@ import org.apache.hadoop.hive.ql.session.SessionState;
  */
 public class HiveDriverFactory implements Serializable
   {
+  /** Properties to merge into the hive conf. */
+  protected Map<String, String> properties;
 
   /** a HiveConf object. */
   protected transient HiveConf hiveConf;
+
+  /** Initialises the HiveDriverFactory. */
+  public HiveDriverFactory()
+    {
+    this.properties = Collections.<String, String>emptyMap();
+    }
+
+  /**
+   * Initialises the HiveDriverFactory with the specified properties applied to the HiveConf for the driver.
+   *
+   * @param properties Properties to add to the HiveConf used by the driver.
+   */
+  public HiveDriverFactory(Map<String, String> properties)
+    {
+    this.properties = properties;
+    }
+
 
   /**
    * Creates a new Driver instance and sets everything up for compiling/processing queries. Users of
@@ -57,7 +78,13 @@ public class HiveDriverFactory implements Serializable
   private HiveConf getHiveConf()
     {
     if ( this.hiveConf == null )
+      {
       this.hiveConf = new HiveConf();
+      for ( Map.Entry<String, String> entry : properties.entrySet() )
+        {
+        this.hiveConf.set( entry.getKey(), entry.getValue() );
+        }
+      }
     return this.hiveConf;
     }
 

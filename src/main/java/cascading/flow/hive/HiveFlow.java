@@ -22,6 +22,7 @@ package cascading.flow.hive;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
 import cascading.CascadingException;
 import cascading.flow.hadoop.ProcessFlow;
@@ -40,10 +41,11 @@ public class HiveFlow extends ProcessFlow
    * @param queries The hive queries to run, separated by `;`.
    * @param sources The source taps of the queries.
    * @param sink    The sink of the queries.
+   * @param properties Properties to add to the hive conf when running the query such as performance options.
    */
-  public HiveFlow( String name, String query, Collection<cascading.tap.Tap> sources, Tap sink )
+      public HiveFlow( String name, String query, Collection<cascading.tap.Tap> sources, Tap sink, Map<String, String> properties )
     {
-    this( name, new HiveDriverFactory(), new String[]{query}, sources, sink );
+    this( name, new HiveDriverFactory(properties), new String[]{query}, sources, sink );
     }
 
 
@@ -73,6 +75,19 @@ public class HiveFlow extends ProcessFlow
     this( name, new HiveDriverFactory(), queries, sources, sink );
     }
 
+  /**
+   * Constructs a new HiveFlow object with the given name, queries, a list of source taps and sink.
+   *
+   * @param name       The name of the flow.
+   * @param queries    The hive queries to run, separated by `;`.
+   * @param sources    The source taps of the queries.
+   * @param sink       The sink of the queries.
+   * @param properties Properties to add to the hive conf when running the query such as performance options.
+   */
+  public HiveFlow( String name, String queries[], Collection<cascading.tap.Tap> sources, Tap sink, Map<String, String> properties )
+    {
+    this( name, new HiveDriverFactory(properties), queries, sources, sink );
+    }
 
   /**
    * Constructs a new HiveFlow object with the given name, queries, a list of source taps. This constructor can be
