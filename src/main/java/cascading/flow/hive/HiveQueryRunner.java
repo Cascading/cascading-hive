@@ -84,18 +84,13 @@ public class HiveQueryRunner implements Runnable
         if( response.getResponseCode() != 0 )
           throw new CascadingException( "hive error '" + response.getErrorMessage() + "' while running query " + currentQuery );
         }
-      }  
+      }
     catch( CommandNeedRetryException exception )
       {
       if (currentQuery == null)
-        {
-            throw new CascadingException( "problem while executing hive queries: " + Arrays.toString(queries), exception );
-        }
+        throw new CascadingException( "problem while executing hive queries: " + Arrays.toString(queries), exception );
       else
-        {
         throw new CascadingException( "problem while executing hive query: " + currentQuery, exception );
-        }
-            
       }
     finally
       {

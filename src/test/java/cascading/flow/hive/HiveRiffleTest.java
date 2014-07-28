@@ -63,7 +63,7 @@ public class HiveRiffleTest extends HiveTestCase
     {
     Tap mockSink = Mockito.mock( Tap.class );
     new HiveRiffle( createHiveDriverFactory(), new String[]{"create table foo (key string)"},
-      new ArrayList<Tap>(  ), mockSink );
+      new ArrayList<Tap>(), mockSink );
     }
 
   @Test(expected = CascadingException.class)
@@ -77,10 +77,10 @@ public class HiveRiffleTest extends HiveTestCase
   @Test
   public void testIncomingAndOutgoing()
     {
-    List<Tap> incoming = new ArrayList<Tap>(  );
+    List<Tap> incoming = new ArrayList<Tap>();
     incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
     incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
-    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(  ), "/out" );
+    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/out" );
 
     HiveRiffle riffle = new HiveRiffle( createHiveDriverFactory(), new String[]{"create table foo (key string)"},
       incoming, outgoing );
@@ -97,10 +97,10 @@ public class HiveRiffleTest extends HiveTestCase
     HiveDriverFactory factory = mock( HiveDriverFactory.class );
     when( factory.createHiveDriver() ).thenReturn( mockDriver );
 
-    List<Tap> incoming = new ArrayList<Tap>(  );
+    List<Tap> incoming = new ArrayList<Tap>();
     incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
     incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
-    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(  ), "/out" );
+    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/out" );
 
     HiveRiffle riffle = new HiveRiffle( factory, new String[]{"creat table foo (key string)"},
       incoming, outgoing );
@@ -112,14 +112,14 @@ public class HiveRiffleTest extends HiveTestCase
   public void testCompleteWithProblematicStatement() throws Exception
     {
     Driver mockDriver = mock( Driver.class );
-    when( mockDriver.run( anyString() ) ).thenReturn( new CommandProcessorResponse( -1, "test error", null  ) );
+    when( mockDriver.run( anyString() ) ).thenReturn( new CommandProcessorResponse( -1, "test error", null ) );
     HiveDriverFactory factory = mock( HiveDriverFactory.class );
     when( factory.createHiveDriver() ).thenReturn( mockDriver );
 
-    List<Tap> incoming = new ArrayList<Tap>(  );
+    List<Tap> incoming = new ArrayList<Tap>();
     incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
     incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
-    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(  ), "/out" );
+    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/out" );
 
     HiveRiffle riffle = new HiveRiffle( factory, new String[]{"creat table foo (key string)"},
       incoming, outgoing );
@@ -132,14 +132,14 @@ public class HiveRiffleTest extends HiveTestCase
     {
     int ok = 0;
     Driver mockDriver = mock( Driver.class );
-    when( mockDriver.run( anyString() ) ).thenReturn( new CommandProcessorResponse( ok, "test error", null  ) );
+    when( mockDriver.run( anyString() ) ).thenReturn( new CommandProcessorResponse( ok, "test error", null ) );
     HiveDriverFactory factory = mock( HiveDriverFactory.class );
     when( factory.createHiveDriver() ).thenReturn( mockDriver );
 
-    List<Tap> incoming = new ArrayList<Tap>(  );
+    List<Tap> incoming = new ArrayList<Tap>();
     incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
     incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
-    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(  ), "/out" );
+    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/out" );
 
     HiveRiffle riffle = new HiveRiffle( factory, new String[]{"creat table foo (key string)"},
       incoming, outgoing );
@@ -153,10 +153,10 @@ public class HiveRiffleTest extends HiveTestCase
     HiveDriverFactory factory = mock( HiveDriverFactory.class );
     when( factory.createHiveDriver() ).thenThrow( new RuntimeException( "testing" ) );
 
-    List<Tap> incoming = new ArrayList<Tap>(  );
+    List<Tap> incoming = new ArrayList<Tap>();
     incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
     incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
-    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(  ), "/out" );
+    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/out" );
 
     HiveRiffle riffle = new HiveRiffle( factory, new String[]{"creat table foo (key string)"},
       incoming, outgoing );

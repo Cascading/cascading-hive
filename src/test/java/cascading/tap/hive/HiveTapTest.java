@@ -23,24 +23,12 @@ package cascading.tap.hive;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 
-import cascading.CascadingException;
 import cascading.HiveTestCase;
 import cascading.scheme.NullScheme;
 import cascading.tap.SinkMode;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.HiveMetaHook;
-import org.apache.hadoop.hive.metastore.HiveMetaHookLoader;
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
-import org.apache.hadoop.hive.metastore.RetryingMetaStoreClient;
-import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
-import org.apache.hadoop.hive.metastore.api.SerDeInfo;
-import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
-import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.mapred.JobConf;
 import org.junit.Test;
 
@@ -71,7 +59,8 @@ public class HiveTapTest extends HiveTestCase
   @Test
   public void testCreateResourceInNonExistingDatabase() throws IOException
     {
-    HiveTableDescriptor desc = new HiveTableDescriptor("myDatabase", "myTable2", new String[]{"key"}, new String[]{"string"} );
+    HiveTableDescriptor desc = new HiveTableDescriptor( "myDatabase", "myTable2", new String[]{"key"}, new String[]{
+      "string"} );
     HiveTap tap = new HiveTap( desc, new NullScheme() );
     assertTrue( tap.createResource( new JobConf() ) );
     assertTrue( tap.resourceExists( new JobConf() ) );
@@ -88,8 +77,8 @@ public class HiveTapTest extends HiveTestCase
     HiveTableDescriptor mismatch = new HiveTableDescriptor( "myTable3", new String[]{"key", "value"},
       new String[]{"string", "string"} );
 
-    tap = new HiveTap( mismatch, new NullScheme(  ), SinkMode.REPLACE, true );
-    tap.resourceExists( new JobConf(  ) );
+    tap = new HiveTap( mismatch, new NullScheme(), SinkMode.REPLACE, true );
+    tap.resourceExists( new JobConf() );
 
     }
 
@@ -102,8 +91,8 @@ public class HiveTapTest extends HiveTestCase
 
     HiveTableDescriptor mismatch = new HiveTableDescriptor( "myTable4", new String[]{"key2"}, new String[]{"string"} );
 
-    tap = new HiveTap( mismatch, new NullScheme(  ), SinkMode.REPLACE, true );
-    tap.resourceExists( new JobConf(  ) );
+    tap = new HiveTap( mismatch, new NullScheme(), SinkMode.REPLACE, true );
+    tap.resourceExists( new JobConf() );
     }
 
   @Test(expected = HiveTableValidationException.class)
@@ -114,8 +103,8 @@ public class HiveTapTest extends HiveTestCase
     tap.createResource( new JobConf() );
 
     HiveTableDescriptor mismatch = new HiveTableDescriptor( "myTable5", new String[]{"key"}, new String[]{"int"} );
-    tap = new HiveTap( mismatch, new NullScheme(  ), SinkMode.REPLACE, true );
-    tap.resourceExists( new JobConf(  ) );
+    tap = new HiveTap( mismatch, new NullScheme(), SinkMode.REPLACE, true );
+    tap.resourceExists( new JobConf() );
     }
 
   @Test
@@ -127,16 +116,16 @@ public class HiveTapTest extends HiveTestCase
 
     HiveTableDescriptor mismatch = new HiveTableDescriptor( "MYTABLE4", new String[]{"KeY"}, new String[]{"StRinG"} );
 
-    tap = new HiveTap( mismatch, new NullScheme(  ), SinkMode.REPLACE, true );
-    assertTrue( tap.resourceExists( new JobConf(  ) ) );
+    tap = new HiveTap( mismatch, new NullScheme(), SinkMode.REPLACE, true );
+    assertTrue( tap.resourceExists( new JobConf() ) );
     }
 
   @Test
   public void testResourceExistsStrictModeWithPartitionedTable() throws IOException
     {
     HiveTableDescriptor desc = new HiveTableDescriptor( "myTable8", new String[]{"name", "id"},
-       new String[]{"string", "string"},
-       new String [] {"id"} );
+      new String[]{"string", "string"},
+      new String[]{"id"} );
     HiveTap tap = new HiveTap( desc, new NullScheme() );
     tap.createResource( new JobConf() );
 
@@ -144,8 +133,8 @@ public class HiveTapTest extends HiveTestCase
       new String[]{"StRinG", "string"},
       new String[]{"ID"} );
 
-    tap = new HiveTap( mismatch, new NullScheme(  ), SinkMode.REPLACE, true );
-    assertTrue( tap.resourceExists( new JobConf(  ) ) );
+    tap = new HiveTap( mismatch, new NullScheme(), SinkMode.REPLACE, true );
+    assertTrue( tap.resourceExists( new JobConf() ) );
     }
 
 
@@ -155,7 +144,7 @@ public class HiveTapTest extends HiveTestCase
     HiveTableDescriptor desc = new HiveTableDescriptor( "myTable5", new String[]{"key"}, new String[]{"string"} );
     HiveTap tap = new HiveTap( desc, new NullScheme() );
 
-    JobConf conf = new JobConf(  );
+    JobConf conf = new JobConf();
 
     tap.createResource( conf );
     assertTrue( tap.resourceExists( conf ) );
@@ -178,7 +167,7 @@ public class HiveTapTest extends HiveTestCase
       desc.getTableName(), now, now, desc.toHiveTable().getSd(),
       new HashMap<String, String>() );
 
-    tap.registerPartition(conf, part);
+    tap.registerPartition( conf, part );
 
     assertTableExists( desc );
 
@@ -205,7 +194,6 @@ public class HiveTapTest extends HiveTestCase
     assertTrue( client.tableExists( descriptor.getDatabaseName(), descriptor.getTableName() ) );
     client.close();
     }
-
 
 
   }

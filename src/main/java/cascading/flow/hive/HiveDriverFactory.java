@@ -42,7 +42,7 @@ public class HiveDriverFactory implements Serializable
   /** Initialises the HiveDriverFactory. */
   public HiveDriverFactory()
     {
-    this.properties = Collections.<String, String>emptyMap();
+    this.properties = Collections.emptyMap();
     }
 
   /**
@@ -81,9 +81,7 @@ public class HiveDriverFactory implements Serializable
       {
       this.hiveConf = new HiveConf();
       for ( Map.Entry<String, String> entry : properties.entrySet() )
-        {
         this.hiveConf.set( entry.getKey(), entry.getValue() );
-        }
       }
     return this.hiveConf;
     }

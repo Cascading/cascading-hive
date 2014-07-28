@@ -22,7 +22,6 @@ package cascading.tap.hive;
 
 import java.io.IOException;
 
-import cascading.CascadingException;
 import cascading.flow.FlowProcess;
 import cascading.flow.hadoop.HadoopFlowProcess;
 import cascading.scheme.NullScheme;
@@ -32,9 +31,7 @@ import org.apache.hadoop.mapred.OutputCollector;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
+import static org.junit.Assert.*;
 
 /**
  * Tests for HivePartitionTap.
@@ -46,10 +43,10 @@ public class HivePartitionTapTest
   public void testConstruction()
     {
     HiveTableDescriptor desc = new HiveTableDescriptor( "dual", new String[]{"key", "val"},
-                                                                new String[]{"int", "string"},
-                                                                new String[]{"key"} );
-    HiveTap tap = new HiveTap( desc, new NullScheme(  ) );
-    HivePartitionTap partitionTap =  new HivePartitionTap( tap, SinkMode.UPDATE );
+      new String[]{"int", "string"},
+      new String[]{"key"} );
+    HiveTap tap = new HiveTap( desc, new NullScheme() );
+    HivePartitionTap partitionTap = new HivePartitionTap( tap, SinkMode.UPDATE );
     assertSame( partitionTap.getParent(), tap );
     assertEquals( SinkMode.UPDATE, partitionTap.getSinkMode() );
     }
@@ -60,12 +57,12 @@ public class HivePartitionTapTest
     HiveTableDescriptor desc = new HiveTableDescriptor( "dual", new String[]{"key", "val"},
       new String[]{"int", "string"},
       new String[]{"key"} );
-    HiveTap parent = new HiveTap( desc, new NullScheme(  ) );
-    HivePartitionTap partitionTap =  new HivePartitionTap( parent );
+    HiveTap parent = new HiveTap( desc, new NullScheme() );
+    HivePartitionTap partitionTap = new HivePartitionTap( parent );
 
-    FlowProcess process = new HadoopFlowProcess(  );
+    FlowProcess process = new HadoopFlowProcess();
     OutputCollector collector = Mockito.mock( OutputCollector.class );
-    TupleEntryCollector tec =  partitionTap.openForWrite( process, collector );
+    TupleEntryCollector tec = partitionTap.openForWrite( process, collector );
     HivePartitionTap.HivePartitionCollector partitionCollector = (HivePartitionTap.HivePartitionCollector) tec;
     assertNotNull( partitionCollector );
     }

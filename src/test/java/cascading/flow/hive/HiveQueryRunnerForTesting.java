@@ -24,6 +24,6 @@ public class HiveQueryRunnerForTesting extends HiveQueryRunner
   {
   public HiveQueryRunnerForTesting( HiveDriverFactory driverFactory, String queries[] )
     {
-    super(driverFactory, queries );
+    super( driverFactory, queries );
     }
   }

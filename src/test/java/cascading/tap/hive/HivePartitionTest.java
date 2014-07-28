@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+
 package cascading.tap.hive;
 
 import java.util.Arrays;
@@ -28,7 +29,6 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
 
 /**
  * Tests for HivePartition
@@ -39,7 +39,7 @@ public class HivePartitionTest
   @Test(expected = IllegalArgumentException.class)
   public void testConstructionWithEmptyFields()
     {
-    new HivePartition( new Fields(  ) );
+    new HivePartition( new Fields() );
     }
 
   @Test(expected = IllegalArgumentException.class)
@@ -52,7 +52,7 @@ public class HivePartitionTest
   public void testToPartition()
     {
     Fields partFields = new Fields( "year", "month", "day" );
-    HivePartition partition =  new HivePartition( partFields );
+    HivePartition partition = new HivePartition( partFields );
     Tuple tuple = new Tuple( "2014", "03", "31" );
     TupleEntry te = new TupleEntry( partFields, tuple );
     String converted = partition.toPartition( te );
@@ -63,8 +63,8 @@ public class HivePartitionTest
   public void testToTuple()
     {
     Fields partFields = new Fields( "year", "month", "day" );
-    HivePartition partition =  new HivePartition( partFields );
-    TupleEntry te = new TupleEntry( partFields, Tuple.size( 3 ));
+    HivePartition partition = new HivePartition( partFields );
+    TupleEntry te = new TupleEntry( partFields, Tuple.size( 3 ) );
     partition.toTuple( "year=2014/month=03/day=31/", te );
     Tuple expected = new Tuple( "2014", "03", "31" );
     assertEquals( expected, te.getTuple() );
@@ -73,20 +73,20 @@ public class HivePartitionTest
   @Test
   public void testToHivePartition()
     {
-    String [] columnNames = new String[] { "year", "month", "day", "customer", "event"};
-    String [] columnTypes = new String[] { "int", "int", "int", "string", "string" };
-    String [] partitionColumns = new String[] {"year", "month", "day"};
+    String[] columnNames = new String[]{"year", "month", "day", "customer", "event"};
+    String[] columnTypes = new String[]{"int", "int", "int", "string", "string"};
+    String[] partitionColumns = new String[]{"year", "month", "day"};
     HiveTableDescriptor descriptor = new HiveTableDescriptor( "myDb", "myTable", columnNames, columnTypes, partitionColumns );
 
     Fields partFields = new Fields( partitionColumns );
-    HivePartition partition =  new HivePartition( partFields );
+    HivePartition partition = new HivePartition( partFields );
 
     Partition part = partition.toHivePartition( "year=2014/month=03/day=31/", descriptor );
 
     assertEquals( descriptor.getTableName(), part.getTableName() );
     assertEquals( descriptor.getDatabaseName(), part.getDbName() );
     assertEquals( Arrays.asList( "2014", "03", "31" ), part.getValues() );
-    assertEquals(  descriptor.toHiveTable().getSd(), part.getSd() );
+    assertEquals( descriptor.toHiveTable().getSd(), part.getSd() );
     }
 
 
