@@ -83,7 +83,7 @@ public class HiveTestCase extends PlatformTestCase
    */
   public void runHiveQuery( String query )
     {
-    HiveQueryRunner runner = new HiveQueryRunnerForTesting( hiveDriverFactory, query );
+    HiveQueryRunner runner = new HiveQueryRunnerForTesting( hiveDriverFactory, new String[]{query} );
     runner.run();
     }
 

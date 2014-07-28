@@ -84,9 +84,13 @@ public class HiveDemo
     HiveTap keyvalueTap = new HiveTap( keyValueDescriptor, keyValueDescriptor.toScheme(), SinkMode.REPLACE, true );
 
     // populate data in keyvalue by selecting data from dual
+    // truncate keyvalue afterwards as an example of multiple queries. 
+    String queries[] = {
+        "insert overwrite table keyvalue select 'Hello' as key, 'hive!' as value from dual",
+        "truncate keyvalue"
+    };
     HiveFlow selectFlow = new HiveFlow( "select data from dual into keyvalue",
-      "insert overwrite table keyvalue select 'Hello' as key, 'hive!' as value from dual ",
-      Arrays.<Tap>asList( dualTap ), keyvalueTap );
+      queries, Arrays.<Tap>asList( dualTap ), keyvalueTap );
 
     // describe a third table, similar to keyvalue. This will be used as a sink in a pure cascading flow
     HiveTableDescriptor keyValueDescriptor2 = new HiveTableDescriptor( "keyvalue2", new String[]{"key", "value"},
