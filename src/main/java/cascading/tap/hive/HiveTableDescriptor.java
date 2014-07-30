@@ -33,6 +33,9 @@ import cascading.scheme.Scheme;
 import cascading.scheme.hadoop.TextDelimited;
 import cascading.tap.partition.Partition;
 import cascading.tuple.Fields;
+
+import org.apache.hadoop.fs.Path;
+
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.TableType;
@@ -85,6 +88,9 @@ public class HiveTableDescriptor implements Serializable
   /** Hive serialization library */
   private String serializationLib;
 
+  /** Optional alternate location of the table */
+  private String location = null;
+
   /**
    * Constructs a new HiveTableDescriptor object.
    *
@@ -95,7 +101,7 @@ public class HiveTableDescriptor implements Serializable
   public HiveTableDescriptor( String tableName, String[] columnNames, String[] columnTypes )
     {
     this( HIVE_DEFAULT_DATABASE_NAME, tableName, columnNames, columnTypes, new String[]{}, HIVE_DEFAULT_DELIMITER,
-      HIVE_DEFAULT_SERIALIZATION_LIB_NAME );
+      HIVE_DEFAULT_SERIALIZATION_LIB_NAME, null );
     }
 
   /**
@@ -109,7 +115,7 @@ public class HiveTableDescriptor implements Serializable
   public HiveTableDescriptor( String tableName, String[] columnNames, String[] columnTypes, String[] partitionKeys )
     {
     this( HIVE_DEFAULT_DATABASE_NAME, tableName, columnNames, columnTypes, partitionKeys, HIVE_DEFAULT_DELIMITER,
-      HIVE_DEFAULT_SERIALIZATION_LIB_NAME );
+      HIVE_DEFAULT_SERIALIZATION_LIB_NAME, null );
     }
 
   /**
@@ -125,7 +131,7 @@ public class HiveTableDescriptor implements Serializable
   public HiveTableDescriptor( String tableName, String[] columnNames, String[] columnTypes, String[] partitionKeys, String delimiter )
     {
     this( HIVE_DEFAULT_DATABASE_NAME, tableName, columnNames, columnTypes, partitionKeys, delimiter,
-      HIVE_DEFAULT_SERIALIZATION_LIB_NAME );
+      HIVE_DEFAULT_SERIALIZATION_LIB_NAME, null );
     }
 
 
@@ -140,7 +146,7 @@ public class HiveTableDescriptor implements Serializable
   public HiveTableDescriptor( String databaseName, String tableName, String[] columnNames, String[] columnTypes )
     {
     this( databaseName, tableName, columnNames, columnTypes, new String[]{}, HIVE_DEFAULT_DELIMITER,
-      HIVE_DEFAULT_SERIALIZATION_LIB_NAME );
+      HIVE_DEFAULT_SERIALIZATION_LIB_NAME, null );
     }
 
   /**
@@ -154,7 +160,8 @@ public class HiveTableDescriptor implements Serializable
    */
   public HiveTableDescriptor( String databaseName, String tableName, String[] columnNames, String[] columnTypes, String[] partitionKeys )
     {
-    this( databaseName, tableName, columnNames, columnTypes, partitionKeys, HIVE_DEFAULT_DELIMITER, HIVE_DEFAULT_SERIALIZATION_LIB_NAME );
+    this( databaseName, tableName, columnNames, columnTypes, partitionKeys, HIVE_DEFAULT_DELIMITER,
+      HIVE_DEFAULT_SERIALIZATION_LIB_NAME, null );
     }
 
 
@@ -173,7 +180,8 @@ public class HiveTableDescriptor implements Serializable
   public HiveTableDescriptor( String databaseName, String tableName, String[] columnNames, String[] columnTypes,
                               String[] partitionKeys, String delimiter )
     {
-    this( databaseName, tableName, columnNames, columnTypes, partitionKeys, delimiter, HIVE_DEFAULT_SERIALIZATION_LIB_NAME );
+    this( databaseName, tableName, columnNames, columnTypes, partitionKeys, delimiter,
+      HIVE_DEFAULT_SERIALIZATION_LIB_NAME, null );
     }
 
   /**
@@ -188,7 +196,7 @@ public class HiveTableDescriptor implements Serializable
    */
   public HiveTableDescriptor( String databaseName, String tableName, String[] columnNames, String[] columnTypes,
                               String[] partitionKeys, String delimiter,
-                              String serializationLib )
+                              String serializationLib, Path location )
     {
     if( tableName == null || tableName.isEmpty() )
       throw new IllegalArgumentException( "tableName cannot be null or empty" );
@@ -209,6 +217,15 @@ public class HiveTableDescriptor implements Serializable
       verifyPartitionKeys();
     if( columnNames.length == 0 || columnTypes.length == 0 || columnNames.length != columnTypes.length )
       throw new IllegalArgumentException( "columnNames and columnTypes cannot be empty and must have the same size" );
+
+    if( location != null )
+      {
+      if( !location.isAbsolute() )
+        throw new IllegalArgumentException( "location must be a fully qualified absolute path" );
+
+      // Store as string since path is not serialisable
+      this.location = location.toString();
+      }
     }
 
   /**
@@ -254,6 +271,15 @@ public class HiveTableDescriptor implements Serializable
     sd.setSerdeInfo( serDeInfo );
     sd.setInputFormat( HIVE_DEFAULT_INPUT_FORMAT_NAME );
     sd.setOutputFormat( HIVE_DEFAULT_OUTPUT_FORMAT_NAME );
+
+    if ( location != null )
+      {
+      table.setTableType( TableType.EXTERNAL_TABLE.toString() );
+      // Need to set this as well since setting the table type would be too obvious
+      table.putToParameters( "EXTERNAL", "TRUE" );
+      sd.setLocation( location.toString() );
+      }
+
     table.setSd( sd );
 
     if ( isPartitioned() )
@@ -316,14 +342,15 @@ public class HiveTableDescriptor implements Serializable
    * Returns the path of the table within the warehouse directory.
    * @return The path of the table within the warehouse directory.
    */
-  public String getFilesystemPath()
+  public String getLocation( String warehousePath )
     {
-    if ( getDatabaseName().equals( HIVE_DEFAULT_DATABASE_NAME ) )
-      return getTableName();
+    if (location != null)
+      return location.toString();
+    else if ( getDatabaseName().equals( HIVE_DEFAULT_DATABASE_NAME ) )
+      return String.format( "%s/%s", warehousePath, getTableName() );
     else
-      return String.format( "%s.db/%s", getDatabaseName(), getTableName() );
+      return String.format( "%s/%s.db/%s", warehousePath, getDatabaseName(), getTableName() );
     }
-
 
   /**
    * Converts the HiveTableDescriptor to a Scheme instance based on the information available.
@@ -397,6 +424,8 @@ public class HiveTableDescriptor implements Serializable
       return false;
     if( tableName != null ? !tableName.equalsIgnoreCase( that.tableName ) : that.tableName != null )
       return false;
+    if( location != null ? !location.equals( that.location ) : that.location != null )
+      return false;
 
     return true;
     }
@@ -411,6 +440,7 @@ public class HiveTableDescriptor implements Serializable
     result = 31 * result + ( columnNames != null ? arraysHashCodeCaseInsensitive( columnNames ) : 0 );
     result = 31 * result + ( columnTypes != null ? arraysHashCodeCaseInsensitive( columnTypes ) : 0 );
     result = 31 * result + ( serializationLib != null ? serializationLib.hashCode() : 0 );
+    result = 31 * result + ( location != null ? location.hashCode() : 0 );
     return result;
     }
 
@@ -425,6 +455,7 @@ public class HiveTableDescriptor implements Serializable
       ", columnNames=" + Arrays.toString( columnNames ) +
       ", columnTypes=" + Arrays.toString( columnTypes ) +
       ", serializationLib='" + serializationLib + '\'' +
+      ( location != null ? ", location='" + location + '\'' : "" ) +
       '}';
     }
 

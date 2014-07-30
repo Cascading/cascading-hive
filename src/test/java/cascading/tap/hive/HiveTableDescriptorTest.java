@@ -32,6 +32,7 @@ import cascading.scheme.Scheme;
 import cascading.scheme.hadoop.TextDelimited;
 import cascading.tuple.Fields;
 import junit.framework.Assert;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.TableType;
@@ -162,7 +163,7 @@ public class HiveTableDescriptorTest
     HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "mytable",
       new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"}, new String[]{},
-      delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME );
+      delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME, null );
     Scheme scheme = descriptor.toScheme();
     assertNotNull( scheme );
     Assert.assertEquals( delim, ( (TextDelimited) scheme ).getDelimiter() );
@@ -175,7 +176,7 @@ public class HiveTableDescriptorTest
     HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "mytable",
       new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"}, new String[]{},
-      delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME );
+      delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME, null );
     StorageDescriptor sd = descriptor.toHiveTable().getSd();
     Map<String, String> expected = new HashMap<String, String>(  );
     expected.put( "field.delim", delim );
@@ -190,8 +191,8 @@ public class HiveTableDescriptorTest
     String delim = null;
     HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "mytable",
       new String[]{"one", "two", "three"},
-      new String[]{"int", "string",
-                   "boolean"}, new String[]{}, delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME
+      new String[]{"int", "string", "boolean"}, new String[]{},
+      delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME, null
     );
     Scheme scheme = descriptor.toScheme();
     assertNotNull( scheme );
@@ -237,7 +238,7 @@ public class HiveTableDescriptorTest
     {
     HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"} );
-    assertEquals( "mytable", descriptor.getFilesystemPath() );
+    assertEquals( "warehouse/mytable", descriptor.getLocation( "warehouse") );
     }
 
   @Test
@@ -245,7 +246,18 @@ public class HiveTableDescriptorTest
     {
     HiveTableDescriptor descriptor = new HiveTableDescriptor( "myDB", "myTable", new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"} );
-    assertEquals( "mydb.db/mytable", descriptor.getFilesystemPath() );
+    assertEquals( "warehouse/mydb.db/mytable", descriptor.getLocation( "warehouse" ) );
     }
+
+  @Test
+  public void testGetFilesystempathWithSpecifiedLocation()
+      {
+      HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "mytable",
+        new String[]{"one", "two", "three"},
+        new String[]{"int", "string", "boolean"}, new String[]{},
+        ",", HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME, new Path( "file:/custom_path" ) );
+
+      assertEquals( "file:/custom_path", descriptor.getLocation( "warehouse" ) );
+      }
   }
 
