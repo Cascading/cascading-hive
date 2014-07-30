@@ -25,7 +25,9 @@ import java.util.HashMap;
 import cascading.tap.partition.DelimitedPartition;
 import cascading.tuple.Fields;
 import cascading.tuple.TupleEntry;
+
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 
 /**
  * Implements a Hive compatible Partition for Cascading.
@@ -60,8 +62,13 @@ class HivePartition extends DelimitedPartition
   Partition toHivePartition( String partitionString, HiveTableDescriptor tableDescriptor )
     {
     int now = (int) ( System.currentTimeMillis() / 1000 );
+    //Set the correct location in the storage descriptor
+    StorageDescriptor sd = tableDescriptor.toHiveTable().getSd();
+    if( sd.getLocation() != null )
+      sd.setLocation( sd.getLocation() + "/" + partitionString );
+
     return new Partition( Arrays.asList( parse( partitionString ) ), tableDescriptor.getDatabaseName(),
-                          tableDescriptor.getTableName(), now, now, tableDescriptor.toHiveTable().getSd(),
+                          tableDescriptor.getTableName(), now, now, sd,
                           new HashMap<String, String>() );
     }
 
