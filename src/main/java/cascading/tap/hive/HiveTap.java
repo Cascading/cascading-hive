@@ -28,7 +28,10 @@ import cascading.scheme.Scheme;
 import cascading.tap.SinkMode;
 import cascading.tap.TapException;
 import cascading.tap.hadoop.Hfs;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.HiveMetaHook;
 import org.apache.hadoop.hive.metastore.HiveMetaHookLoader;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
@@ -41,6 +44,7 @@ import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.thrift.TException;
@@ -172,7 +176,18 @@ public class HiveTap extends Hfs
           throw new HiveTableValidationException( String.format( "expected a table of type '%s' but found '%s'",
             tableDescriptor.toHiveTable().getTableType(), table.getTableType() ) );
 
-        List<FieldSchema> schemaList = table.getSd().getCols();
+        // Check that the paths are the same
+        FileSystem fs = FileSystem.get( conf );
+        StorageDescriptor sd = table.getSd();
+        Path expectedPath = fs.makeQualified( new Path( tableDescriptor.getLocation( hiveConf.getVar( ConfVars.METASTOREWAREHOUSE ) ) ) );
+        Path actualPath = fs.makeQualified( new Path( sd.getLocation() ));
+
+        if ( !expectedPath.equals(actualPath) )
+          throw new HiveTableValidationException( String.format(
+            "table in MetaStore does not have the sampe path. Expected %s got %s",
+            expectedPath, actualPath ) );
+
+        List<FieldSchema> schemaList = sd.getCols();
         if( schemaList.size() != tableDescriptor.getColumnNames().length - tableDescriptor.getPartitionKeys().length )
           throw new HiveTableValidationException( String.format(
             "table in MetaStore does not have same number of columns. expected %d got %d",
@@ -369,8 +384,7 @@ public class HiveTap extends Hfs
       }
     catch( NoSuchObjectException exception )
       {
-      setStringPath( String.format( "%s/%s", hiveConf.get( HiveConf.ConfVars.METASTOREWAREHOUSE.varname ),
-        tableDescriptor.getFilesystemPath() ) );
+      setStringPath( tableDescriptor.getLocation( hiveConf.getVar( ConfVars.METASTOREWAREHOUSE ) ) );
       }
     catch( TException exception )
       {

@@ -27,6 +27,7 @@ import java.util.HashMap;
 import cascading.HiveTestCase;
 import cascading.scheme.NullScheme;
 import cascading.tap.SinkMode;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.mapred.JobConf;
@@ -137,6 +138,23 @@ public class HiveTapTest extends HiveTestCase
     assertTrue( tap.resourceExists( new JobConf() ) );
     }
 
+  @Test(expected = HiveTableValidationException.class)
+  public void testResourceExistsStrictModeLocationMismatch() throws IOException
+    {
+    HiveTableDescriptor desc = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "mytable9",
+      new String[]{"one", "two", "three"},
+      new String[]{"int", "string", "boolean"}, new String[]{},
+      ",", HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME, new Path( HIVE_WAREHOUSE_DIR + "/custompath" ) );
+    HiveTap tap = new HiveTap( desc, new NullScheme() );
+    tap.createResource( new JobConf() );
+
+    HiveTableDescriptor mismatch = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "mytable9",
+      new String[]{"one", "two", "three"},
+      new String[]{"int", "string", "boolean"}, new String[]{},
+      ",");
+    tap = new HiveTap( mismatch, new NullScheme(), SinkMode.REPLACE, true );
+    tap.resourceExists( new JobConf() );
+    }
 
   @Test
   public void testDeleteRessource() throws Exception
