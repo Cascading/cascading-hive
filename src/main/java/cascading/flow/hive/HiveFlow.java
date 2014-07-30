@@ -22,12 +22,16 @@ package cascading.flow.hive;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import cascading.CascadingException;
+import cascading.flow.FLowDescriptors;
 import cascading.flow.hadoop.ProcessFlow;
 import cascading.tap.Tap;
 import cascading.tap.hive.HiveNullTap;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * A subclass of ProcessFlow for running Hive queries.
@@ -38,12 +42,12 @@ public class HiveFlow extends ProcessFlow
    * Constructs a new HiveFlow object with the given name, queries, a list of source taps and sink.
    *
    * @param name    The name of the flow.
-   * @param queries The hive queries to run, separated by `;`.
+   * @param query The hive queries to run, separated by `;`.
    * @param sources The source taps of the queries.
    * @param sink    The sink of the queries.
    * @param properties Properties to add to the hive conf when running the query such as performance options.
    */
-      public HiveFlow( String name, String query, Collection<cascading.tap.Tap> sources, Tap sink, Map<String, String> properties )
+   public HiveFlow( String name, String query, Collection<cascading.tap.Tap> sources, Tap sink, Map<String, String> properties )
     {
     this( name, new HiveDriverFactory(properties), new String[]{query}, sources, sink );
     }
@@ -54,7 +58,7 @@ public class HiveFlow extends ProcessFlow
    * used when the Flow does not really have
    *
    * @param name    The name of the flow.
-   * @param queries The hive queries to run.
+   * @param query The hive queries to run.
    * @param sources The source taps of the queries.
    */
   public HiveFlow( String name, String query, Collection<Tap> sources )
@@ -107,7 +111,7 @@ public class HiveFlow extends ProcessFlow
    */
   HiveFlow( String name, HiveDriverFactory driverFactory, String query, Collection<cascading.tap.Tap> sources, Tap sink )
     {
-    super( name, new HiveRiffle( driverFactory, new String[]{query}, sources, sink ) );
+    this( name, driverFactory, new String[]{query}, sources, sink );
     }
 
   /**
@@ -115,9 +119,16 @@ public class HiveFlow extends ProcessFlow
    */
   HiveFlow( String name, HiveDriverFactory driverFactory, String queries[], Collection<cascading.tap.Tap> sources, Tap sink )
     {
-    super( name, new HiveRiffle( driverFactory, queries, sources, sink ) );
+    super( new Properties(), name, new HiveRiffle( driverFactory, queries, sources, sink ), createFlowDescriptor( queries ) );
     }
 
+  private static Map<String, String> createFlowDescriptor( String[] queries )
+    {
+    Map<String, String> flowDescriptor = new LinkedHashMap<String, String>();
+    flowDescriptor.put( FLowDescriptors.STATEMENTS, StringUtils.join( queries, FLowDescriptors.VALUE_SEPARATOR ) );
+    flowDescriptor.put( FLowDescriptors.DESCRIPTION, "Hive flow" );
+    return flowDescriptor;
+    }
 
   @Override
   public void complete()

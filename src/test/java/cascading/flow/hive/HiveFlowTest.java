@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import cascading.HiveTestCase;
+import cascading.flow.FLowDescriptors;
 import cascading.scheme.NullScheme;
 import cascading.tap.Tap;
 import cascading.tap.hadoop.Hfs;
@@ -41,13 +42,19 @@ public class HiveFlowTest extends HiveTestCase
     {
     Tap sink = new Hfs( new NullScheme(), "/foo" );
     List<Tap> sources = Arrays.asList( (Tap) new Hfs( new NullScheme(), "/bar" ) );
-    HiveFlow flow = new HiveFlow( "some name", createHiveDriverFactory(),
-      "select * from foo", sources, sink );
+
+    String stmt = "select * from foo";
+    HiveFlow flow = new HiveFlow( "some name", createHiveDriverFactory(), stmt, sources, sink );
     assertEquals( sink, flow.getSink() );
     Map<String, Tap> expectedSources = new HashMap<String, Tap>();
     expectedSources.put( "/bar", sources.get( 0 ) );
     assertEquals( expectedSources, flow.getSources() );
     assertEquals( "some name", flow.getName() );
+
+    Map<String, String> flowDescriptor = flow.getFlowDescriptor();
+    assertEquals( 2, flowDescriptor.size() );
+    assertEquals( "Hive flow", flowDescriptor.get( FLowDescriptors.DESCRIPTION ) );
+    assertEquals( stmt, flowDescriptor.get( FLowDescriptors.STATEMENTS ) );
     }
 
   @Test
@@ -67,5 +74,10 @@ public class HiveFlowTest extends HiveTestCase
     expectedSources.put( "/bar", sources.get( 0 ) );
     assertEquals( expectedSources, flow.getSources() );
     assertEquals( "some name", flow.getName() );
+
+    Map<String, String> flowDescriptor = flow.getFlowDescriptor();
+    assertEquals( 2, flowDescriptor.size() );
+    assertEquals( "Hive flow", flowDescriptor.get( FLowDescriptors.DESCRIPTION ) );
+    assertEquals( queries[ 0 ] + FLowDescriptors.VALUE_SEPARATOR + queries[ 1 ], flowDescriptor.get( FLowDescriptors.STATEMENTS ) );
     }
   }
