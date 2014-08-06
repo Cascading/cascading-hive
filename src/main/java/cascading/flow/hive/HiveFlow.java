@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import cascading.CascadingException;
-import cascading.flow.FLowDescriptors;
+import cascading.flow.FlowDescriptors;
 import cascading.flow.hadoop.ProcessFlow;
 import cascading.tap.Tap;
 import cascading.tap.hive.HiveNullTap;
@@ -125,8 +125,8 @@ public class HiveFlow extends ProcessFlow
   private static Map<String, String> createFlowDescriptor( String[] queries )
     {
     Map<String, String> flowDescriptor = new LinkedHashMap<String, String>();
-    flowDescriptor.put( FLowDescriptors.STATEMENTS, StringUtils.join( queries, FLowDescriptors.VALUE_SEPARATOR ) );
-    flowDescriptor.put( FLowDescriptors.DESCRIPTION, "Hive flow" );
+    flowDescriptor.put( FlowDescriptors.STATEMENTS, StringUtils.join( queries, FlowDescriptors.VALUE_SEPARATOR ) );
+    flowDescriptor.put( FlowDescriptors.DESCRIPTION, "Hive flow" );
     return flowDescriptor;
     }
 

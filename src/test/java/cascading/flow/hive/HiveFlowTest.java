@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import cascading.HiveTestCase;
-import cascading.flow.FLowDescriptors;
+import cascading.flow.FlowDescriptors;
 import cascading.scheme.NullScheme;
 import cascading.tap.Tap;
 import cascading.tap.hadoop.Hfs;
@@ -53,8 +53,8 @@ public class HiveFlowTest extends HiveTestCase
 
     Map<String, String> flowDescriptor = flow.getFlowDescriptor();
     assertEquals( 2, flowDescriptor.size() );
-    assertEquals( "Hive flow", flowDescriptor.get( FLowDescriptors.DESCRIPTION ) );
-    assertEquals( stmt, flowDescriptor.get( FLowDescriptors.STATEMENTS ) );
+    assertEquals( "Hive flow", flowDescriptor.get( FlowDescriptors.DESCRIPTION ) );
+    assertEquals( stmt, flowDescriptor.get( FlowDescriptors.STATEMENTS ) );
     }
 
   @Test
@@ -77,7 +77,7 @@ public class HiveFlowTest extends HiveTestCase
 
     Map<String, String> flowDescriptor = flow.getFlowDescriptor();
     assertEquals( 2, flowDescriptor.size() );
-    assertEquals( "Hive flow", flowDescriptor.get( FLowDescriptors.DESCRIPTION ) );
-    assertEquals( queries[ 0 ] + FLowDescriptors.VALUE_SEPARATOR + queries[ 1 ], flowDescriptor.get( FLowDescriptors.STATEMENTS ) );
+    assertEquals( "Hive flow", flowDescriptor.get( FlowDescriptors.DESCRIPTION ) );
+    assertEquals( queries[ 0 ] + FlowDescriptors.VALUE_SEPARATOR + queries[ 1 ], flowDescriptor.get( FlowDescriptors.STATEMENTS ) );
     }
   }
