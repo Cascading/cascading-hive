@@ -74,7 +74,7 @@ public class HiveDemo
 
     // load local data into dual. The table will be created as needed.
     HiveFlow loadDataFlow = new HiveFlow( "load data into dual",
-      String.format( "load data local inpath '%s' overwrite into table dual", dualTableInputFile ),
+      new String [] {String.format( "load data local inpath '%s' overwrite into table dual", dualTableInputFile ) },
       Arrays.<Tap>asList( new Hfs( new NullScheme(), dualTableInputFile ) ), dualTap );
 
     // describe a second table: keyvalue
@@ -84,7 +84,7 @@ public class HiveDemo
     HiveTap keyvalueTap = new HiveTap( keyValueDescriptor, keyValueDescriptor.toScheme(), SinkMode.REPLACE, true );
 
     // populate data in keyvalue by selecting data from dual
-    // truncate keyvalue afterwards as an example of multiple queries. 
+    // truncate keyvalue afterwards as an example of multiple queries.
     String queries[] = {
         "insert overwrite table keyvalue select 'Hello' as key, 'hive!' as value from dual",
         "truncate keyvalue"
