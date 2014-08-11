@@ -120,9 +120,8 @@ public class HiveViewDemo
 
     System.out.println( "----------------------Hive JDBC--------------------------" );
     while( rs.next() )
-      {
       System.out.println( "customer=" + rs.getString( 1 ) );
-      }
+
     System.out.println( "---------------------------------------------------------" );
     stmt.close();
     con.close();

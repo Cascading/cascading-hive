@@ -84,10 +84,11 @@ public class HiveDemo
     HiveTap keyvalueTap = new HiveTap( keyValueDescriptor, keyValueDescriptor.toScheme(), SinkMode.REPLACE, true );
 
     // populate data in keyvalue by selecting data from dual
-    // truncate keyvalue afterwards as an example of multiple queries.
+    // showing how to run multiple queries
     String queries[] = {
         "insert overwrite table keyvalue select 'Hello' as key, 'hive!' as value from dual",
-        "truncate keyvalue"
+        "insert into table keyvalue select 'Multiple' as key, 'queries' as value from dual",
+        "insert into table keyvalue select 'are' as key, 'supported' as value from dual",
     };
     HiveFlow selectFlow = new HiveFlow( "select data from dual into keyvalue",
       queries, Arrays.<Tap>asList( dualTap ), keyvalueTap );
@@ -138,9 +139,8 @@ public class HiveDemo
     ResultSet rs = stmt.executeQuery( "select key, value from keyvalue2" );
     System.out.println( "----------------------Hive JDBC--------------------------" );
     while( rs.next() )
-      {
       System.out.printf( "data from hive table copy: key=%s,value=%s\n", rs.getString( 1 ), rs.getString( 2 ) );
-      }
+
     System.out.println( "---------------------------------------------------------" );
     stmt.close();
     con.close();
