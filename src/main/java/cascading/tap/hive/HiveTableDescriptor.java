@@ -209,7 +209,8 @@ public class HiveTableDescriptor implements Serializable
     this.columnTypes = columnTypes;
     this.partitionKeys = partitionKeys;
     this.serializationLib = serializationLib;
-    if( delimiter == null )
+    //Only set the delimiter if the serialization lib is Delimited.
+    if( delimiter == null && this.serializationLib == HIVE_DEFAULT_SERIALIZATION_LIB_NAME )
       this.delimiter = HIVE_DEFAULT_DELIMITER;
     else
       this.delimiter = delimiter;
@@ -264,8 +265,16 @@ public class HiveTableDescriptor implements Serializable
     SerDeInfo serDeInfo = new SerDeInfo();
     serDeInfo.setSerializationLib( serializationLib );
     Map<String, String> serDeParameters = new HashMap<String, String>();
-    serDeParameters.put( "serialization.format", getDelimiter() );
-    serDeParameters.put( "field.delim", getDelimiter() );
+
+    if ( getDelimiter() != null)
+      {
+      serDeParameters.put( "serialization.format", getDelimiter() );
+      serDeParameters.put( "field.delim", getDelimiter() );
+      }
+    else
+      {
+      serDeParameters.put( "serialization.format", "1" );
+      }
     serDeInfo.setParameters( serDeParameters );
 
     sd.setSerdeInfo( serDeInfo );
