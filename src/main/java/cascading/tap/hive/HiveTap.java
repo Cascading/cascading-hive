@@ -21,9 +21,12 @@
 package cascading.tap.hive;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.Properties;
 
 import cascading.CascadingException;
+import cascading.property.AppProps;
 import cascading.scheme.Scheme;
 import cascading.tap.SinkMode;
 import cascading.tap.TapException;
@@ -60,6 +63,27 @@ public class HiveTap extends Hfs
   {
   /** Field LOG */
   private static final Logger LOG = LoggerFactory.getLogger( HiveTap.class );
+
+  static
+    {
+    // add cascading-jdbc release to frameworks
+    Properties properties = new Properties();
+    InputStream stream = HiveTap.class.getClassLoader().getResourceAsStream( "cascading/framework.properties" );
+    if( stream != null )
+      {
+      try
+        {
+        properties.load( stream );
+        stream.close();
+        }
+      catch( IOException exception )
+        {
+        // ingore
+        }
+      }
+    String framework = properties.getProperty( "name" );
+    AppProps.addApplicationFramework( null, framework );
+    }
 
   /** TableDescriptor for the table. */
   private final HiveTableDescriptor tableDescriptor;
@@ -99,8 +123,6 @@ public class HiveTap extends Hfs
     this.strict = strict;
     setScheme( scheme );
     setFilesystemLocation();
-
-
     }
 
   @Override

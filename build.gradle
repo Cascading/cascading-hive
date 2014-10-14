@@ -135,6 +135,13 @@ jar {
   }
 }
 
+ task createFrameworkProperties( dependsOn: processResources ) << {
+    file( "${sourceSets.main.output.resourcesDir}/cascading" ).mkdirs()
+    file( "${sourceSets.main.output.resourcesDir}/cascading/framework.properties").write("name=${project.name}:${version}\n" )
+  }
+
+  jar.dependsOn( createFrameworkProperties )
+
 test {
   jvmArgs '-Xmx756m'
 
