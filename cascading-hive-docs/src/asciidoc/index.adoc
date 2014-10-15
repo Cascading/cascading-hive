@@ -36,7 +36,7 @@ distributions in existence. The `demo` project introduced below contains an exam
 Demo applications
 -----------------
 
-The https://github.com/Cascading/cascading-hive/tree/wip-1.0/demo[demo] directory of the project contains 3 applications
+The https://github.com/Cascading/cascading-hive/tree/1.0/demo[demo] directory of the project contains 3 applications
 using `Cascading-Hive` demonstrating the usage of the core classes to build applications with Cascading and Apache Hive.
 
 .Hive MetaStore.
@@ -61,7 +61,7 @@ Running the demo apps follows the standard hadoop way of running applications:
 cascading.hive.HiveDemo
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-https://github.com/Cascading/cascading-hive/blob/wip-1.0/demo/src/main/java/cascading/hive/HiveDemo.java[This demo]
+https://github.com/Cascading/cascading-hive/blob/1.0/demo/src/main/java/cascading/hive/HiveDemo.java[This demo]
 shows how Cascading-based data processing and Hive-based processing can be combined to build one app based on
 both technologies. The application does the following list of things:
 
@@ -79,7 +79,7 @@ the Hive flows and the Cascading flows and enables you to build more complex app
 cascading.hive.HivePartitionDemo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-https://github.com/Cascading/cascading-hive/blob/wip-1.0/demo/src/main/java/cascading/hive/HivePartitionDemo.java[This
+https://github.com/Cascading/cascading-hive/blob/1.0/demo/src/main/java/cascading/hive/HivePartitionDemo.java[This
 demo] focusses on the support for partitioned tables. The app is dealing with a tab separated log file of a simulated
 cloud service logging customers in regions. The goal is to create a Hive table that is partitioned based on the region
 where a customer interaction happened. The following steps are involved:
@@ -97,7 +97,7 @@ Cascading-Hive.
 cascading.hive.HiveViewDemo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-https://github.com/Cascading/cascading-hive/blob/wip-1.0/demo/src/main/java/cascading/hive/HiveViewDemo.java[This demo]
+https://github.com/Cascading/cascading-hive/blob/1.0/demo/src/main/java/cascading/hive/HiveViewDemo.java[This demo]
 shows how to create a view within a Cascading based application. The application creates a view based on a
 partitioned table (similar to `HivePartitionDemo`) and queries the view via `JDBC`.
 
@@ -118,5 +118,5 @@ Testing
 
 `Cascading-Hive` also provides useful classes, which you can use in your tests, when writing hybrid Hive and
 Cascading applictions. Using
-https://github.com/ConcurrentCore/cascading-hive/blob/wip-1.0/src/test/java/cascading/HiveTestCase.java[`HiveTestCase`]
+https://github.com/ConcurrentCore/cascading-hive/blob/1.0/src/test/java/cascading/HiveTestCase.java[`HiveTestCase`]
 as a base class for such a test is probably a good idea. Most of the tests in `Cascading-Hive` are using it.

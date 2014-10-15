@@ -3,11 +3,6 @@
 
 ## Building:
 
-    # install cascading-hive into your local maven repo
-    > cd ..
-    > gradle install
-
-    # go back to the demo directory and create the hadoop compliant jar
     > cd demo
     > gradle jar
 

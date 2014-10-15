@@ -67,7 +67,7 @@ repositories {
 dependencies {
   // broken hive deps..
   compile group: 'sqlline', name: 'sqlline',  version: '1.1.6'
-  compile group: 'cascading', name: 'cascading-hive', version: '1.0.0-wip-+', changing: true
+  compile group: 'cascading', name: 'cascading-hive', version: '1.0.0'
 
   compile( group: 'org.apache.hive', name: 'hive-jdbc', version: hiveVersion  ){
     exclude group: 'sqline'
