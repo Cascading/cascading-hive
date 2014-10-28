@@ -22,22 +22,37 @@ package cascading.flow.hive;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
+import java.util.LinkedList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 
 import cascading.CascadingException;
 import cascading.flow.FlowDescriptors;
+import cascading.flow.FlowException;
+import cascading.flow.FlowListener;
 import cascading.flow.hadoop.ProcessFlow;
 import cascading.tap.Tap;
 import cascading.tap.hive.HiveNullTap;
+import cascading.util.Util;
+
 import org.apache.commons.lang.StringUtils;
 
 /**
  * A subclass of ProcessFlow for running Hive queries.
  */
-public class HiveFlow extends ProcessFlow
+public class HiveFlow extends ProcessFlow<HiveRiffle>
   {
+  /** Field thread */
+  protected transient Thread thread;
+  /** Field throwable */
+  private Throwable throwable;
+  /** Field stop */
+  protected boolean stop;
+  /** Field listeners */
+  private List<FlowListener> listeners;  
+  
   /**
    * Constructs a new HiveFlow object with the given name, queries, a list of source taps and sink.
    *
@@ -131,17 +146,139 @@ public class HiveFlow extends ProcessFlow
     }
 
   @Override
+  public void start()
+    {
+    if( thread != null || stop )
+       return;
+
+    throwable = null;
+    thread = createRunThread();
+    thread.start();
+    }
+
+  @Override
   public void complete()
     {
+    start();
+
     try
       {
+      try
+        {
+        synchronized( this ) // prevent NPE on quick stop() & complete() after start()
+          {
+          while( thread == null && !stop )
+            Util.safeSleep( 10 );
+          }
+  
+        if( thread != null )
+          thread.join();
+
+        }
+      catch( InterruptedException exception )
+        {
+        throw new FlowException( "HiveRiffle", "thread interrupted", exception );
+        }
+
+      if( throwable instanceof FlowException )
+        throw (FlowException) throwable;
+
+      if( throwable instanceof CascadingException )
+        throw (CascadingException) throwable;
+
+      if( throwable instanceof OutOfMemoryError )
+        throw (OutOfMemoryError) throwable;
+
+      if( throwable != null )
+        throw new FlowException( "HiveRiffle", "unhandled exception", throwable );
+      }
+    finally
+      {
+      thread = null;
+      throwable = null;
+      }
+    }
+
+
+  @Override
+  protected void fireOnThrowable()
+    {
+    if( hasListeners() )
+      {
+      boolean isHandled = false;
+
+      for( FlowListener flowListener : getListeners() )
+        isHandled = flowListener.onThrowable( this, throwable ) || isHandled;
+
+      if( isHandled )
+        throwable = null;
+      }
+    }
+
+  protected Thread createRunThread()
+    {
+    return new Thread( new Runnable()
+    {
+    @Override
+    public void run()
+      {
+      HiveFlow.this.run();
+      }
+    }, "Hive query executer");
+    }
+
+  private void run()
+    {
+    if( thread == null )
+       throw new IllegalStateException( "to start a HiveFlow call start() or complete(), not Runnable#run()" );
+
+    try
+      {
+      if( stop )
+        return;
+
+      fireOnStarting();
+      flowStats.markStarted();
+      flowStats.markRunning();
+
       if ( !getSink().createResource( getConfigCopy() ) )
         throw new CascadingException( "failed to register table in MetaStore." );
-      }
-    catch( IOException exception )
+
+      getProcess().execute();
+      flowStats.markSuccessful();
+      }   
+    catch( Throwable throwable )
       {
-      throw new CascadingException( exception );
+      this.throwable = throwable;
+      flowStats.markFailed( throwable );
+      fireOnThrowable();
       }
-    super.complete();
+
+
+    fireOnCompleted();
+    flowStats.cleanup();
+    }
+
+
+  List<FlowListener> getListeners()
+  {
+      if( listeners == null )
+          listeners = new LinkedList<FlowListener>();
+
+      return listeners;
+  }
+
+  @Override
+  public void addListener( FlowListener flowListener )
+    {
+    getListeners().add( flowListener );
+    super.addListener( flowListener );
+    }
+
+  @Override
+  public boolean removeListener( FlowListener flowListener )
+    {
+    super.removeListener( flowListener );
+    return getListeners().remove( flowListener );
     }
   }

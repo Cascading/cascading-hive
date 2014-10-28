@@ -93,8 +93,7 @@ public class HiveRiffle
   @ProcessComplete
   public void complete()
     {
-    HiveQueryRunner runner = new HiveQueryRunner( driverFactory, queries );
-    runner.run();
+    execute();
     }
 
   @DependencyOutgoing
@@ -109,4 +108,10 @@ public class HiveRiffle
     return sources ;
     }
 
+  public void execute()
+    {
+    HiveQueryRunner runner = new HiveQueryRunner( driverFactory, queries );
+    runner.run();
+    System.out.println("\nQuery finished\n");      
+    }
   }
