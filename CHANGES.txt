@@ -1,0 +1,6 @@
+Cascading-Hive changelog
+
+1.1 (unreleased)
+
+- update to Cascading 2.7
+- c.f.h.HiveRiffle is no longer public

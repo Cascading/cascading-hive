@@ -39,7 +39,7 @@ import riffle.process.ProcessStop;
  * Riffle process encapsulating Hive operations.
  */
 @riffle.process.Process
-public class HiveRiffle
+class HiveRiffle
   {
   /** List of source taps */
   private final Collection<Tap> sources;
