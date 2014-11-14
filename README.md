@@ -30,6 +30,10 @@ To install cascading-hive into your local maven repository do this:
 
     > gradle install
 
+### Maven, Ivy, Gradle
+
+Cascading-Hive is also available on http://conjars.org.
+
 ## Limitations
 
 Please note that the support for Hive views is currently limited since views
