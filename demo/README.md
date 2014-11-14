@@ -20,7 +20,7 @@ integration between the two.
 
 ### Running this application:
 
-    >  hadoop jar build/libs/cascading-hive-demo-1.0.jar cascading.hive.HiveDemo
+    >  yarn jar build/libs/cascading-hive-demo-1.0.jar cascading.hive.HiveDemo
 
 ### Local MetaStore
 
@@ -38,7 +38,7 @@ This demo shows how to create a partitioned hive table from a Cascading flow.
 
 ### Running this application:
 
-    >  hadoop jar build/libs/cascading-hive-demo-1.0.jar cascading.hive.HivePartitionDemo
+    >  yarn jar build/libs/cascading-hive-demo-1.0.jar cascading.hive.HivePartitionDemo
 
 ### Remote MetaStore
 
@@ -54,5 +54,5 @@ HiveFlow and selects data via JDBC from that view
 
 ### Running this application:
 
-    >  hadoop jar build/libs/cascading-hive-demo-1.0.jar cascading.hive.HiveViewDemo
+    >  yarn jar build/libs/cascading-hive-demo-1.0.jar cascading.hive.HiveViewDemo
 
