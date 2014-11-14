@@ -66,7 +66,7 @@ public class HiveTap extends Hfs
 
   static
     {
-    // add cascading-jdbc release to frameworks
+    // add cascading-hive release to frameworks
     Properties properties = new Properties();
     InputStream stream = HiveTap.class.getClassLoader().getResourceAsStream( "cascading/framework.properties" );
     if( stream != null )
