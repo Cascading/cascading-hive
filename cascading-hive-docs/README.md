@@ -1,3 +1,3 @@
 # Cascading-Hive documentation
 
-The documentation in this sub-project can be found online: http://docs.cascading.org/cascading-hive
+The documentation in this sub-project can be found online: http://docs.cascading.org/cascading-hive/1.0
