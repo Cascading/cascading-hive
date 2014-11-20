@@ -24,11 +24,14 @@ import java.beans.ConstructorProperties;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 
 import cascading.CascadingException;
 import cascading.tap.Tap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import riffle.process.DependencyIncoming;
 import riffle.process.DependencyOutgoing;
 import riffle.process.ProcessComplete;
@@ -53,6 +56,8 @@ public class HiveRiffle
   /** The hive queries to run */
   private String queries[];
 
+  private Future<Throwable> future;
+
   /**
    * Constructs a new HiveRiffle with the given HiveConf object, queries, a list of source taps and a sink.
    *
@@ -72,13 +77,20 @@ public class HiveRiffle
     this.sink = sink;
     }
 
-  /**
-   * start method. currently does nothing, but is required by riffle.
-   */
   @ProcessStart
   public void start()
     {
-    //NOOP
+    internalStart();
+    }
+
+  private synchronized void internalStart()
+    {
+    if ( future != null )
+      return;
+    ExecutorService executorService = Executors.newSingleThreadExecutor( new HiveFlowThreadFactory() );
+    Callable<Throwable> queryRunner =  new HiveQueryRunner( driverFactory, queries );
+    future = executorService.submit( queryRunner );
+    executorService.shutdown();
     }
 
   /**
@@ -87,14 +99,29 @@ public class HiveRiffle
   @ProcessStop
   public void stop()
     {
-    // NOOP
+    // since it is unclear in which state the system is left, if we interrupt the running thread, we opt for a noop for now.
     }
 
   @ProcessComplete
   public void complete()
     {
-    HiveQueryRunner runner = new HiveQueryRunner( driverFactory, queries );
-    runner.run();
+    internalStart();
+    try
+      {
+      Throwable throwable = future.get();
+      if( throwable != null )
+        {
+        if( throwable instanceof RuntimeException )
+          throw ( (RuntimeException) throwable );
+        else
+          throw new CascadingException( "exception while executing hive queries", throwable );
+        }
+      }
+      catch( Exception exception )
+        {
+        throw new CascadingException( "exception while executing hive queries", exception );
+        }
+
     }
 
   @DependencyOutgoing
@@ -107,6 +134,16 @@ public class HiveRiffle
   public Collection getIncoming()
     {
     return sources ;
+    }
+
+
+  class HiveFlowThreadFactory implements ThreadFactory
+    {
+    @Override
+    public Thread newThread( Runnable r )
+      {
+      return new Thread( r, "hive-flow" );
+      }
     }
 
   }

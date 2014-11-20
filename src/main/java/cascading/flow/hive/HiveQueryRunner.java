@@ -23,6 +23,8 @@ package cascading.flow.hive;
 
 import cascading.CascadingException;
 import java.util.Arrays;
+import java.util.concurrent.Callable;
+
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
@@ -31,10 +33,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Class for running ad-hoc Hive queries. The class is meant as a convenience class for cases where the hive queries
- * do not fit into the Cascading processing model. It also implements the Runnable interface so that the queries can be
- * submitted to a CompletionService.
+ * do not fit into the Cascading processing model. It also implements the Callable and Runnable interface so that the
+ * queries can be submitted to a ExecutorService.
  */
-public class HiveQueryRunner implements Runnable
+public class HiveQueryRunner implements Runnable, Callable<Throwable>
   {
   /** Field LOG */
   private static final Logger LOG = LoggerFactory.getLogger( HiveQueryRunner.class );
@@ -76,10 +78,10 @@ public class HiveQueryRunner implements Runnable
       {
       driver = driverFactory.createHiveDriver();
 
-      for (String subquery : queries )
+      for (String query : queries )
         {
-        LOG.info( "running hive query: '{}'", subquery );
-        currentQuery = subquery;
+        LOG.info( "running hive query: '{}'", query );
+        currentQuery = query;
         CommandProcessorResponse response = driver.run( currentQuery );
         if( response.getResponseCode() != 0 )
           throw new CascadingException( "hive error '" + response.getErrorMessage() + "' while running query " + currentQuery );
@@ -88,7 +90,7 @@ public class HiveQueryRunner implements Runnable
     catch( CommandNeedRetryException exception )
       {
       if (currentQuery == null)
-        throw new CascadingException( "problem while executing hive queries: " + Arrays.toString(queries), exception );
+        throw new CascadingException( "problem while executing hive queries: " + Arrays.toString( queries ), exception );
       else
         throw new CascadingException( "problem while executing hive query: " + currentQuery, exception );
       }
@@ -97,5 +99,19 @@ public class HiveQueryRunner implements Runnable
       if( driver != null )
         driver.destroy();
       }
+    }
+
+  @Override
+  public Throwable call() throws Exception
+    {
+    try
+      {
+      this.run();
+      }
+    catch( Throwable throwable )
+      {
+      return throwable;
+      }
+    return null;
     }
   }

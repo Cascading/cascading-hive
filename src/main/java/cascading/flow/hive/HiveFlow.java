@@ -31,6 +31,8 @@ import cascading.flow.FlowDescriptors;
 import cascading.flow.hadoop.ProcessFlow;
 import cascading.tap.Tap;
 import cascading.tap.hive.HiveNullTap;
+import cascading.tap.hive.HivePartitionTap;
+import cascading.tap.hive.HiveTap;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -131,17 +133,30 @@ public class HiveFlow extends ProcessFlow
     }
 
   @Override
+  public void start()
+    {
+    registerSinkTable();
+    super.start();
+    }
+
+  @Override
   public void complete()
+    {
+    registerSinkTable();
+    super.complete();
+    }
+
+  private void registerSinkTable()
     {
     try
       {
-      if ( !getSink().createResource( getConfigCopy() ) )
-        throw new CascadingException( "failed to register table in MetaStore." );
+      Tap sink = getSink();
+      if ( sink instanceof HiveTap || sink instanceof HivePartitionTap )
+        sink.createResource( getFlowProcess() );
       }
     catch( IOException exception )
       {
       throw new CascadingException( exception );
       }
-    super.complete();
     }
   }
