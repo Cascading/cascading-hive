@@ -2,6 +2,7 @@ Cascading-Hive changelog
 
 1.1 (unreleased)
 
+- support for apache hive 0.14
 - c.f.h.HiveRiffle supports async start method
 - update to Cascading 2.7
 - c.f.h.HiveRiffle is no longer public

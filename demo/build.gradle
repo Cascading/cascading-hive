@@ -67,19 +67,22 @@ repositories {
 dependencies {
   // broken hive deps..
   compile group: 'sqlline', name: 'sqlline',  version: '1.1.6'
-  compile group: 'cascading', name: 'cascading-hive', version: '1.1.0-wip-+'
+  compile group: 'cascading', name: 'cascading-hive', version: '1.1.0-wip-dev'
 
   compile( group: 'org.apache.hive', name: 'hive-jdbc', version: hiveVersion  ){
     exclude group: 'sqline'
+    exclude group: 'org.slf4j'
   }
-  compile group: 'org.apache.hive', name: 'hive-exec', version: hiveVersion
+  compile( group: 'org.apache.hive', name: 'hive-exec', version: hiveVersion ) {
+    exclude group: 'org.slf4j'
+  }
   // add the line below, if you use hive 0.10
   //compile group: 'org.apache.hive', name: 'hive-builtins', version: hiveVersion
 
   provided group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
   provided group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
-  provided group: 'org.slf4j', name: 'slf4j-api', version: '1.6.1'
-  provided group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.6.1'
+  provided group: 'org.slf4j', name: 'slf4j-api', version: '1.7.6'
+  provided group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.6'
   provided group: 'log4j', name: 'log4j', version: '1.2.17'
 
 }

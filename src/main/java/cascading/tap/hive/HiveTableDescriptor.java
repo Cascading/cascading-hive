@@ -65,7 +65,7 @@ public class HiveTableDescriptor implements Serializable
   public static final String HIVE_DEFAULT_OUTPUT_FORMAT_NAME = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat";
 
   /** default serialization lib name */
-  public static final String HIVE_DEFAULT_SERIALIZATION_LIB_NAME = HiveConf.ConfVars.HIVESCRIPTSERDE.defaultVal;
+  public static final String HIVE_DEFAULT_SERIALIZATION_LIB_NAME = "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe";
 
   /** columns to be used for partitioning */
   private String[] partitionKeys;

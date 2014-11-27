@@ -95,7 +95,7 @@ public class HiveTableDescriptorTest
     assertEquals( expectedSchema, sd.getCols() );
 
     SerDeInfo serDeInfo = sd.getSerdeInfo();
-    assertEquals( HiveConf.ConfVars.HIVESCRIPTSERDE.defaultVal, serDeInfo.getSerializationLib() );
+    assertEquals( HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME, serDeInfo.getSerializationLib() );
 
     assertEquals( HiveTableDescriptor.HIVE_DEFAULT_INPUT_FORMAT_NAME, sd.getInputFormat() );
     assertEquals( HiveTableDescriptor.HIVE_DEFAULT_OUTPUT_FORMAT_NAME, sd.getOutputFormat() );
@@ -120,14 +120,13 @@ public class HiveTableDescriptorTest
     assertEquals( expectedSchema, sd.getCols() );
 
     SerDeInfo serDeInfo = sd.getSerdeInfo();
-    assertEquals( HiveConf.ConfVars.HIVESCRIPTSERDE.defaultVal, serDeInfo.getSerializationLib() );
+    assertEquals( HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME, serDeInfo.getSerializationLib() );
 
     assertEquals( HiveTableDescriptor.HIVE_DEFAULT_INPUT_FORMAT_NAME, sd.getInputFormat() );
     assertEquals( HiveTableDescriptor.HIVE_DEFAULT_OUTPUT_FORMAT_NAME, sd.getOutputFormat() );
     assertTrue( table.isSetPartitionKeys() );
 
     }
-
 
   @Test
   public void testToFields()
