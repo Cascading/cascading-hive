@@ -2,6 +2,8 @@ Cascading-Hive changelog
 
 1.1 (unreleased)
 
+- c.t.h.HiveTap throws a TapException when running on cluster and no remote metastore is configured. This avoids hard to
+  debug inconsistency problems.
 - support for apache hive 0.14
 - c.f.h.HiveRiffle supports async start method
 - update to Cascading 2.7

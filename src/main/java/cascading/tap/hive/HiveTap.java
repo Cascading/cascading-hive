@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Properties;
 
 import cascading.CascadingException;
+import cascading.flow.hadoop.util.HadoopUtil;
 import cascading.property.AppProps;
 import cascading.scheme.Scheme;
 import cascading.tap.SinkMode;
@@ -317,6 +318,11 @@ public class HiveTap extends Hfs
     {
     if( !tableDescriptor.isPartitioned() )
       return;
+
+    // throw exception to avoid inconsistent meta store, otherwise the user will end up with a table with 0 partitions
+    // in it.
+    if( !HadoopUtil.isLocal( conf ) && conf.get( ConfVars.METASTOREURIS.name() ) == null )
+      throw new TapException( "Cannot register partition without central metastore. Please set 'hive.metastore.uris' to your metastore." );
 
     if( !resourceExists( conf ) )
       createHiveTable();
