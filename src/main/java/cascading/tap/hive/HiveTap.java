@@ -321,7 +321,7 @@ public class HiveTap extends Hfs
 
     // throw exception to avoid inconsistent meta store, otherwise the user will end up with a table with 0 partitions
     // in it.
-    if( !HadoopUtil.isLocal( conf ) && conf.get( ConfVars.METASTOREURIS.name() ) == null )
+    if( !HadoopUtil.isLocal( conf ) && conf.get( ConfVars.METASTOREURIS.varname ) == null )
       throw new TapException( "Cannot register partition without central metastore. Please set 'hive.metastore.uris' to your metastore." );
 
     if( !resourceExists( conf ) )
