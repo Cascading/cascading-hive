@@ -23,8 +23,10 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 
+import cascading.util.Util;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.Driver;
+import org.apache.hadoop.hive.ql.history.HiveHistory;
 import org.apache.hadoop.hive.ql.session.SessionState;
 
 /**
@@ -39,10 +41,13 @@ public class HiveDriverFactory implements Serializable
   /** a HiveConf object. */
   protected transient HiveConf hiveConf;
 
+  /** decorator for the HiveHistory object to fetch counters.*/
+  private CascadingHiveHistoryDecorator hiveHistory;
+
   /** Initialises the HiveDriverFactory. */
   public HiveDriverFactory()
     {
-    this.properties = Collections.emptyMap();
+    this( Collections.<String, String>emptyMap() );
     }
 
   /**
@@ -50,11 +55,10 @@ public class HiveDriverFactory implements Serializable
    *
    * @param properties Properties to add to the HiveConf used by the driver.
    */
-  public HiveDriverFactory(Map<String, String> properties)
+  public HiveDriverFactory( Map<String, String> properties )
     {
     this.properties = properties;
     }
-
 
   /**
    * Creates a new Driver instance and sets everything up for compiling/processing queries. Users of
@@ -64,8 +68,15 @@ public class HiveDriverFactory implements Serializable
    */
   public Driver createHiveDriver( )
     {
-    SessionState.start( getHiveConf() );
-    SessionState.get().setIsSilent( true );
+    SessionState sessionState = SessionState.start( getHiveConf() );
+    if( hiveHistory != null )
+      {
+      HiveHistory original = sessionState.getHiveHistory();
+      hiveHistory.setOriginal( original );
+      // this might break in the future, but there is no API to do that, so we have to use reflection.
+      Util.setInstanceFieldIfExists( sessionState, "hiveHist", hiveHistory );
+      }
+    SessionState.setCurrentSessionState( sessionState );
     Driver driver = new Driver( getHiveConf() );
     driver.init();
     return driver;
@@ -86,4 +97,12 @@ public class HiveDriverFactory implements Serializable
     return this.hiveConf;
     }
 
+  /**
+   * Sets the CascadingHiveHistoryDecorator.
+   * @param hiveHistory a CascadingHiveHistoryDecorator instance.
+   */
+  public void setCascadingHiveHistoryDecorator( CascadingHiveHistoryDecorator hiveHistory )
+    {
+    this.hiveHistory = hiveHistory;
+    }
   }

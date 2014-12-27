@@ -147,6 +147,22 @@ public class HiveRiffleTest extends HiveTestCase
     verify( mockDriver ).destroy();
     }
 
+  @Test
+  public void testGetCounters() throws Exception
+    {
+    HiveDriverFactory factory = new HiveDriverFactory();
+
+    List<Tap> incoming = new ArrayList<Tap>();
+    incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
+    incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
+    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/out" );
+
+    HiveRiffle riffle = new HiveRiffle( factory, new String[]{"create table counters (key string)"},
+      incoming, outgoing );
+    riffle.complete();
+    assertEquals( 0, riffle.getCounters().size() );
+    }
+
   @Test(expected = RuntimeException.class)
   public void testCompleteDriverCreationFailure() throws Exception
     {

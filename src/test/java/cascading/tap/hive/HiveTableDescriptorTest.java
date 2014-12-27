@@ -140,7 +140,7 @@ public class HiveTableDescriptorTest
   public void testToFieldsWithPartitionedTable()
     {
     HiveTableDescriptor descriptor = new HiveTableDescriptor( "mytable", new String[]{"one", "two", "three"},
-      new String[]{"int", "string", "boolean"}, new String[] {"three"});
+      new String[]{"int", "string", "boolean"}, new String[]{"three"} );
     assertEquals( new Fields( "one", "two" ), descriptor.toFields() );
     }
 
@@ -177,7 +177,7 @@ public class HiveTableDescriptorTest
       new String[]{"int", "string", "boolean"}, new String[]{},
       delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME, null );
     StorageDescriptor sd = descriptor.toHiveTable().getSd();
-    Map<String, String> expected = new HashMap<String, String>(  );
+    Map<String, String> expected = new HashMap<String, String>();
     expected.put( "field.delim", delim );
     expected.put( "serialization.format", delim );
     assertEquals( expected, sd.getSerdeInfo().getParameters() );
@@ -187,11 +187,11 @@ public class HiveTableDescriptorTest
   @Test
   public void testToSchemeWithNullDelimiter()
     {
-    String delim = null;
+    String delimiter = null;
     HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "mytable",
       new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"}, new String[]{},
-      delim, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME, null
+      delimiter, HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME, null
     );
     Scheme scheme = descriptor.toScheme();
     assertNotNull( scheme );
@@ -233,15 +233,15 @@ public class HiveTableDescriptorTest
     }
 
   @Test
-  public void testGetFilesystempathWithDefaultDB()
+  public void testGetFilesystemPathWithDefaultDB()
     {
     HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"} );
-    assertEquals( "warehouse/mytable", descriptor.getLocation( "warehouse") );
+    assertEquals( "warehouse/mytable", descriptor.getLocation( "warehouse" ) );
     }
 
   @Test
-  public void testGetFilesystempathWithCustomDB()
+  public void testGetFilesystemPathWithCustomDB()
     {
     HiveTableDescriptor descriptor = new HiveTableDescriptor( "myDB", "myTable", new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"} );
@@ -249,14 +249,14 @@ public class HiveTableDescriptorTest
     }
 
   @Test
-  public void testGetFilesystempathWithSpecifiedLocation()
-      {
-      HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "mytable",
-        new String[]{"one", "two", "three"},
-        new String[]{"int", "string", "boolean"}, new String[]{},
-        ",", HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME, new Path( "file:/custom_path" ) );
+  public void testGetFilesystemPathWithSpecifiedLocation()
+    {
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "mytable",
+      new String[]{"one", "two", "three"},
+      new String[]{"int", "string", "boolean"}, new String[]{},
+      ",", HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME, new Path( "file:/custom_path" ) );
 
-      assertEquals( "file:/custom_path", descriptor.getLocation( "warehouse" ) );
-      }
+    assertEquals( "file:/custom_path", descriptor.getLocation( "warehouse" ) );
+    }
   }
 

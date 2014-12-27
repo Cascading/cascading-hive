@@ -20,10 +20,16 @@
 
 package cascading.flow.hive;
 
-import java.beans.ConstructorProperties;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,9 +38,16 @@ import java.util.concurrent.ThreadFactory;
 
 import cascading.CascadingException;
 import cascading.tap.Tap;
+import org.apache.hadoop.hive.ql.QueryPlan;
+import org.apache.hadoop.hive.ql.exec.Task;
+import org.apache.hadoop.hive.ql.history.HiveHistory;
+import org.apache.hadoop.mapred.Counters;
+import org.apache.hadoop.mapreduce.Counter;
 import riffle.process.DependencyIncoming;
 import riffle.process.DependencyOutgoing;
+import riffle.process.ProcessChildren;
 import riffle.process.ProcessComplete;
+import riffle.process.ProcessCounters;
 import riffle.process.ProcessStart;
 import riffle.process.ProcessStop;
 
@@ -42,7 +55,7 @@ import riffle.process.ProcessStop;
  * Riffle process encapsulating Hive operations.
  */
 @riffle.process.Process
-class HiveRiffle
+class HiveRiffle implements CascadingHiveHistoryDecorator
   {
   /** List of source taps */
   private final Collection<Tap> sources;
@@ -56,22 +69,28 @@ class HiveRiffle
   /** The hive queries to run */
   private String queries[];
 
+  /** A future running the current queries asynchronously. */
   private Future<Throwable> future;
+
+  /** The internal HiveHistory instance of the current SessionState. */
+  private HiveHistory original;
+
+  /** set to keep track of all counters of all tasks of all queries. */
+  private List<HiveStep> hiveTasks = new ArrayList<HiveStep>();
 
   /**
    * Constructs a new HiveRiffle with the given HiveConf object, queries, a list of source taps and a sink.
    *
    * @param driverFactory a factory for creating Driver instances.
-   * @param queries    The hive queries to run.
-   * @param sources The source taps of the queries.
-   * @param sink  The sink of the queries.
+   * @param queries       The hive queries to run.
+   * @param sources       The source taps of the queries.
+   * @param sink          The sink of the queries.
    */
-  @ConstructorProperties({"hiveConf", "queries", "sources", "sink"})
   HiveRiffle( HiveDriverFactory driverFactory, String queries[], Collection<Tap> sources, Tap sink )
     {
     this.driverFactory = driverFactory;
     this.queries = queries;
-    if ( sources == null || sources.isEmpty() )
+    if( sources == null || sources.isEmpty() )
       throw new CascadingException( "sources cannot be null or empty" );
     this.sources = sources;
     this.sink = sink;
@@ -85,10 +104,14 @@ class HiveRiffle
 
   private synchronized void internalStart()
     {
-    if ( future != null )
+    if( future != null )
       return;
+    // the history is used in the hive SessionState, which is kept in a ThreadLocal, so we can only set it, once
+    // we are actually running. Otherwise, we break Hive's internal state.
+    driverFactory.setCascadingHiveHistoryDecorator( this );
+
     ExecutorService executorService = Executors.newSingleThreadExecutor( new HiveFlowThreadFactory() );
-    Callable<Throwable> queryRunner =  new HiveQueryRunner( driverFactory, queries );
+    Callable<Throwable> queryRunner = new HiveQueryRunner( driverFactory, queries );
     future = executorService.submit( queryRunner );
     executorService.shutdown();
     }
@@ -117,11 +140,10 @@ class HiveRiffle
           throw new CascadingException( "exception while executing hive queries", throwable );
         }
       }
-      catch( Exception exception )
-        {
-        throw new CascadingException( "exception while executing hive queries", exception );
-        }
-
+    catch( Exception exception )
+      {
+      throw new CascadingException( "exception while executing hive queries", exception );
+      }
     }
 
   @DependencyOutgoing
@@ -133,9 +155,145 @@ class HiveRiffle
   @DependencyIncoming
   public Collection getIncoming()
     {
-    return sources ;
+    return sources;
     }
 
+  @ProcessCounters
+  public Map<String, Map<String, Long>> getCounters()
+    {
+    // roll up all counters
+    Map<String, Map<String, Long>> counters = new HashMap<String, Map<String, Long>>();
+
+    for ( HiveStep internalHiveTask : hiveTasks )
+      {
+      for( Map.Entry<String, Map<String,Long>> entry: internalHiveTask.getCounters().entrySet() )
+        {
+        if( !counters.containsKey( entry.getKey() ) )
+          counters.put( entry.getKey(), entry.getValue() );
+        else
+          {
+          Map<String, Long> existing = counters.get( entry.getKey() );
+          for ( Map.Entry<String, Long> ctr : entry.getValue().entrySet() )
+            {
+            if( !existing.containsKey( ctr.getKey() ) )
+              existing.put( ctr.getKey(), ctr.getValue() );
+            else
+              existing.put( ctr.getKey(), existing.get( entry.getKey() ) + ctr.getValue() );
+            }
+          }
+        }
+      }
+    return counters;
+    }
+
+  @ProcessChildren
+  public List<Object> getChildren()
+    {
+    return Collections.<Object>unmodifiableList( hiveTasks );
+    }
+
+  private Map<String, Map<String, Long>> asMap( Counters counters )
+    {
+    Map<String, Map<String, Long>> groups = new LinkedHashMap<String, Map<String, Long>>();
+
+    for( String groupName : counters.getGroupNames() )
+      {
+      Map<String, Long> group = new HashMap<String, Long>();
+      Counters.Group counterGroup = counters.getGroup( groupName );
+      for( Counter counter : counterGroup )
+        group.put( counter.getName(), counter.getValue() );
+
+      groups.put( groupName, group );
+      }
+    return groups;
+    }
+
+
+  @Override
+  public String getHistFileName()
+    {
+    return original.getHistFileName();
+    }
+
+  @Override
+  public void startQuery( String cmd, String id )
+    {
+    original.startQuery( cmd, id );
+    }
+
+  @Override
+  public void setQueryProperty( String queryId, Keys propName, String propValue )
+    {
+    original.setQueryProperty( queryId, propName, propValue );
+    }
+
+  @Override
+  public void setTaskProperty( String queryId, String taskId, Keys propName, String propValue )
+    {
+    original.setTaskProperty( queryId, taskId, propName, propValue );
+    }
+
+  @Override
+  public synchronized void setTaskCounters( String queryId, String taskId, Counters ctrs )
+    {
+    // task id is something like "step-1" and can repeat, so we concat it with the unique query id.
+    hiveTasks.add( new HiveStep( queryId + " " + taskId, asMap( ctrs ) ) );
+    original.setTaskCounters( queryId, taskId, ctrs );
+    }
+
+  @Override
+  public void printRowCount( String queryId )
+    {
+    original.printRowCount( queryId );
+    }
+
+  @Override
+  public void endQuery( String queryId )
+    {
+    original.endQuery( queryId );
+    }
+
+  @Override
+  public void startTask( String queryId, Task<? extends Serializable> task, String taskName )
+    {
+    original.startTask( queryId, task, taskName );
+    }
+
+  @Override
+  public void endTask( String queryId, Task<? extends Serializable> task )
+    {
+    original.endTask( queryId, task );
+    }
+
+  @Override
+  public void progressTask( String queryId, Task<? extends Serializable> task )
+    {
+    original.progressTask( queryId, task );
+    }
+
+  @Override
+  public void logPlanProgress( QueryPlan plan ) throws IOException
+    {
+    original.logPlanProgress( plan );
+    }
+
+  @Override
+  public void setIdToTableMap( Map<String, String> map )
+    {
+    original.setIdToTableMap( map );
+    }
+
+  @Override
+  public void closeStream()
+    {
+    original.closeStream();
+    }
+
+
+  public void setOriginal( HiveHistory original )
+    {
+    this.original = original;
+    }
 
   class HiveFlowThreadFactory implements ThreadFactory
     {

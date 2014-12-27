@@ -54,7 +54,6 @@ public class HiveFlow extends ProcessFlow
     this( name, new HiveDriverFactory(properties), new String[]{query}, sources, sink );
     }
 
-
   /**
    * Constructs a new HiveFlow object with the given name, queries, a list of source taps. This constructor can be
    * used when the Flow does not really have
