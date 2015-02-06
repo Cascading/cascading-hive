@@ -32,6 +32,7 @@ import cascading.cascade.CascadeConnector;
 import cascading.flow.Flow;
 import cascading.flow.FlowProcess;
 import cascading.flow.hadoop.HadoopFlowConnector;
+import cascading.flow.hadoop2.Hadoop2MR1FlowConnector;
 import cascading.flow.hive.HiveFlow;
 import cascading.operation.BaseOperation;
 import cascading.operation.Function;
@@ -121,19 +122,19 @@ public class HiveDemo
 
     Pipe upperPipe = new Each( "uppercase kv -> kv2 ", keyvalueTap.getSinkFields(),
       new Upper( keyvalueTap.getSinkFields() ), Fields.RESULTS );
-    Flow<?> pureCascadingFlow = new HadoopFlowConnector().connect( keyvalueTap, keyvalue2Tap, upperPipe );
+    Flow<?> pureCascadingFlow = new Hadoop2MR1FlowConnector().connect( keyvalueTap, keyvalue2Tap, upperPipe );
 
     // run all of the above flows, cascading will figure out the right order of execution
     Cascade cascade = new CascadeConnector( properties ).connect( pureCascadingFlow,
       loadDataFlow, selectFlow );
 
-    cascade.writeDOT( "hivedemo.dot" );
     cascade.complete();
 
-    // finally read the data from the table, that was filled by cascading via the Hive JDBC driver
-    Class.forName( "org.apache.hadoop.hive.jdbc.HiveDriver" );
 
-    Connection con = DriverManager.getConnection( "jdbc:hive://", "", "" );
+    // finally read the data from the table, that was filled by cascading via the Hive JDBC driver
+    Class.forName( "org.apache.hive.jdbc.HiveDriver" );
+
+    Connection con = DriverManager.getConnection( "jdbc:hive2://", "", "" );
     Statement stmt = con.createStatement();
 
     ResultSet rs = stmt.executeQuery( "select key, value from keyvalue2" );

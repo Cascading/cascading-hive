@@ -27,7 +27,7 @@ import java.util.Properties;
 
 import cascading.flow.Flow;
 import cascading.flow.FlowProcess;
-import cascading.flow.hadoop.HadoopFlowConnector;
+import cascading.flow.hadoop2.Hadoop2MR1FlowConnector;
 import cascading.operation.BaseOperation;
 import cascading.operation.Filter;
 import cascading.operation.FilterCall;
@@ -35,7 +35,6 @@ import cascading.operation.Function;
 import cascading.operation.FunctionCall;
 import cascading.pipe.Each;
 import cascading.pipe.Pipe;
-import cascading.pipe.assembly.Retain;
 import cascading.property.AppProps;
 import cascading.scheme.hadoop.TextDelimited;
 import cascading.tap.SinkMode;
@@ -101,13 +100,13 @@ public class HivePartitionDemo
     Pipe pipe = new Each( " import ", allFields,
       new Echo( allFields ), Fields.RESULTS );
 
-    Flow flow = new HadoopFlowConnector().connect( input, partitionTap, pipe );
+    Flow flow = new Hadoop2MR1FlowConnector().connect( input, partitionTap, pipe );
 
     flow.complete();
 
-    Class.forName( "org.apache.hadoop.hive.jdbc.HiveDriver" );
+    Class.forName( "org.apache.hive.jdbc.HiveDriver" );
 
-    Connection con = DriverManager.getConnection( "jdbc:hive://", "", "" );
+    Connection con = DriverManager.getConnection( "jdbc:hive2://", "", "" );
     Statement stmt = con.createStatement();
 
     ResultSet rs = stmt.executeQuery( "select * from mydb.mytable where region = 'ASIA' " );
@@ -151,7 +150,7 @@ public class HivePartitionDemo
 
     Pipe headPipe = new Each( "requests from ASIA", allFields, new RegionFilter( "ASIA" ) );
 
-    Flow headFlow = new HadoopFlowConnector().connect( partitionTap, requestsInAsiaSink, headPipe );
+    Flow headFlow = new Hadoop2MR1FlowConnector().connect( partitionTap, requestsInAsiaSink, headPipe );
 
     headFlow.complete();
 

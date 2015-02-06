@@ -29,7 +29,7 @@ import java.util.Properties;
 
 import cascading.flow.Flow;
 import cascading.flow.FlowProcess;
-import cascading.flow.hadoop.HadoopFlowConnector;
+import cascading.flow.hadoop2.Hadoop2MR1FlowConnector;
 import cascading.flow.hive.HiveFlow;
 import cascading.operation.BaseOperation;
 import cascading.operation.Function;
@@ -99,7 +99,7 @@ public class HiveViewDemo
 
     Tap input = new Hfs( new TextDelimited( allFields ), "hdfs:/tmp/access.log" );
 
-    Flow flow = new HadoopFlowConnector().connect( input, outputTap, pipe );
+    Flow flow = new Hadoop2MR1FlowConnector().connect( input, outputTap, pipe );
 
     flow.complete();
 
@@ -111,9 +111,9 @@ public class HiveViewDemo
     HiveFlow viewflow = new HiveFlow( "create view", viewDef, inputs );
     viewflow.complete();
 
-    Class.forName( "org.apache.hadoop.hive.jdbc.HiveDriver" );
+    Class.forName( "org.apache.hive.jdbc.HiveDriver" );
 
-    Connection con = DriverManager.getConnection( "jdbc:hive://", "", "" );
+    Connection con = DriverManager.getConnection( "jdbc:hive2://", "", "" );
     Statement stmt = con.createStatement();
 
     ResultSet rs = stmt.executeQuery( "select * from customers_in_asia " );
