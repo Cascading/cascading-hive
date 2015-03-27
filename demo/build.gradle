@@ -61,13 +61,13 @@ repositories {
   mavenCentral()
   maven{ url 'http://conjars.org/repo/' }
   maven{ url 'http://www.datanucleus.org/downloads/maven2/' }
-
+  maven { url = 'http://oss.sonatype.org/content/repositories/snapshots' }
 }
 
 dependencies {
   // broken hive deps..
   compile group: 'sqlline', name: 'sqlline',  version: '1.1.6'
-  compile group: 'cascading', name: 'cascading-hive', version: '1.1.0-wip-dev'
+  compile group: 'cascading', name: 'cascading-hive', version: '2.0.0-wip-dev'
 
   compile( group: 'org.apache.hive', name: 'hive-jdbc', version: hiveVersion  ){
     exclude group: 'sqline'

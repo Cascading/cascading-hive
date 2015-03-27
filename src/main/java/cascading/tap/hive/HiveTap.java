@@ -33,6 +33,7 @@ import cascading.scheme.Scheme;
 import cascading.tap.SinkMode;
 import cascading.tap.TapException;
 import cascading.tap.hadoop.Hfs;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -51,7 +52,6 @@ import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,7 +128,7 @@ public class HiveTap extends Hfs
     }
 
   @Override
-  public boolean createResource( JobConf conf ) throws IOException
+  public boolean createResource( Configuration conf ) throws IOException
     {
     if( !resourceExists( conf ) )
       return createHiveTable( conf );
@@ -141,7 +141,7 @@ public class HiveTap extends Hfs
    * @return true, if the table has been created successfully.
    * @throws IOException In case an interaction with the Hive metastore fails.
    */
-  private boolean createHiveTable( JobConf configuration ) throws IOException
+  private boolean createHiveTable( Configuration configuration ) throws IOException
     {
     IMetaStoreClient metaStoreClient = null;
     try
@@ -182,7 +182,7 @@ public class HiveTap extends Hfs
     }
 
   @Override
-  public boolean resourceExists( JobConf conf ) throws IOException
+  public boolean resourceExists( Configuration conf ) throws IOException
     {
     IMetaStoreClient metaStoreClient = null;
     try
@@ -204,9 +204,9 @@ public class HiveTap extends Hfs
         FileSystem fs = FileSystem.get( conf );
         StorageDescriptor sd = table.getSd();
         Path expectedPath = fs.makeQualified( new Path( tableDescriptor.getLocation( hiveConf.getVar( ConfVars.METASTOREWAREHOUSE ) ) ) );
-        Path actualPath = fs.makeQualified( new Path( sd.getLocation() ));
+        Path actualPath = fs.makeQualified( new Path( sd.getLocation() ) );
 
-        if ( !expectedPath.equals(actualPath) )
+        if( !expectedPath.equals( actualPath ) )
           throw new HiveTableValidationException( String.format(
             "table in MetaStore does not have the sampe path. Expected %s got %s",
             expectedPath, actualPath ) );
@@ -273,7 +273,7 @@ public class HiveTap extends Hfs
     }
 
   @Override
-  public boolean deleteResource( JobConf conf ) throws IOException
+  public boolean deleteResource( Configuration conf ) throws IOException
     {
     // clean up HDFS
     super.deleteResource( conf );
@@ -310,11 +310,11 @@ public class HiveTap extends Hfs
    * Registers a new Partition of a HiveTable. If the Partition already exists, it is ignored. If the current
    * table is not partitioned, the call is also ignored.
    *
-   * @param conf      JobConf object of the current flow.
+   * @param conf      Configuration object of the current flow.
    * @param partition The partition to register.
    * @throws IOException In case any interaction with the HiveMetaStore fails.
    */
-  void registerPartition( JobConf conf, Partition partition ) throws IOException
+  void registerPartition( Configuration conf, Partition partition ) throws IOException
     {
     if( !tableDescriptor.isPartitioned() )
       return;
@@ -357,7 +357,7 @@ public class HiveTap extends Hfs
     }
 
   @Override
-  public boolean commitResource( JobConf conf ) throws IOException
+  public boolean commitResource( Configuration conf ) throws IOException
     {
     boolean result = true;
     try
@@ -369,12 +369,11 @@ public class HiveTap extends Hfs
       {
       throw new TapException( exception );
       }
-
     return super.commitResource( conf ) && result;
     }
 
   @Override
-  public long getModifiedTime( JobConf conf ) throws IOException
+  public long getModifiedTime( Configuration conf ) throws IOException
     {
     return modifiedTime;
     }
@@ -394,7 +393,6 @@ public class HiveTap extends Hfs
    * it uses the value from the Hive MetaStore. Otherwise it uses the default location for Hive.
    *
    * */
-
   private void setFilesystemLocation()
     {
     // If the table already exists get the location otherwise use the location from the table descriptor.
@@ -432,7 +430,7 @@ public class HiveTap extends Hfs
    * @return a new IMetaStoreClient
    * @throws MetaException in case the creation fails.
    */
-  private IMetaStoreClient createMetaStoreClient( JobConf configuration ) throws MetaException
+  private IMetaStoreClient createMetaStoreClient( Configuration configuration ) throws MetaException
     {
     // it is a bit unclear if it is safe to re-use these instances, so we create a
     // new one every time, to be sure

@@ -30,10 +30,10 @@ import cascading.HiveTestCase;
 import cascading.scheme.NullScheme;
 import cascading.tap.Tap;
 import cascading.tap.hadoop.Hfs;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordReader;
 import org.junit.Test;
@@ -78,9 +78,9 @@ public class HiveRiffleTest extends HiveTestCase
   public void testIncomingAndOutgoing()
     {
     List<Tap> incoming = new ArrayList<Tap>();
-    incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
-    incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
-    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/out" );
+    incoming.add( new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
+    incoming.add( new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
+    Tap outgoing = new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/out" );
 
     HiveRiffle riffle = new HiveRiffle( createHiveDriverFactory(), new String[]{"create table foo (key string)"},
       incoming, outgoing );
@@ -98,9 +98,9 @@ public class HiveRiffleTest extends HiveTestCase
     when( factory.createHiveDriver() ).thenReturn( mockDriver );
 
     List<Tap> incoming = new ArrayList<Tap>();
-    incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
-    incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
-    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/out" );
+    incoming.add( new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
+    incoming.add( new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
+    Tap outgoing = new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/out" );
 
     HiveRiffle riffle = new HiveRiffle( factory, new String[]{"creat table foo (key string)"},
       incoming, outgoing );
@@ -117,9 +117,9 @@ public class HiveRiffleTest extends HiveTestCase
     when( factory.createHiveDriver() ).thenReturn( mockDriver );
 
     List<Tap> incoming = new ArrayList<Tap>();
-    incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
-    incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
-    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/out" );
+    incoming.add( new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
+    incoming.add( new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
+    Tap outgoing = new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/out" );
 
     HiveRiffle riffle = new HiveRiffle( factory, new String[]{"creat table foo (key string)"},
       incoming, outgoing );
@@ -137,9 +137,9 @@ public class HiveRiffleTest extends HiveTestCase
     when( factory.createHiveDriver() ).thenReturn( mockDriver );
 
     List<Tap> incoming = new ArrayList<Tap>();
-    incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
-    incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
-    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/out" );
+    incoming.add( new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
+    incoming.add( new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
+    Tap outgoing = new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/out" );
 
     HiveRiffle riffle = new HiveRiffle( factory, new String[]{"creat table foo (key string)"},
       incoming, outgoing );
@@ -153,9 +153,9 @@ public class HiveRiffleTest extends HiveTestCase
     HiveDriverFactory factory = new HiveDriverFactory();
 
     List<Tap> incoming = new ArrayList<Tap>();
-    incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
-    incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
-    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/out" );
+    incoming.add( new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
+    incoming.add( new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
+    Tap outgoing = new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/out" );
 
     HiveRiffle riffle = new HiveRiffle( factory, new String[]{"create table counters (key string)"},
       incoming, outgoing );
@@ -170,9 +170,9 @@ public class HiveRiffleTest extends HiveTestCase
     when( factory.createHiveDriver() ).thenThrow( new RuntimeException( "testing" ) );
 
     List<Tap> incoming = new ArrayList<Tap>();
-    incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
-    incoming.add( new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
-    Tap outgoing = new Hfs( new NullScheme<JobConf, RecordReader, OutputCollector, Object, Object>(), "/out" );
+    incoming.add( new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/foo/bar" ) );
+    incoming.add( new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/quux/bla" ) );
+    Tap outgoing = new Hfs( new NullScheme<Configuration, RecordReader, OutputCollector, Object, Object>(), "/out" );
 
     HiveRiffle riffle = new HiveRiffle( factory, new String[]{"creat table foo (key string)"},
       incoming, outgoing );

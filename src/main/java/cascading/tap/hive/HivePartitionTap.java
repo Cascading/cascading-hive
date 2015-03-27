@@ -26,9 +26,8 @@ import cascading.CascadingException;
 import cascading.tap.SinkMode;
 import cascading.flow.FlowProcess;
 import cascading.tap.hadoop.PartitionTap;
-import cascading.tuple.TupleEntry;
 import cascading.tuple.TupleEntryCollector;
-import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.OutputCollector;
 
 /**
@@ -61,13 +60,13 @@ public class HivePartitionTap extends PartitionTap
    */
   class HivePartitionCollector extends PartitionCollector
     {
-    private FlowProcess<JobConf> flowProcess;
+    private FlowProcess<? extends Configuration> flowProcess;
 
     /**
      * Constructs a new HivePartitionCollector instance with the current FlowProcess instance.
      * @param flowProcess The currently running FlowProcess.
      */
-    public HivePartitionCollector( FlowProcess<JobConf> flowProcess )
+    public HivePartitionCollector( FlowProcess<? extends Configuration> flowProcess )
       {
       super( flowProcess );
       this.flowProcess = flowProcess;
@@ -95,13 +94,13 @@ public class HivePartitionTap extends PartitionTap
     }
 
   @Override
-  public TupleEntryCollector openForWrite( FlowProcess<JobConf> flowProcess, OutputCollector output ) throws IOException
+  public TupleEntryCollector openForWrite( FlowProcess<? extends Configuration> flowProcess, OutputCollector output ) throws IOException
     {
     return new HivePartitionCollector( flowProcess );
     }
 
   @Override
-  public String getFullIdentifier( JobConf conf )
+  public String getFullIdentifier( Configuration conf )
     {
     return parent.getFullIdentifier( conf );
     }

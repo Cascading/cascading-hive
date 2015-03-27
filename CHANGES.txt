@@ -1,5 +1,9 @@
 Cascading-Hive changelog
 
+2.0 (unreleased)
+
+- update to Cascading 3.0
+
 1.1 (unreleased)
 
 - added ability to capture and report task level counters in c.f.h.HiveRiffle

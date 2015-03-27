@@ -31,7 +31,6 @@ import cascading.cascade.Cascade;
 import cascading.cascade.CascadeConnector;
 import cascading.flow.Flow;
 import cascading.flow.FlowProcess;
-import cascading.flow.hadoop.HadoopFlowConnector;
 import cascading.flow.hadoop2.Hadoop2MR1FlowConnector;
 import cascading.flow.hive.HiveFlow;
 import cascading.operation.BaseOperation;
@@ -49,8 +48,6 @@ import cascading.tap.hive.HiveTap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.mapred.JobConf;
 
 import static cascading.tap.SinkMode.REPLACE;
 
