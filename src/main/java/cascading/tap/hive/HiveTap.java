@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Properties;
 
+
 import cascading.CascadingException;
 import cascading.flow.hadoop.util.HadoopUtil;
 import cascading.property.AppProps;
@@ -130,7 +131,7 @@ public class HiveTap extends Hfs
   public boolean createResource( JobConf conf ) throws IOException
     {
     if( !resourceExists( conf ) )
-      return createHiveTable();
+      return createHiveTable( conf );
     return true;
     }
 
@@ -140,12 +141,12 @@ public class HiveTap extends Hfs
    * @return true, if the table has been created successfully.
    * @throws IOException In case an interaction with the Hive metastore fails.
    */
-  private boolean createHiveTable() throws IOException
+  private boolean createHiveTable( JobConf configuration ) throws IOException
     {
     IMetaStoreClient metaStoreClient = null;
     try
       {
-      metaStoreClient = createMetaStoreClient();
+      metaStoreClient = createMetaStoreClient( configuration );
       Table hiveTable = tableDescriptor.toHiveTable();
       try
         {
@@ -180,16 +181,16 @@ public class HiveTap extends Hfs
       }
     }
 
-
   @Override
   public boolean resourceExists( JobConf conf ) throws IOException
     {
     IMetaStoreClient metaStoreClient = null;
     try
       {
-      metaStoreClient = createMetaStoreClient();
+      metaStoreClient = createMetaStoreClient( conf );
       Table table = metaStoreClient.getTable( tableDescriptor.getDatabaseName(),
         tableDescriptor.getTableName() );
+
       modifiedTime = table.getLastAccessTime();
       // check if the schema matches the table descriptor. If not, throw an exception.
       if( strict )
@@ -281,7 +282,7 @@ public class HiveTap extends Hfs
     try
       {
       LOG.info( "dropping hive table {} in database {}", tableDescriptor.getTableName(), tableDescriptor.getDatabaseName() );
-      metaStoreClient = createMetaStoreClient();
+      metaStoreClient = createMetaStoreClient( conf );
       metaStoreClient.dropTable( tableDescriptor.getDatabaseName(), tableDescriptor.getTableName(),
         true, true );
       }
@@ -305,7 +306,6 @@ public class HiveTap extends Hfs
     return true;
     }
 
-
   /**
    * Registers a new Partition of a HiveTable. If the Partition already exists, it is ignored. If the current
    * table is not partitioned, the call is also ignored.
@@ -325,12 +325,12 @@ public class HiveTap extends Hfs
       throw new TapException( "Cannot register partition without central metastore. Please set 'hive.metastore.uris' to your metastore." );
 
     if( !resourceExists( conf ) )
-      createHiveTable();
+      createHiveTable( conf );
 
     IMetaStoreClient metaStoreClient = null;
     try
       {
-      metaStoreClient = createMetaStoreClient();
+      metaStoreClient = createMetaStoreClient( conf );
       metaStoreClient.add_partition( partition );
       }
     catch( MetaException exception )
@@ -356,21 +356,21 @@ public class HiveTap extends Hfs
       }
     }
 
-
   @Override
   public boolean commitResource( JobConf conf ) throws IOException
     {
     boolean result = true;
     try
       {
-      if ( !resourceExists( conf ) )
-        result =  createHiveTable();
+      if( !resourceExists( conf ) )
+        result = createHiveTable( conf );
       }
     catch( IOException exception )
       {
       throw new TapException( exception );
       }
-    return super.commitResource( conf ) && result ;
+
+    return super.commitResource( conf ) && result;
     }
 
   @Override
@@ -394,13 +394,14 @@ public class HiveTap extends Hfs
    * it uses the value from the Hive MetaStore. Otherwise it uses the default location for Hive.
    *
    * */
-  private void setFilesystemLocation(  )
+
+  private void setFilesystemLocation()
     {
     // If the table already exists get the location otherwise use the location from the table descriptor.
     IMetaStoreClient metaStoreClient = null;
     try
       {
-      metaStoreClient = createMetaStoreClient();
+      metaStoreClient = createMetaStoreClient( null );
       Table table = metaStoreClient.getTable( tableDescriptor.getDatabaseName(),
         tableDescriptor.getTableName() );
       String path = table.getSd().getLocation();
@@ -425,19 +426,21 @@ public class HiveTap extends Hfs
       }
     }
 
-
   /**
    * Private helper method to create a IMetaStore client.
    *
    * @return a new IMetaStoreClient
    * @throws MetaException in case the creation fails.
    */
-  private IMetaStoreClient createMetaStoreClient() throws MetaException
+  private IMetaStoreClient createMetaStoreClient( JobConf configuration ) throws MetaException
     {
     // it is a bit unclear if it is safe to re-use these instances, so we create a
     // new one every time, to be sure
     if( hiveConf == null )
       hiveConf = new HiveConf();
+
+    if( configuration != null )
+      hiveConf.addResource( configuration );
 
     return RetryingMetaStoreClient.getProxy( hiveConf,
       new HiveMetaHookLoader()
