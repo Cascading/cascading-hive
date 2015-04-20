@@ -24,10 +24,7 @@ apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
-apply plugin: 'propdeps'
-apply plugin: 'propdeps-idea'
-apply plugin: 'propdeps-eclipse'
-apply plugin: 'propdeps-maven'
+apply plugin: 'provided-base'
 
 ext.cascadingVersion = '3.0.0-wip-+'
 ext.hadoopVersion = '2.4.1'
@@ -50,11 +47,11 @@ ext.buildDate = timestamp
 buildscript {
   repositories {
     mavenCentral()
-    maven { url 'http://repo.springsource.org/plugins-release' }
+    jcenter()
   }
 
   dependencies {
-    classpath 'org.springframework.build.gradle:propdeps-plugin:0.0.5'
+    classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:2.2.+'
   }
 }
 
@@ -86,8 +83,8 @@ dependencies {
 
   provided group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
   provided group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
-  provided group: 'org.slf4j', name: 'slf4j-api', version: '1.6.1'
-  provided group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.6.1'
+  provided group: 'org.slf4j', name: 'slf4j-api', version: '1.7.6'
+  provided group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.6'
   provided group: 'log4j', name: 'log4j', version: '1.2.17'
 
   testCompile group: 'cascading', name: 'cascading-hadoop2-mr1', version: cascadingVersion, changing: true
@@ -95,7 +92,7 @@ dependencies {
   testCompile group: 'cascading', name: 'cascading-hadoop2-mr1', version: cascadingVersion, classifier: 'tests', changing: true
   testCompile group: 'cascading', name: 'cascading-platform', version: cascadingVersion, classifier: 'tests', changing: true
   testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion
-  testCompile group: 'junit', name: 'junit', version: '4.11'
+  testCompile group: 'junit', name: 'junit', version: '4.12'
   testCompile group: 'org.mockito', name: 'mockito-all', version: '1.9.5'
 
 }
