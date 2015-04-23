@@ -86,7 +86,7 @@ public class HiveDriverFactory implements Serializable
    * Private helper method to return the HiveConf object.
    * @return the HiveConf object.
    */
-  private HiveConf getHiveConf()
+   HiveConf getHiveConf()
     {
     if ( this.hiveConf == null )
       {

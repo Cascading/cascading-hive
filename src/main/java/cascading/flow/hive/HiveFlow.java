@@ -28,7 +28,7 @@ import java.util.Properties;
 
 import cascading.CascadingException;
 import cascading.flow.FlowDescriptors;
-import cascading.flow.hadoop.ProcessFlow;
+import cascading.flow.process.ProcessFlow;
 import cascading.tap.Tap;
 import cascading.tap.hive.HiveNullTap;
 import cascading.tap.hive.HivePartitionTap;

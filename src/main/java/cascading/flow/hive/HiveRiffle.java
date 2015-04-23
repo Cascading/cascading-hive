@@ -38,6 +38,7 @@ import java.util.concurrent.ThreadFactory;
 
 import cascading.CascadingException;
 import cascading.tap.Tap;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.QueryPlan;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.history.HiveHistory;
@@ -46,6 +47,7 @@ import org.apache.hadoop.mapreduce.Counter;
 import riffle.process.DependencyIncoming;
 import riffle.process.DependencyOutgoing;
 import riffle.process.ProcessChildren;
+import riffle.process.ProcessConfiguration;
 import riffle.process.ProcessComplete;
 import riffle.process.ProcessCounters;
 import riffle.process.ProcessStart;
@@ -156,6 +158,12 @@ class HiveRiffle implements CascadingHiveHistoryDecorator
   public Collection getIncoming()
     {
     return sources;
+    }
+
+  @ProcessConfiguration
+  public Configuration getConfiguration()
+    {
+    return driverFactory.getHiveConf();
     }
 
   @ProcessCounters
