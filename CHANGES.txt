@@ -1,11 +1,12 @@
 Cascading-Hive changelog
 
-1.1 (unreleased)
+1.1
 
+- support for Hive 1.0.0
 - added ability to capture and report task level counters in c.f.h.HiveRiffle
 - c.t.h.HiveTap throws a TapException when running on cluster and no remote metastore is configured. This avoids hard to
   debug inconsistency problems.
-- support for apache hive 0.14
+- support for apache Hive 0.14
 - c.f.h.HiveRiffle supports async start method
 - update to Cascading 2.7
 - c.f.h.HiveRiffle is no longer public
