@@ -5,6 +5,7 @@ import static org.apache.hadoop.hive.metastore.api.LockState.ACQUIRED;
 import static org.apache.hadoop.hive.metastore.api.LockState.NOT_ACQUIRED;
 import static org.apache.hadoop.hive.metastore.api.LockState.WAITING;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
@@ -17,6 +18,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Timer;
 
@@ -46,7 +49,9 @@ import cascading.tap.hive.LockManager.HeartbeatFactory;
 import cascading.tap.hive.LockManager.HeartbeatTimerTask;
 import cascading.tap.hive.LockManager.LockFailureListener;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Ordering;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LockManagerTest {
@@ -121,15 +126,16 @@ public class LockManagerTest {
     lockManager.acquireLock(configuration);
     verify(mockMetaStoreClient).lock(requestCaptor.capture());
     List<LockComponent> components = requestCaptor.getValue().getComponent();
+
     assertEquals(2, components.size());
-    assertEquals("db", components.get(0).getDbname());
-    assertEquals("one", components.get(0).getTablename());
-    assertEquals(LockType.SHARED_READ, components.get(0).getType());
-    assertEquals(LockLevel.TABLE, components.get(0).getLevel());
-    assertEquals("db", components.get(1).getDbname());
-    assertEquals("two", components.get(1).getTablename());
-    assertEquals(LockType.SHARED_READ, components.get(1).getType());
-    assertEquals(LockLevel.TABLE, components.get(1).getLevel());
+
+    LockComponent expected1 = new LockComponent(LockType.SHARED_READ, LockLevel.TABLE, "db");
+    expected1.setTablename("one");
+    assertTrue(components.contains(expected1));
+
+    LockComponent expected2 = new LockComponent(LockType.SHARED_READ, LockLevel.TABLE, "db");
+    expected2.setTablename("two");
+    assertTrue(components.contains(expected2));
   }
 
   @Test(expected = CascadingException.class)
@@ -274,14 +280,14 @@ public class LockManagerTest {
     lockManager.onCompleted(mockFlow);
     verify(mockMetaStoreClient).unlock(LOCK_ID);
   }
-  
+
   @Test
   public void testOnStopping() throws Exception {
     lockManager.onStarting(mockFlow);
     lockManager.onStopping(mockFlow);
     verify(mockMetaStoreClient, atLeastOnce()).unlock(LOCK_ID);
   }
-  
+
   @Test
   public void testFullLifecycle() throws Exception {
     lockManager.onStarting(mockFlow);
