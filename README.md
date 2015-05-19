@@ -4,7 +4,7 @@ Cascading-Hive is an integration between Apache Hive and Cascading. It currently
 has the following major features:
 
 - running Hive queries within a Cascade
-- reading from Hive tables within a Cascading Flow
+- reading from Hive tables within a Cascading Flow (including [transactional tables](https://cwiki.apache.org/confluence/display/Hive/Hive+Transactions))
 - writing/creating Hive tables from a Cascading Flow
 - writing/creating partitioned Hive tables from a Cascading Flow
 - deconstructing a Hive view into Taps
@@ -18,10 +18,11 @@ files.
 
 ## Hive dependency
 
-Cascading-Hive works with hive-0.10+. When using the maven dependency you have
-to specify the version of Hive you are using as a runtime dependency yourself.
-This is done to avoid classpath issues with the various Hadoop and Hive
-distributions in existence. See the `demo` project for an example.
+Cascading-Hive works with hive-0.10+ although hive-0.13+ is required for the reading
+of transactional tables. When using the maven dependency you have to specify the
+version of Hive you are using as a runtime dependency yourself. This is done to avoid
+classpath issues with the various Hadoop and Hive distributions in existence. See the
+`demo` project for an example.
 
 
 ## Installing
@@ -43,5 +44,8 @@ Cascading Flow. To work around this, you can create a table in Hive instead, and
 read from that within your Cascading Flow. This restriction might change in the
 future.
 
-Please also note also that Hive relies on the `hadoop` command being present in
-your `PATH` when it executes the queries on the Hadoop cluster.
+Also note that it is not yet possible to write to transactional tables and that
+the `HiveTap` will prevent any attempt to do so.
+
+Finally note that Hive relies on the `hadoop` command being present in your
+`PATH` when it executes the queries on the Hadoop cluster.

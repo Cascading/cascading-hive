@@ -25,10 +25,13 @@ import java.util.Arrays;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
+
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 /**
  * Tests for HivePartition
@@ -69,6 +72,18 @@ public class HivePartitionTest
     Tuple expected = new Tuple( "2014", "03", "31" );
     assertEquals( expected, te.getTuple() );
     }
+  
+
+  @Test
+  public void toTupleOrcTransactional() {
+    Fields partFields = new Fields( "continent", "country" );
+    HivePartition partition = new HivePartition( partFields );
+    TupleEntry te = new TupleEntry( partFields, Tuple.size( 2 ) );
+    partition.toTuple( "continent=Asia/country=India/base_0000006", te );
+    Tuple expected = new Tuple( "Asia", "India" );
+    assertEquals( expected, te.getTuple() );
+  }
+
 
   @Test
   public void testToHivePartition()

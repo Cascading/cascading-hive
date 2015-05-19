@@ -27,9 +27,13 @@ import java.util.HashMap;
 import cascading.HiveTestCase;
 import cascading.scheme.NullScheme;
 import cascading.tap.SinkMode;
+
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.common.ValidTxnList;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.txn.TxnDbUtil;
 import org.apache.hadoop.mapred.JobConf;
 import org.junit.Test;
 
@@ -144,7 +148,7 @@ public class HiveTapTest extends HiveTestCase
     HiveTableDescriptor desc = new HiveTableDescriptor( HiveTableDescriptor.HIVE_DEFAULT_DATABASE_NAME, "mytable9",
       new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"}, new String[]{},
-      ",", HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME, new Path( HIVE_WAREHOUSE_DIR + "/custompath" ) );
+      ",", HiveTableDescriptor.HIVE_DEFAULT_SERIALIZATION_LIB_NAME, new Path( dbFolder.getRoot().getAbsolutePath() + "/custompath" ) );
     HiveTap tap = new HiveTap( desc, new NullScheme() );
     tap.createResource( new JobConf() );
 
@@ -193,7 +197,6 @@ public class HiveTapTest extends HiveTestCase
     Partition result = client.getPartition( desc.getDatabaseName(), desc.getTableName(), Arrays.asList( "2" ) );
     assertNotNull( result );
     client.close();
-
     }
 
   @Test
@@ -206,6 +209,56 @@ public class HiveTapTest extends HiveTestCase
     assertEquals( "file:/tmp/myLocation", tap.getPath().toString() );
     }
 
+  @Test
+  public void testSetTransactionalConfig() throws Exception
+    {
+    HiveConf conf = new HiveConf();
+    TxnDbUtil.setConfValues(conf);
+    conf.setBoolVar(HiveConf.ConfVars.METASTORE_EXECUTE_SET_UGI, true);
+    conf.setBoolVar(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY, true);
+    conf.unset(ValidTxnList.VALID_TXNS_KEY);
+    TxnDbUtil.cleanDb();
+    TxnDbUtil.prepDb();
+    
+    HiveTableDescriptor desc = new HiveTableDescriptor( "myTableTx1", new String[]{"key"}, new String[]{"string"}, true );
+    HiveTap tap = new HiveTap( desc, new NullScheme() );
+    tap.sourceConfInit( null, conf );
+    
+    assertEquals( "0:", conf.get(ValidTxnList.VALID_TXNS_KEY) );
+    }
+  
+  @Test(expected = UnsupportedOperationException.class)
+  public void testSinkConfInitFailsForTransactional()
+    {
+    HiveTableDescriptor desc = new HiveTableDescriptor( "myTableTx2", new String[]{"key"}, new String[]{"string"}, true );
+    HiveTap tap = new HiveTap( desc, new NullScheme() );
+    tap.sinkConfInit( null, new JobConf() );
+    }
+  
+  @Test(expected = UnsupportedOperationException.class)
+  public void testOpenForWriteFailsForTransactional() throws IOException
+    {
+    HiveTableDescriptor desc = new HiveTableDescriptor( "myTableTx3", new String[]{"key"}, new String[]{"string"}, true );
+    HiveTap tap = new HiveTap( desc, new NullScheme() );
+    tap.openForWrite( null, null );
+    }
+  
+  @Test(expected = UnsupportedOperationException.class)
+  public void testCreateResourceFailsForTransactional() throws IOException
+    {
+    HiveTableDescriptor desc = new HiveTableDescriptor( "myTableTx4", new String[]{"key"}, new String[]{"string"}, true );
+    HiveTap tap = new HiveTap( desc, new NullScheme() );
+    tap.createResource( new JobConf() );
+    }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testDeleteResourceFailsForTransactional() throws IOException
+    {
+    HiveTableDescriptor desc = new HiveTableDescriptor( "myTableTx5", new String[]{"key"}, new String[]{"string"}, true );
+    HiveTap tap = new HiveTap( desc, new NullScheme() );
+    tap.deleteResource( new JobConf() );
+    }
+  
   private void assertTableExists( HiveTableDescriptor descriptor ) throws Exception
     {
     IMetaStoreClient client = createMetaStoreClient();

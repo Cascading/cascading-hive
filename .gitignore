@@ -12,6 +12,13 @@ build
 out
 TempStatsStore
 derby.log
+hive_warehouse
 metastore_db
 *.dot
 *.sw[a-z]
+
+# Eclipse files
+.classpath
+.settings
+.project
+.springBeans

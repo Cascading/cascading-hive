@@ -32,14 +32,17 @@ import cascading.scheme.Scheme;
 import cascading.scheme.hadoop.TextDelimited;
 import cascading.tuple.Fields;
 import junit.framework.Assert;
+
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertNotNull;
@@ -104,6 +107,15 @@ public class HiveTableDescriptorTest
 
 
   @Test
+  public void testToHiveTableTransactional()
+    {
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "myTable", new String[]{"key", "value"},
+      new String[]{"int", "STRING"}, true );
+    Table table = descriptor.toHiveTable();
+    assertEquals( true, Boolean.parseBoolean(table.getParameters().get(HiveTableDescriptor.HIVE_ACID_TABLE_PARAMETER_KEY)) );
+    }
+  
+  @Test
   public void testToHiveTableWithPartitioning()
     {
     HiveTableDescriptor descriptor = new HiveTableDescriptor( "mytable", new String[]{"key", "value"},
@@ -133,7 +145,15 @@ public class HiveTableDescriptorTest
     {
     HiveTableDescriptor descriptor = new HiveTableDescriptor( "mytable", new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"} );
-    assertEquals( new Fields( "one", "two", "three" ), descriptor.toFields() );
+    assertEquals( new Fields( Fields.names("one", "two", "three"), Fields.types(Integer.class, String.class, Boolean.class ) ), descriptor.toFields() );
+    }
+
+  @Test
+  public void testIsTransactional()
+    {
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "mytable", new String[]{"one", "two", "three"},
+        new String[]{"int", "string", "boolean"}, true );
+    assertEquals( true, descriptor.isTransactional() );
     }
 
   @Test
@@ -141,9 +161,16 @@ public class HiveTableDescriptorTest
     {
     HiveTableDescriptor descriptor = new HiveTableDescriptor( "mytable", new String[]{"one", "two", "three"},
       new String[]{"int", "string", "boolean"}, new String[]{"three"} );
-    assertEquals( new Fields( "one", "two" ), descriptor.toFields() );
+    assertEquals( new Fields( Fields.names( "one", "two" ), Fields.types(Integer.class, String.class) ), descriptor.toFields() );
     }
-
+  
+  @Test
+  public void testGetPartitionWithPartitionedTable()
+  {
+    HiveTableDescriptor descriptor = new HiveTableDescriptor( "mytable", new String[]{"one", "two", "three"},
+        new String[]{"int", "string", "boolean"}, new String[]{"three"} );
+    assertEquals( new Fields( Fields.names( "three" ), Fields.types(Boolean.class) ), descriptor.getPartition().getPartitionFields() );
+  }
 
   @Test
   public void testToSchemeWithDefaultDelimiter()
@@ -258,5 +285,31 @@ public class HiveTableDescriptorTest
 
     assertEquals( "file:/custom_path", descriptor.getLocation( "warehouse" ) );
     }
+  
+  @Test
+  public void testToTypeInfo() {
+    HiveTableDescriptor descriptor = new HiveTableDescriptor("myTable", new String[] { "key", "value" }, new String[] {
+        "int", "STRING" });
+    StructTypeInfo typeInfo = descriptor.toTypeInfo();
+    List<String> fieldNames = typeInfo.getAllStructFieldNames();
+    List<TypeInfo> typeInfos = typeInfo.getAllStructFieldTypeInfos();
+    
+    assertEquals(fieldNames, Arrays.asList("key", "value"));
+    assertEquals(typeInfos, Arrays.asList(PrimitiveObjectInspectorFactory.javaIntObjectInspector.getTypeInfo(), 
+        PrimitiveObjectInspectorFactory.javaStringObjectInspector.getTypeInfo()));
+  }
+  
+  @Test
+  public void testToTypeInfoIgnoresPartitions() {
+    HiveTableDescriptor descriptor = new HiveTableDescriptor("myTable", new String[] { "key", "value" }, new String[] {
+        "int", "STRING" }, new String[] { "key" } );
+    StructTypeInfo typeInfo = descriptor.toTypeInfo();
+    List<String> fieldNames = typeInfo.getAllStructFieldNames();
+    List<TypeInfo> typeInfos = typeInfo.getAllStructFieldTypeInfos();
+    
+    assertEquals(fieldNames, Arrays.asList("key"));
+    assertEquals(typeInfos, Arrays.asList(PrimitiveObjectInspectorFactory.javaIntObjectInspector.getTypeInfo()));
+  }
+  
   }
 
