@@ -20,29 +20,19 @@
 
 package cascading.tap.hive;
 
+import static cascading.tap.hive.HiveTableDescriptor.HIVE_ACID_TABLE_PARAMETER_KEY;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Properties;
 
-
-import cascading.CascadingException;
-import cascading.flow.hadoop.util.HadoopUtil;
-import cascading.property.AppProps;
-import cascading.scheme.Scheme;
-import cascading.tap.SinkMode;
-import cascading.tap.TapException;
-import cascading.tap.hadoop.Hfs;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.common.ValidTxnList;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
-import org.apache.hadoop.hive.metastore.HiveMetaHook;
-import org.apache.hadoop.hive.metastore.HiveMetaHookLoader;
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
-import org.apache.hadoop.hive.metastore.RetryingMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -52,9 +42,21 @@ import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
+import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import cascading.CascadingException;
+import cascading.flow.FlowProcess;
+import cascading.flow.hadoop.util.HadoopUtil;
+import cascading.property.AppProps;
+import cascading.scheme.Scheme;
+import cascading.tap.SinkMode;
+import cascading.tap.TapException;
+import cascading.tap.hadoop.Hfs;
+import cascading.tuple.TupleEntryCollector;
 
 /**
  * HiveTap is Tap implementation, which can create Hive tables on HDFS. HiveTap supports a strict mode, which will
@@ -90,14 +92,17 @@ public class HiveTap extends Hfs
   /** TableDescriptor for the table. */
   private final HiveTableDescriptor tableDescriptor;
 
-  /** HiveConf object */
-  private transient HiveConf hiveConf;
-
   /** strict mode enforces that an existing table has to match the given TableDescriptor */
   private boolean strict;
 
   /** last modified time */
   private long modifiedTime;
+
+  /** ACID property of this table */
+  private boolean transactional;
+
+  /** Provides IMetaStoreClient instances as needed. */
+  private MetaStoreClientFactory metaStoreClientFactory;
 
   /**
    * Constructs a new HiveTap instance.
@@ -120,12 +125,19 @@ public class HiveTap extends Hfs
    */
   public HiveTap( HiveTableDescriptor tableDesc, Scheme scheme, SinkMode mode, boolean strict )
     {
+    this(tableDesc, scheme, mode, strict, new MetaStoreClientFactory());
+    }
+  
+  HiveTap( HiveTableDescriptor tableDesc, Scheme scheme, SinkMode mode, boolean strict, MetaStoreClientFactory metaStoreClientFactory )
+  {
     super( scheme, null, mode );
     this.tableDescriptor = tableDesc;
     this.strict = strict;
+    this.metaStoreClientFactory = metaStoreClientFactory;
     setScheme( scheme );
     setFilesystemLocation();
-    }
+    setTransactional();
+  }
 
   @Override
   public boolean createResource( Configuration conf ) throws IOException
@@ -143,10 +155,11 @@ public class HiveTap extends Hfs
    */
   private boolean createHiveTable( Configuration configuration ) throws IOException
     {
+    forbidIfTransactional();
     IMetaStoreClient metaStoreClient = null;
     try
       {
-      metaStoreClient = createMetaStoreClient( configuration );
+      metaStoreClient = metaStoreClientFactory.newInstance( configuration );
       Table hiveTable = tableDescriptor.toHiveTable();
       try
         {
@@ -187,7 +200,7 @@ public class HiveTap extends Hfs
     IMetaStoreClient metaStoreClient = null;
     try
       {
-      metaStoreClient = createMetaStoreClient( conf );
+      metaStoreClient = metaStoreClientFactory.newInstance( conf );
       Table table = metaStoreClient.getTable( tableDescriptor.getDatabaseName(),
         tableDescriptor.getTableName() );
 
@@ -203,7 +216,7 @@ public class HiveTap extends Hfs
         // Check that the paths are the same
         FileSystem fs = FileSystem.get( conf );
         StorageDescriptor sd = table.getSd();
-        Path expectedPath = fs.makeQualified( new Path( tableDescriptor.getLocation( hiveConf.getVar( ConfVars.METASTOREWAREHOUSE ) ) ) );
+        Path expectedPath = fs.makeQualified( new Path( tableDescriptor.getLocation( HiveConfFactory.getHiveConf(conf).getVar( ConfVars.METASTOREWAREHOUSE ) ) ) );
         Path actualPath = fs.makeQualified( new Path( sd.getLocation() ) );
 
         if( !expectedPath.equals( actualPath ) )
@@ -217,6 +230,12 @@ public class HiveTap extends Hfs
             "table in MetaStore does not have same number of columns. expected %d got %d",
             tableDescriptor.getColumnNames().length - tableDescriptor.getPartitionKeys().length,
             schemaList.size() ) );
+        
+        if ( tableDescriptor.isTransactional() != Boolean.parseBoolean( table.getParameters().get( HIVE_ACID_TABLE_PARAMETER_KEY ) ) )
+          throw new HiveTableValidationException( String.format(
+              "table in MetaStore does not have the same ACID properties. expected %b got %b",
+              tableDescriptor.isTransactional(), Boolean.parseBoolean( table.getParameters().get( HIVE_ACID_TABLE_PARAMETER_KEY ) ) ) );
+        
         for( int index = 0; index < schemaList.size(); index++ )
           {
           FieldSchema schema = schemaList.get( index );
@@ -275,6 +294,7 @@ public class HiveTap extends Hfs
   @Override
   public boolean deleteResource( Configuration conf ) throws IOException
     {
+    forbidIfTransactional();
     // clean up HDFS
     super.deleteResource( conf );
 
@@ -282,7 +302,7 @@ public class HiveTap extends Hfs
     try
       {
       LOG.info( "dropping hive table {} in database {}", tableDescriptor.getTableName(), tableDescriptor.getDatabaseName() );
-      metaStoreClient = createMetaStoreClient( conf );
+      metaStoreClient = metaStoreClientFactory.newInstance( conf );
       metaStoreClient.dropTable( tableDescriptor.getDatabaseName(), tableDescriptor.getTableName(),
         true, true );
       }
@@ -330,7 +350,7 @@ public class HiveTap extends Hfs
     IMetaStoreClient metaStoreClient = null;
     try
       {
-      metaStoreClient = createMetaStoreClient( conf );
+      metaStoreClient = metaStoreClientFactory.newInstance( conf );
       metaStoreClient.add_partition( partition );
       }
     catch( MetaException exception )
@@ -399,7 +419,7 @@ public class HiveTap extends Hfs
     IMetaStoreClient metaStoreClient = null;
     try
       {
-      metaStoreClient = createMetaStoreClient( null );
+      metaStoreClient = metaStoreClientFactory.newInstance( null );
       Table table = metaStoreClient.getTable( tableDescriptor.getDatabaseName(),
         tableDescriptor.getTableName() );
       String path = table.getSd().getLocation();
@@ -411,7 +431,7 @@ public class HiveTap extends Hfs
       }
     catch( NoSuchObjectException exception )
       {
-      setStringPath( tableDescriptor.getLocation( hiveConf.getVar( ConfVars.METASTOREWAREHOUSE ) ) );
+      setStringPath( tableDescriptor.getLocation( HiveConfFactory.getHiveConf( null ).getVar( ConfVars.METASTOREWAREHOUSE ) ) );
       }
     catch( TException exception )
       {
@@ -425,30 +445,98 @@ public class HiveTap extends Hfs
     }
 
   /**
-   * Private helper method to create a IMetaStore client.
+   * Private method that sets the ACID state of the table. For an existing table it uses the
+   * value from the Hive MetaStore. Otherwise it uses the default location for Hive.
    *
-   * @return a new IMetaStoreClient
-   * @throws MetaException in case the creation fails.
-   */
-  private IMetaStoreClient createMetaStoreClient( Configuration configuration ) throws MetaException
+   * */
+  private void setTransactional()
     {
-    // it is a bit unclear if it is safe to re-use these instances, so we create a
-    // new one every time, to be sure
-    if( hiveConf == null )
-      hiveConf = new HiveConf();
-
-    if( configuration != null )
-      hiveConf.addResource( configuration );
-
-    return RetryingMetaStoreClient.getProxy( hiveConf,
-      new HiveMetaHookLoader()
+    // If the table already exists get the ACID state otherwise use the state from the table descriptor.
+    IMetaStoreClient metaStoreClient = null;
+    try
       {
-      @Override
-      public HiveMetaHook getHook( Table tbl ) throws MetaException
-        {
-        return null;
-        }
-      }, HiveMetaStoreClient.class.getName()
-    );
+      metaStoreClient = metaStoreClientFactory.newInstance( null );
+      Table table = metaStoreClient.getTable( tableDescriptor.getDatabaseName(),
+        tableDescriptor.getTableName() );
+      transactional = Boolean.parseBoolean( table.getParameters().get( HIVE_ACID_TABLE_PARAMETER_KEY ) );
+      }
+    catch( MetaException exception )
+      {
+      throw new CascadingException( exception );
+      }
+    catch( NoSuchObjectException exception )
+      {
+      transactional = tableDescriptor.isTransactional();
+      }
+    catch( TException exception )
+      {
+      throw new CascadingException( exception );
+      }
+    finally
+      {
+      if( metaStoreClient != null )
+        metaStoreClient.close();
+      }
     }
+  
+  @Override
+  public void sinkConfInit( FlowProcess<? extends Configuration> process, Configuration conf )
+    {
+    forbidIfTransactional();
+    super.sinkConfInit(process, conf);
+    }
+
+  @Override
+  public void sourceConfInit( FlowProcess<? extends Configuration> process, Configuration conf )
+    {
+    setTransactionalConfig(conf);
+    super.sourceConfInit(process, conf);
+    }
+
+
+  
+  @Override
+  public TupleEntryCollector openForWrite(FlowProcess<? extends Configuration> flowProcess, OutputCollector output)
+    throws IOException {
+    forbidIfTransactional();
+    return super.openForWrite(flowProcess, output);
+  }
+
+  private void forbidIfTransactional()
+    {
+    if ( transactional )
+      {
+      throw new UnsupportedOperationException( "Writing to an ACID table is not currently supported." );
+      }
+    }
+
+  void setTransactionalConfig(Configuration conf) {
+    if ( transactional )
+    {
+      IMetaStoreClient metaStoreClient = null;
+      try
+      {
+        metaStoreClient = metaStoreClientFactory.newInstance( conf );
+        ValidTxnList validTxnList = metaStoreClient.getValidTxns();
+        conf.set(ValidTxnList.VALID_TXNS_KEY, validTxnList.toString());
+        LOG.debug("Set ValidTxnList on conf: {}", validTxnList);
+        
+        conf.setInt(hive_metastoreConstants.BUCKET_COUNT, tableDescriptor.getBucketCount());
+        LOG.debug("Set bucket count on conf: {}", tableDescriptor.getBucketCount());
+      }
+      catch (MetaException exception)
+      {
+        throw new CascadingException( "Could not fetch transaction list from meta store.", exception );
+      }
+      catch (TException exception)
+      {
+        throw new CascadingException( "Could not fetch transaction list from meta store.", exception );
+      }
+    }
+  }
+
+  boolean isTransactional() {
+    return transactional;
+  }
+  
   }

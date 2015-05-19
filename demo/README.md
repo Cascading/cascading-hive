@@ -55,4 +55,24 @@ HiveFlow and selects data via JDBC from that view
 ### Running this application:
 
     >  yarn jar build/libs/cascading-hive-demo-1.0.jar cascading.hive.HiveViewDemo
+    
+    
+## cascading.hive.TransactionalTableDemo
+
+Demo that uses the [corc](https://github.com/HotelsDotCom/corc) library to read records from a transactional Hive table that is backed by
+an [ORC ACID](http://orc.apache.org/docs/acid.html) dataset. Also obtains a shared read lock to ensure
+consistent reads when other clients might be mutating the table or the
+system performs compactions. Be sure that your installation supports ACID
+and has been configured as described on the [Apache Hive Wiki](https://cwiki.apache.org/confluence/display/Hive/Hive+Transactions).
+
+### Running this application:
+
+    >  export YARN_OPTS="-Dhive.server.url=jdbc:hive2://localhost:10000/default \
+         -Dhive.server.user=root \
+         -Dhive.server.password=hadoop \
+         -Dhive.metastore.uris=thrift://sandbox.hortonworks.com:9083"
+    
+    >  yarn jar build/libs/cascading-hive-demo-1.0.jar cascading.hive.TransactionalTableDemo
+
+
 

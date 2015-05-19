@@ -106,12 +106,13 @@ class HivePartition extends DelimitedPartition
       return new String[]{};
     String[] split = getPattern().split( partitionString );
 
-    for( int index = 0; index < split.length; index++ )
+    String[] values = new String[ getPartitionFields().size() ];
+    for( int index = 0; index < getPartitionFields().size(); index++ )
       {
       String value = split[ index ].split( EQUALS )[ 1 ];
-      split[ index ] = value;
+      values[ index ] = value;
       }
-    return split;
+    return values;
     }
 
   @Override
@@ -119,7 +120,7 @@ class HivePartition extends DelimitedPartition
     {
     return "HivePartition{" +
       "delimiter='" + delimiter + '\'' +
-      "partitionFields='" + getPartitionFields() + '\'' +
+      ", partitionFields='" + getPartitionFields() + '\'' +
       '}';
     }
   }
