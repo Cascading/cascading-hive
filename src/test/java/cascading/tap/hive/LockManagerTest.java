@@ -18,8 +18,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Timer;
 
@@ -49,9 +47,7 @@ import cascading.tap.hive.LockManager.HeartbeatFactory;
 import cascading.tap.hive.LockManager.HeartbeatTimerTask;
 import cascading.tap.hive.LockManager.LockFailureListener;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Ordering;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LockManagerTest {
