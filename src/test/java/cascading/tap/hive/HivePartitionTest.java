@@ -71,6 +71,17 @@ public class HivePartitionTest
     }
 
   @Test
+  public void toTupleOrcTransactional()
+    {
+    Fields partFields = new Fields( "continent", "country" );
+    HivePartition partition = new HivePartition( partFields );
+    TupleEntry te = new TupleEntry( partFields, Tuple.size( 2 ) );
+    partition.toTuple( "continent=Asia/country=India/base_0000006", te );
+    Tuple expected = new Tuple( "Asia", "India" );
+    assertEquals( expected, te.getTuple() );
+    }
+
+  @Test
   public void testToHivePartition()
     {
     String[] columnNames = new String[]{"year", "month", "day", "customer", "event"};
@@ -88,6 +99,5 @@ public class HivePartitionTest
     assertEquals( Arrays.asList( "2014", "03", "31" ), part.getValues() );
     assertEquals( descriptor.toHiveTable().getSd(), part.getSd() );
     }
-
 
   }

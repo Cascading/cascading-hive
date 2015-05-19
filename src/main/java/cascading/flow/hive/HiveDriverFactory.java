@@ -83,7 +83,7 @@ public class HiveDriverFactory implements Serializable
     }
 
   /**
-   * Private helper method to return the HiveConf object.
+   * Helper method to return the HiveConf object.
    * @return the HiveConf object.
    */
    HiveConf getHiveConf()

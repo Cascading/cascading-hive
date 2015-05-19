@@ -26,6 +26,7 @@ import java.io.IOException;
 import cascading.flow.hive.HiveDriverFactory;
 import cascading.flow.hive.HiveQueryRunner;
 import cascading.flow.hive.HiveQueryRunnerForTesting;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaHook;
@@ -35,32 +36,40 @@ import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.RetryingMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Super class for tests interacting with hive and its MetaStore.
  */
-public class HiveTestCase extends PlatformTestCase
+abstract public class HiveTestCase extends PlatformTestCase
   {
   public final static File DERBY_HOME = new File( "build/test/derby" );
 
-  public final static String CWD = System.getProperty( "user.dir" );
+  @Rule
+  public TemporaryFolder dbFolder = new TemporaryFolder();
 
-  public final static String HIVE_WAREHOUSE_DIR = CWD + "/build/test/hive";
-
-  private HiveDriverFactory hiveDriverFactory = new HiveDriverFactoryForTesting( createHiveConf() );
+  private HiveDriverFactory hiveDriverFactory;
 
   private HiveConf hiveConf;
 
   @BeforeClass
-  public static void beforeClass() throws IOException
+  public static void createDerbyFolder() throws IOException
     {
     // do this once per class, otherwise we run into bizarre derby errors
     if( DERBY_HOME.exists() )
       FileUtils.deleteDirectory( DERBY_HOME );
     DERBY_HOME.mkdirs();
     System.setProperty( "derby.system.home", DERBY_HOME.getAbsolutePath() );
-    System.setProperty( HiveConf.ConfVars.METASTOREWAREHOUSE.varname, HIVE_WAREHOUSE_DIR );
+    }
+
+  @Before
+  public void before()
+    {
+    System.setProperty( HiveConf.ConfVars.METASTOREWAREHOUSE.varname, dbFolder.getRoot().getAbsolutePath() );
+    hiveDriverFactory = new HiveDriverFactoryForTesting( createHiveConf() );
     }
 
   /**
@@ -72,7 +81,8 @@ public class HiveTestCase extends PlatformTestCase
     if ( hiveConf == null )
       {
       hiveConf = new HiveConf();
-      hiveConf.set( HiveConf.ConfVars.METASTOREWAREHOUSE.varname, HIVE_WAREHOUSE_DIR );
+      hiveConf.set("fs.raw.impl", RawFileSystem.class.getName());
+      hiveConf.set( HiveConf.ConfVars.METASTOREWAREHOUSE.varname, dbFolder.getRoot().getAbsolutePath() );
       }
       return hiveConf;
     }

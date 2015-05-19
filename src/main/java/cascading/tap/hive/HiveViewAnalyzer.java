@@ -83,8 +83,8 @@ public class HiveViewAnalyzer implements Closeable
       int result = driver.compile( sql );
       if( result != 0 )
         {
-        throw new CascadingException( "unable to compile query '" + sql  + "'. Make sure that all tables in the view are" +
-          "already registered in the Hive MetaStore ");
+        throw new CascadingException( "unable to compile query '" + sql + "'. Make sure that all tables in the view are" +
+          "already registered in the Hive MetaStore " );
         }
       // the plan and the schema contain what we need to build proper taps/schemes/fields
       QueryPlan plan = driver.getPlan();

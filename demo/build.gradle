@@ -33,6 +33,17 @@ ext.hiveVersion = '1.0.0'
 group = "cascading"
 version = "1.0"
 
+sourceCompatibility = '1.7'
+targetCompatibility = '1.7'
+
+if (JavaVersion.current().isJava8Compatible()) {
+  allprojects {
+    tasks.withType(Javadoc) {
+      options.addStringOption('Xdoclint:none', '-quiet')
+    }
+  }
+}
+
 ext.timestamp = new SimpleDateFormat( "yyyyMMdd" ).format( new Date() )
 
 buildscript {
@@ -62,6 +73,7 @@ dependencies {
   // broken hive deps..
   compile group: 'sqlline', name: 'sqlline',  version: '1.1.6'
   compile group: 'cascading', name: 'cascading-hive', version: '2.0.0-wip-dev'
+  compile group: 'com.hotels', name: 'corc-cascading', version: '1.0.0'
 
   compile( group: 'org.apache.hive', name: 'hive-jdbc', version: hiveVersion  ){
     exclude group: 'sqline'

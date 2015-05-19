@@ -2,6 +2,7 @@ Cascading-Hive changelog
 
 2.0 (unreleased)
 
+- support for ORC+ACID files (Hive 0.13+)
 - update to Cascading 3.0
 
 1.1

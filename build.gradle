@@ -40,6 +40,16 @@ file( 'version.properties' ).withInputStream { versionProperties.load( it ) }
 group = 'cascading'
 version = releaseVersion
 
+sourceCompatibility = '1.7'
+targetCompatibility = '1.7'
+
+if (JavaVersion.current().isJava8Compatible()) {
+  allprojects {
+    tasks.withType(Javadoc) {
+      options.addStringOption('Xdoclint:none', '-quiet')
+    }
+  }
+}
 
 ext.timestamp = new SimpleDateFormat( "yyyyMMdd" ).format( new Date() )
 ext.buildDate = timestamp
@@ -76,7 +86,6 @@ dependencies {
   provided (group: 'org.apache.hive', name: 'hive-exec', version: hiveVersion){
       exclude group: 'com.google.guava'
   }
-  //provided group: 'com.google.guava', name: 'guava', version: '11.0'
 
   runtime group: 'xerces', name: 'xercesImpl', version: '2.9.1'
   runtime group: 'xalan', name: 'xalan', version: '2.7.1'
@@ -94,6 +103,8 @@ dependencies {
   testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion
   testCompile group: 'junit', name: 'junit', version: '4.12'
   testCompile group: 'org.mockito', name: 'mockito-all', version: '1.9.5'
+  testCompile group: 'com.hotels', name: 'corc-cascading', version: '1.0.0'
+
 
 }
 

@@ -41,15 +41,15 @@ public class HiveViewAnalyzerTest extends HiveTestCase
     Collection<Tap> taps = analyzer.asTaps( "select key from foobar" );
     assertEquals( 1, taps.size() );
     Hfs tap = (Hfs) taps.iterator().next();
-    assertEquals( HIVE_WAREHOUSE_DIR + "/foobar", tap.getPath().toString() );
+    assertEquals( dbFolder.getRoot().getAbsolutePath() + "/foobar", tap.getPath().toString() );
     runHiveQuery( "create view firstView as select key, value from foobar where key = '42' " );
     taps = analyzer.asTaps( "select key from firstView" );
     tap = (Hfs) taps.iterator().next();
-    assertEquals( HIVE_WAREHOUSE_DIR + "/foobar", tap.getPath().toString() );
+    assertEquals( dbFolder.getRoot().getAbsolutePath() + "/foobar", tap.getPath().toString() );
     runHiveQuery( "create view secondView as select key, value from firstView where value = 'magic' " );
     taps = analyzer.asTaps( "select key from firstView" );
     tap = (Hfs) taps.iterator().next();
-    assertEquals( HIVE_WAREHOUSE_DIR + "/foobar", tap.getPath().toString() );
+    assertEquals( dbFolder.getRoot().getAbsolutePath() + "/foobar", tap.getPath().toString() );
     }
 
   }
