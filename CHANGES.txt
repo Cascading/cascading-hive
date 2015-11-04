@@ -2,6 +2,7 @@ Cascading-Hive changelog
 
 2.0.1 (unreleased)
 
+- zse Cascading 3.0.2.
 - avoid NPE in c.t.h.HiveTap#createResource when used with c.f.h.HiveFlow.
 
 2.0
