@@ -33,7 +33,9 @@ import cascading.tap.Tap;
 import cascading.tap.hive.HiveNullTap;
 import cascading.tap.hive.HivePartitionTap;
 import cascading.tap.hive.HiveTap;
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * A subclass of ProcessFlow for running Hive queries.
@@ -151,7 +153,12 @@ public class HiveFlow extends ProcessFlow
       {
       Tap sink = getSink();
       if ( sink instanceof HiveTap || sink instanceof HivePartitionTap )
-        sink.createResource( getFlowProcess() );
+        {
+        Object conf = getFlowProcess().getConfig();
+        if( conf == null )
+          conf = new Configuration();
+        sink.createResource( conf );
+        }
       }
     catch( IOException exception )
       {

@@ -1,5 +1,9 @@
 Cascading-Hive changelog
 
+2.0.1 (unreleased)
+
+- avoid NPE in c.t.h.HiveTap#createResource when used with c.f.h.HiveFlow.
+
 2.0
 
 - support for ORC+ACID files (Hive 0.13+)
