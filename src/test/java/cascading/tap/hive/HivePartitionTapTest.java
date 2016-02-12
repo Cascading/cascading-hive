@@ -22,14 +22,24 @@ package cascading.tap.hive;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import cascading.flow.FlowProcess;
 import cascading.flow.hadoop.HadoopFlowProcess;
 import cascading.scheme.NullScheme;
+import cascading.scheme.Scheme;
 import cascading.tap.SinkMode;
 import cascading.tap.hadoop.io.MultiInputSplit;
 import cascading.tuple.TupleEntryCollector;
+
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.IMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.thrift.TException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -38,7 +48,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import cascading.CascadingException;
+
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -48,6 +62,7 @@ import static org.mockito.Mockito.when;
 public class HivePartitionTapTest
   {
 
+  private static final String DATABASE_NAME = "test_db";
   private static final String TABLE_NAME = "dual";
   private static final String[] COLUMN_NAMES = new String[]{"key", "val"};
   private static final String[] COLUMN_TYPES = new String[]{"int", "string"};
@@ -160,6 +175,130 @@ public class HivePartitionTapTest
     String folderUri = deltaFolder.getParentFile().toURI().toString();
     folderUri = folderUri.substring( 0, folderUri.length() - 1 );
     assertEquals( folderUri, identifier );
+    }
+
+  @Test
+  public void getChildPartitionIdentifiersReadAll() throws IOException, TException
+    {
+    HiveTableDescriptor tableDesc = new HiveTableDescriptor( DATABASE_NAME, TABLE_NAME, COLUMN_NAMES, COLUMN_TYPES,
+        PARTITION_KEYS );
+
+    MetaStoreClientFactory metaStoreClientFactory = mock( MetaStoreClientFactory.class );
+    IMetaStoreClient metaStoreClient = mock( IMetaStoreClient.class );
+    Table table = mock( Table.class );
+    StorageDescriptor tableStorageDescriptor = mock( StorageDescriptor.class );
+    Partition partition = mock( Partition.class );
+    StorageDescriptor partitionStorageDescriptor = mock( StorageDescriptor.class );
+
+    when( mockFlowProcess.getConfig() ).thenReturn( HiveConfFactory.getHiveConf( null ) );
+    when( metaStoreClientFactory.newInstance( any( HiveConf.class) ) ).thenReturn( metaStoreClient );
+    when( metaStoreClient.getTable( DATABASE_NAME, TABLE_NAME ) ).thenReturn( table );
+    when( table.getSd() ).thenReturn( tableStorageDescriptor );
+    when( tableStorageDescriptor.getLocation() ).thenReturn( "/base/path" );
+    when( metaStoreClient.listPartitions( DATABASE_NAME, TABLE_NAME, HivePartitionTap.NO_LIMIT ) )
+        .thenReturn( Arrays.asList( partition ) );
+    when( partition.getSd() ).thenReturn( partitionStorageDescriptor );
+    when( partitionStorageDescriptor.getLocation() ).thenReturn( "/base/path/key=0" );
+
+    Scheme scheme = new NullScheme();
+    SinkMode sinkMode = SinkMode.KEEP;
+    HiveTap hiveTap = new HiveTap( tableDesc, scheme, sinkMode, false, metaStoreClientFactory );
+    HivePartitionTap partitionTap = new HivePartitionTap( hiveTap );
+
+    String[] identifiers = partitionTap.getChildPartitionIdentifiers( mockFlowProcess, true );
+    assertEquals( 1, identifiers.length );
+    assertEquals( "/base/path/key=0", identifiers[0] );
+    }
+
+  @Test
+  public void getChildPartitionIdentifiersReadSelected() throws IOException, TException
+    {
+    HiveTableDescriptor tableDesc = new HiveTableDescriptor( DATABASE_NAME, TABLE_NAME, COLUMN_NAMES, COLUMN_TYPES,
+        PARTITION_KEYS );
+
+    MetaStoreClientFactory metaStoreClientFactory = mock( MetaStoreClientFactory.class );
+    IMetaStoreClient metaStoreClient = mock( IMetaStoreClient.class );
+    Table table = mock( Table.class );
+    StorageDescriptor tableStorageDescriptor = mock( StorageDescriptor.class );
+    Partition partition = mock( Partition.class );
+    StorageDescriptor partitionStorageDescriptor = mock( StorageDescriptor.class );
+
+    when( mockFlowProcess.getConfig() ).thenReturn( HiveConfFactory.getHiveConf( null ) );
+    when( metaStoreClientFactory.newInstance( any( HiveConf.class) ) ).thenReturn( metaStoreClient );
+    when( metaStoreClient.getTable( DATABASE_NAME, TABLE_NAME ) ).thenReturn( table );
+    when( table.getSd() ).thenReturn( tableStorageDescriptor );
+    when( tableStorageDescriptor.getLocation() ).thenReturn( "/base/path" );
+    when( metaStoreClient.getPartitionsByNames( DATABASE_NAME, TABLE_NAME, Arrays.asList( "key=0" ) ) )
+        .thenReturn( Arrays.asList( partition ) );
+    when( partition.getSd() ).thenReturn( partitionStorageDescriptor );
+    when( partitionStorageDescriptor.getLocation() ).thenReturn( "/base/path/key=0" );
+    when(partition.getValues()).thenReturn(Arrays.asList("0"));
+
+    Scheme scheme = new NullScheme();
+    SinkMode sinkMode = SinkMode.KEEP;
+    HiveTap hiveTap = new HiveTap( tableDesc, scheme, sinkMode, false, metaStoreClientFactory );
+    HivePartitionTap partitionTap = new HivePartitionTap( hiveTap, Arrays.asList( Arrays.asList( "0" ) ) );
+
+    String[] identifiers = partitionTap.getChildPartitionIdentifiers( mockFlowProcess, true );
+    assertEquals( 1, identifiers.length );
+    assertEquals( "/base/path/key=0", identifiers[0] );
+    }
+
+  @Test( expected = CascadingException.class )
+  public void getChildPartitionIdentifiersReadSelectedNotExistsFail() throws IOException, TException
+    {
+    HiveTableDescriptor tableDesc = new HiveTableDescriptor( DATABASE_NAME, TABLE_NAME, COLUMN_NAMES, COLUMN_TYPES,
+        PARTITION_KEYS );
+
+    MetaStoreClientFactory metaStoreClientFactory = mock( MetaStoreClientFactory.class );
+    IMetaStoreClient metaStoreClient = mock( IMetaStoreClient.class );
+    Table table = mock( Table.class );
+    StorageDescriptor tableStorageDescriptor = mock( StorageDescriptor.class );
+
+    when( mockFlowProcess.getConfig() ).thenReturn( HiveConfFactory.getHiveConf( null ) );
+    when( metaStoreClientFactory.newInstance( any( HiveConf.class) ) ).thenReturn( metaStoreClient );
+    when( metaStoreClient.getTable( DATABASE_NAME, TABLE_NAME ) ).thenReturn( table );
+    when( table.getSd() ).thenReturn( tableStorageDescriptor );
+    when( tableStorageDescriptor.getLocation() ).thenReturn( "/base/path" );
+    when( metaStoreClient.getPartitionsByNames( DATABASE_NAME, TABLE_NAME, Arrays.asList( "key=0" ) ) )
+        .thenReturn( new ArrayList<Partition>() );
+
+    Scheme scheme = new NullScheme();
+    SinkMode sinkMode = SinkMode.KEEP;
+    HiveTap hiveTap = new HiveTap( tableDesc, scheme, sinkMode, false, metaStoreClientFactory );
+    HivePartitionTap partitionTap = new HivePartitionTap( hiveTap, Arrays.asList( Arrays.asList( "0" ) ) );
+
+    partitionTap.getChildPartitionIdentifiers( mockFlowProcess, true );
+    }
+
+  @Test
+  public void getChildPartitionIdentifiersReadSelectedNotExistsOverride() throws IOException, TException
+    {
+    HiveTableDescriptor tableDesc = new HiveTableDescriptor( DATABASE_NAME, TABLE_NAME, COLUMN_NAMES, COLUMN_TYPES,
+        PARTITION_KEYS );
+
+    MetaStoreClientFactory metaStoreClientFactory = mock( MetaStoreClientFactory.class );
+    IMetaStoreClient metaStoreClient = mock( IMetaStoreClient.class );
+    Table table = mock( Table.class );
+    StorageDescriptor tableStorageDescriptor = mock( StorageDescriptor.class );
+
+    HiveConf hiveConf = HiveConfFactory.getHiveConf( null );
+    hiveConf.setBoolean(HivePartitionTap.FAIL_ON_MISSING_PARTITION, false);
+    when( mockFlowProcess.getConfig() ).thenReturn( hiveConf );
+    when( metaStoreClientFactory.newInstance( any( HiveConf.class) ) ).thenReturn( metaStoreClient );
+    when( metaStoreClient.getTable( DATABASE_NAME, TABLE_NAME ) ).thenReturn( table );
+    when( table.getSd() ).thenReturn( tableStorageDescriptor );
+    when( tableStorageDescriptor.getLocation() ).thenReturn( "/base/path" );
+    when( metaStoreClient.getPartitionsByNames( DATABASE_NAME, TABLE_NAME, Arrays.asList( "key=0" ) ) )
+        .thenReturn( new ArrayList<Partition>() );
+
+    Scheme scheme = new NullScheme();
+    SinkMode sinkMode = SinkMode.KEEP;
+    HiveTap hiveTap = new HiveTap( tableDesc, scheme, sinkMode, false, metaStoreClientFactory );
+    HivePartitionTap partitionTap = new HivePartitionTap( hiveTap, Arrays.asList( Arrays.asList( "0" ) ) );
+
+    String[] identifiers = partitionTap.getChildPartitionIdentifiers( mockFlowProcess, true );
+    assertEquals( 0, identifiers.length );
     }
 
   }

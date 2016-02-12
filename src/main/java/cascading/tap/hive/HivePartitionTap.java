@@ -21,6 +21,9 @@
 package cascading.tap.hive;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import cascading.CascadingException;
 import cascading.flow.FlowProcess;
@@ -29,12 +32,21 @@ import cascading.tap.TapException;
 import cascading.tap.hadoop.PartitionTap;
 import cascading.tap.hadoop.io.MultiInputSplit;
 import cascading.tuple.TupleEntryCollector;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.common.FileUtils;
+import org.apache.hadoop.hive.metastore.IMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
+import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.ql.io.AcidUtils;
 import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Subclass of PartitionTap which registers partitions created in a Cascading Flow in the HiveMetaStore. Since the
@@ -42,6 +54,14 @@ import org.apache.hadoop.mapred.OutputCollector;
  */
 public class HivePartitionTap extends PartitionTap
   {
+  private static final Logger LOG = LoggerFactory.getLogger(HivePartitionTap.class);
+
+  public static final String FAIL_ON_MISSING_PARTITION = "cascading.hive.partition.fail.missing";
+  static final boolean DEFAULT_FAIL_ON_MISSING_PARTITION = true;
+  static final short NO_LIMIT = -1;
+
+  private List<List<String>> selectedPartitionValues;
+
   /**
    * Constructs a new HivePartitionTap with the given HiveTap as the parent directory.
    *
@@ -61,6 +81,23 @@ public class HivePartitionTap extends PartitionTap
   public HivePartitionTap( HiveTap parent, SinkMode sinkMode )
     {
     super( parent, parent.getTableDescriptor().getPartition(), sinkMode );
+    }
+
+  /**
+   * Constructs a new HivePartitionTap with the given HiveTap as the parent directory and sourcing only the given
+   * partitions.
+   * <p>
+   * The provided {@code partitionValues} are expected in the Hive format. For example, if the Hive table has two partition
+   * columns then the inner {@link List} is the values for all the partition columns of one partition and the outer list is
+   * for all the partitions that are required. e.g. {@code [[p1_value1, p2_value1], [p1_value2, p2_value2]]}.
+   *
+   * @param parent The parent directory.
+   * @param partitionValues The partitions to read.
+   */
+  public HivePartitionTap( HiveTap parent, List<List<String>> selectedPartitionValues )
+    {
+    super( parent, parent.getTableDescriptor().getPartition() );
+    this.selectedPartitionValues = selectedPartitionValues;
     }
 
   @Override
@@ -121,6 +158,91 @@ public class HivePartitionTap extends PartitionTap
     {
     ( (HiveTap) getParent() ).setTransactionalConfig( conf );
     super.sourceConfInit( flowProcess, conf );
+    }
+
+
+  @Override
+  public String[] getChildPartitionIdentifiers( FlowProcess<? extends Configuration> flowProcess, boolean fullyQualified ) throws IOException
+    {
+    Configuration conf = flowProcess.getConfig();
+    IMetaStoreClient metaStoreClient = null;
+    try
+      {
+      metaStoreClient = ( (HiveTap) getParent() ).getMetaStoreClientFactory().newInstance( conf );
+      HiveTableDescriptor descriptor = ( (HiveTap) getParent() ).getTableDescriptor();
+
+      List<Partition> partitions;
+      LOG.info("Getting partitions from the Hive metastore");
+      if ( selectedPartitionValues == null || selectedPartitionValues.isEmpty() )
+        {
+        partitions = metaStoreClient.listPartitions( descriptor.getDatabaseName(), descriptor.getTableName(), NO_LIMIT );
+        }
+      else
+        {
+        partitions = getSelectedPartitions( metaStoreClient, descriptor, conf );
+        }
+
+      return getPartitionPaths( partitions );
+      }
+    catch ( TException exception )
+      {
+      throw new CascadingException( exception );
+      }
+    finally
+      {
+      if ( metaStoreClient != null )
+        {
+        metaStoreClient.close();
+        }
+      }
+    }
+
+  private List<Partition> getSelectedPartitions( IMetaStoreClient metaStoreClient, HiveTableDescriptor descriptor, Configuration conf ) throws NoSuchObjectException, MetaException, TException
+    {
+    List<String> selectedPartitionNames = new ArrayList<>();
+    List<String> partitionColumns = Arrays.asList( descriptor.getPartitionKeys() );
+    for ( List<String> partitionValues : selectedPartitionValues )
+      {
+      String partitionName = FileUtils.makePartName( partitionColumns, partitionValues );
+      selectedPartitionNames.add( partitionName );
+      }
+
+    List<Partition> partitions = metaStoreClient.getPartitionsByNames( descriptor.getDatabaseName(), descriptor.getTableName(), selectedPartitionNames );
+
+    for ( Partition partition : partitions )
+      {
+        String existingPartitionName = FileUtils.makePartName( partitionColumns, partition.getValues() );
+        selectedPartitionNames.remove( existingPartitionName );
+      }
+
+    if ( selectedPartitionNames.size() > 0 )
+      {
+      String message = "The following selected partitions do not exist: " + selectedPartitionNames;
+      if ( conf.getBoolean( FAIL_ON_MISSING_PARTITION, DEFAULT_FAIL_ON_MISSING_PARTITION ) )
+        {
+        throw new CascadingException( message );
+        }
+      else
+        {
+        LOG.warn( message );
+        }
+      }
+
+    return partitions;
+    }
+
+  private String[] getPartitionPaths( List<Partition> partitions )
+    {
+    if ( partitions.size() == 0 )
+      {
+      LOG.warn("No partitions have been selected for reading.");
+      }
+    List<String> childIdentifiers = new ArrayList<>(); 
+    for ( Partition partition : partitions )
+      {
+      childIdentifiers.add( partition.getSd().getLocation() );
+      }
+    return childIdentifiers.toArray( new String[childIdentifiers.size()] );
     }
 
   /**
