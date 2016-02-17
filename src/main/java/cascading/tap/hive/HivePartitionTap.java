@@ -87,12 +87,22 @@ public class HivePartitionTap extends PartitionTap
    * Constructs a new HivePartitionTap with the given HiveTap as the parent directory and sourcing only the given
    * partitions.
    * <p>
-   * The provided {@code partitionValues} are expected in the Hive format. For example, if the Hive table has two partition
-   * columns then the inner {@link List} is the values for all the partition columns of one partition and the outer list is
-   * for all the partitions that are required. e.g. {@code [[p1_value1, p2_value1], [p1_value2, p2_value2]]}.
+   * The provided {@code selectedPartitionValues} should be in the format expected by the Hive API. For example, if we
+   * have a table partitioned like this:
+   * <p>
+   * {@code ... PARTITIONED BY (foo string, bar string) ...}
+   * <p>
+   * Then one might select partitions like so:
+   * <pre>
+   * {@code 
+   * List<String> partition1 = Arrays.asList("foo1", "bar1");
+   * List<String> partition2 = Arrays.asList("foo2", "bar2");
+   * List<List<String>> partitions = Arrays.asList(partition1, partition2);
+   * }
+   * </pre>
    *
    * @param parent The parent directory.
-   * @param partitionValues The partitions to read.
+   * @param selectedPartitionValues The partitions to read.
    */
   public HivePartitionTap( HiveTap parent, List<List<String>> selectedPartitionValues )
     {
@@ -172,7 +182,7 @@ public class HivePartitionTap extends PartitionTap
       HiveTableDescriptor descriptor = ( (HiveTap) getParent() ).getTableDescriptor();
 
       List<Partition> partitions;
-      LOG.info("Getting partitions from the Hive metastore");
+      LOG.debug("Getting partitions from the Hive metastore");
       if ( selectedPartitionValues == null || selectedPartitionValues.isEmpty() )
         {
         partitions = metaStoreClient.listPartitions( descriptor.getDatabaseName(), descriptor.getTableName(), NO_LIMIT );
