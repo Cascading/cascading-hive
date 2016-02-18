@@ -26,8 +26,8 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'provided-base'
 
-ext.cascadingVersion = '3.0.3'
-ext.hadoopVersion = '2.6.2'
+ext.cascadingVersion = '3.0.4'
+ext.hadoopVersion = '2.6.4'
 ext.hiveVersion = '1.0.0'
 
 apply from: "etc/properties.gradle"
