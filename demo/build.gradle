@@ -86,6 +86,7 @@ dependencies {
   //compile group: 'org.apache.hive', name: 'hive-builtins', version: hiveVersion
 
   provided group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion
+  provided group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-common', version: hadoopVersion
   provided group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion
   provided group: 'org.slf4j', name: 'slf4j-api', version: '1.7.6'
   provided group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.6'

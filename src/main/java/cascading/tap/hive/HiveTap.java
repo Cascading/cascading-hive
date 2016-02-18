@@ -535,5 +535,10 @@ public class HiveTap extends Hfs
     {
     return transactional;
     }
+  
+  MetaStoreClientFactory getMetaStoreClientFactory()
+    {
+    return metaStoreClientFactory;
+    }
 
   }
