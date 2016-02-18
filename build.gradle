@@ -26,7 +26,7 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'provided-base'
 
-ext.cascadingVersion = '3.0.4'
+ext.cascadingVersion = '3.1.0-wip-+'
 ext.hadoopVersion = '2.6.4'
 ext.hiveVersion = '1.0.0'
 
@@ -103,7 +103,7 @@ dependencies {
   testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion
   testCompile group: 'junit', name: 'junit', version: '4.12'
   testCompile group: 'org.mockito', name: 'mockito-all', version: '1.9.5'
-  testCompile group: 'com.hotels', name: 'corc-cascading', version: '1.0.0'
+  testCompile group: 'com.hotels', name: 'corc-cascading', version: '1.1.0'
 
 
 }

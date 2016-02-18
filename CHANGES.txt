@@ -1,5 +1,10 @@
 Cascading-Hive changelog
 
+2.1 (unreleased)
+
+- update corc to 1.1
+
+
 2.0.1
 
 - use Cascading 3.0.4.
