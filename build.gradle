@@ -83,7 +83,7 @@ dependencies {
 
   compile group: 'cascading', name: 'cascading-hadoop2-mr1', version: cascadingVersion, changing: true
 
-  provided (group: 'org.apache.hive', name: 'hive-exec', version: hiveVersion){
+  provided (group: 'org.apache.hive.hcatalog', name: 'hive-webhcat-java-client', version: hiveVersion){
       exclude group: 'com.google.guava'
   }
 

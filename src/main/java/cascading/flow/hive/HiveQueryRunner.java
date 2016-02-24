@@ -22,7 +22,11 @@ package cascading.flow.hive;
 
 
 import cascading.CascadingException;
+
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
@@ -43,6 +47,12 @@ public class HiveQueryRunner implements Runnable, Callable<Throwable>
 
   /** The hive queries to run. */
   private final String queries[];
+  
+  /** Result of executed queries. */
+  private final List<Object>[] queryResults;
+  
+  /** Flag to enable fetching query results. */
+  private final boolean fetchQueryResults;
 
   /** Factory for creating Driver instances. */
   private final HiveDriverFactory driverFactory;
@@ -65,8 +75,42 @@ public class HiveQueryRunner implements Runnable, Callable<Throwable>
    */
   HiveQueryRunner( HiveDriverFactory driverFactory, String queries[] )
     {
+    this( driverFactory, queries, false );
+    }
+
+  /**
+   * Constructs a new HiveQueryRunner with the given HiveDriverFactory and queries.
+   *
+   * @param driverFactory     The HiveDriverFactory to use.
+   * @param queries           The queries to run.
+   * @param fetchQueryResults {@code true} if the results of each queries must be fetched, {@code false} otherwise.
+   */
+  @SuppressWarnings("unchecked")
+  HiveQueryRunner( HiveDriverFactory driverFactory, String queries[], boolean fetchQueryResults )
+    {
     this.driverFactory = driverFactory;
     this.queries = queries;
+    this.fetchQueryResults = fetchQueryResults;
+    queryResults = fetchQueryResults ? new List[queries.length] : null;
+    }
+
+  /**
+   * Returns an array of query results.
+   * <p>
+   * Each position of the array is a {@link List} of rows that corresponds to the results of the query at the same
+   * position in the given array of queries.
+   * </p>
+   * <p>
+   * This method can only be invoked if {@code fetchQueryResults} was set to {@code true} at construction time.
+   * </p>
+   * @return A {@link List} of rows each executed query.
+   * @throws IllegalStateException If {@code fetchQueryResults} was set to false in the constructor.
+   */
+  public List<Object>[] getQueryResults()
+    {
+    if ( !fetchQueryResults )
+      throw new IllegalStateException( "query results fetch is disabled" );
+    return queryResults;
     }
 
   @Override
@@ -77,14 +121,25 @@ public class HiveQueryRunner implements Runnable, Callable<Throwable>
     try
       {
       driver = driverFactory.createHiveDriver();
-
-      for (String query : queries )
+      if ( fetchQueryResults )
+        Arrays.fill(queryResults, null);
+      for ( int i=0; i<queries.length; i++ )
         {
-        LOG.info( "running hive query: '{}'", query );
-        currentQuery = query;
+        currentQuery = queries[i];
+        LOG.info( "running hive query: '{}'", currentQuery );
         CommandProcessorResponse response = driver.run( currentQuery );
         if( response.getResponseCode() != 0 )
           throw new CascadingException( "hive error '" + response.getErrorMessage() + "' while running query " + currentQuery );
+        if ( fetchQueryResults )
+          {
+          List<Object> results = new LinkedList<>();
+          if(!driver.getResults(results))
+            {
+            results = null;
+            LOG.info( "no results returned for hive query '{}'", currentQuery );
+            }
+          queryResults[i] = results;
+          }
         }
       }
     catch( CommandNeedRetryException exception )
@@ -93,6 +148,10 @@ public class HiveQueryRunner implements Runnable, Callable<Throwable>
         throw new CascadingException( "problem while executing hive queries: " + Arrays.toString( queries ), exception );
       else
         throw new CascadingException( "problem while executing hive query: " + currentQuery, exception );
+      }
+    catch ( IOException exception )
+      {
+      throw new CascadingException( "problem while fetching the results of hive query: " + currentQuery, exception );
       }
     finally
       {
