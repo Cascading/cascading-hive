@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2007-2015 Concurrent, Inc. All Rights Reserved.
+* Copyright (c) 2007-2016 Concurrent, Inc. All Rights Reserved.
 *
 * Project and contact information: http://www.cascading.org/
 *
@@ -18,12 +18,20 @@
 * limitations under the License.
 */
 
-package cascading.flow.hive;
+package cascading.tap.hcatalog;
 
-public class HiveQueryRunnerForTesting extends HiveQueryRunner
-  {
-  public HiveQueryRunnerForTesting( HiveDriverFactory driverFactory, String queries[], boolean fetchQueryResults )
-    {
-    super( driverFactory, queries, fetchQueryResults );
+import org.apache.hive.hcatalog.common.HCatException;
+import org.apache.hive.hcatalog.data.HCatRecord;
+
+import cascading.hadoop.mapred.InputFormatValueCopier;
+
+public class HCatInputFormatValueCopier implements InputFormatValueCopier<HCatRecord> {
+  @Override
+  public void copyValue(HCatRecord oldValue, HCatRecord newValue) {
+    try {
+      oldValue.copy(newValue);
+    } catch (HCatException e) {
+      throw new RuntimeException(e);
     }
   }
+}
