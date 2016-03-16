@@ -22,6 +22,7 @@ package cascading;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import cascading.flow.hive.HiveDriverFactory;
 import cascading.flow.hive.HiveQueryRunner;
@@ -46,6 +47,8 @@ import org.junit.rules.TemporaryFolder;
  */
 abstract public class HiveTestCase extends PlatformTestCase
   {
+  private static final long serialVersionUID = 1L;
+
   public final static File DERBY_HOME = new File( "build/test/derby" );
 
   @Rule
@@ -90,11 +93,13 @@ abstract public class HiveTestCase extends PlatformTestCase
   /**
    * Method for running ad-hoc query in tests.
    * @param query
+   * @return query results
    */
-  public void runHiveQuery( String query )
+  public List<Object> runHiveQuery( String query )
     {
-    HiveQueryRunner runner = new HiveQueryRunnerForTesting( hiveDriverFactory, new String[]{query} );
+    HiveQueryRunner runner = new HiveQueryRunnerForTesting( hiveDriverFactory, new String[]{query}, true );
     runner.run();
+    return runner.getQueryResults()[0];
     }
 
   /**

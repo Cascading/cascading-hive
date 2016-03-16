@@ -1,9 +1,7 @@
 /*
-* Copyright (c) 2007-2015 Concurrent, Inc. All Rights Reserved.
+* This file has been created with ideas taken from Twitter's elephant-bird v4.13:
 *
-* Project and contact information: http://www.cascading.org/
-*
-* This file is part of the Cascading project.
+* https://github.com/twitter/elephant-bird/tree/elephant-bird-4.13
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -18,12 +16,8 @@
 * limitations under the License.
 */
 
-package cascading.flow.hive;
+package cascading.hadoop.mapred;
 
-public class HiveQueryRunnerForTesting extends HiveQueryRunner
-  {
-  public HiveQueryRunnerForTesting( HiveDriverFactory driverFactory, String queries[], boolean fetchQueryResults )
-    {
-    super( driverFactory, queries, fetchQueryResults );
-    }
-  }
+public interface InputFormatValueCopier<T> {
+  public abstract void copyValue(T oldValue, T newValue);
+}

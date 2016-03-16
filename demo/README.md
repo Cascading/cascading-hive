@@ -74,3 +74,20 @@ and has been configured as described on the [Apache Hive Wiki](https://cwiki.apa
 
     >  yarn jar build/libs/cascading-hive-demo-1.0.jar cascading.hive.TransactionalTableDemo
 
+
+## cascading.hive.HCatTapDemo
+
+Demo that copies `access.log` into HDFS and makes it available in Hive as the table `default.access_log`. It
+uses a sink `HCatTap` to copy the data from the file to the table. Then `default.access_log` is read with a
+source `HCatTap` that selects _ASIA_ and _EU_ partitions and counts the number of records for each. The output
+is stored in `hdfs:/tmp/filtered_access.log/`.
+
+### Running this application:
+
+    >  export YARN_OPTS="-Dhive.server.url=jdbc:hive2://localhost:10000/default \
+         -Dhive.server.user=root \
+         -Dhive.server.password=hadoop \
+         -Dhive.metastore.uris=thrift://sandbox.hortonworks.com:9083"
+
+    >  yarn jar build/libs/cascading-hive-demo-1.0.jar cascading.hive.HCatTapDemo
+
