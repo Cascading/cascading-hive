@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2015 Concurrent, Inc. All Rights Reserved.
+ * Copyright (c) 2007-2016 Concurrent, Inc. All Rights Reserved.
  *
  * Project and contact information: http://www.cascading.org/
  *
@@ -81,7 +81,7 @@ public class HivePartitionTap extends PartitionTap
    * that have only delta files, there is no part on the path. Without this we lose our last partition path element in
    * this case.
    * <p/>
-   * See <a href="http://mail-archives.apache.org/mod_mbox/hive-user/201505.mbox/%3CCAC3gpCYxb4mnnFDTKXFP2XCT-chERx64iaAO6VpsnmU+SYoGuQ@mail.gmail.com%3E">this thread</a>.
+   * See <a href="http://mail-archives.apache.org/mod_mbox/hive-user/201605.mbox/%3CCAC3gpCYxb4mnnFDTKXFP2XCT-chERx64iaAO6VpsnmU+SYoGuQ@mail.gmail.com%3E">this thread</a>.
    */
   @Override
   protected String getCurrentIdentifier( FlowProcess<? extends Configuration> flowProcess )
