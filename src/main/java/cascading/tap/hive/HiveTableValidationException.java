@@ -29,6 +29,7 @@ public class HiveTableValidationException extends CascadingException
   {
   /**
    * Constructs a new HiveTableValidationException with he given message.
+   *
    * @param message The Exception message.
    */
   public HiveTableValidationException( String message )

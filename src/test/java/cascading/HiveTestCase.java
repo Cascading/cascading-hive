@@ -27,7 +27,6 @@ import java.util.List;
 import cascading.flow.hive.HiveDriverFactory;
 import cascading.flow.hive.HiveQueryRunner;
 import cascading.flow.hive.HiveQueryRunnerForTesting;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaHook;
@@ -77,21 +76,23 @@ abstract public class HiveTestCase extends PlatformTestCase
 
   /**
    * Creates a HiveConf object usable for testing.
+   *
    * @return a HiveConf object.
    */
   public HiveConf createHiveConf()
     {
-    if ( hiveConf == null )
+    if( hiveConf == null )
       {
       hiveConf = new HiveConf();
-      hiveConf.set("fs.raw.impl", RawFileSystem.class.getName());
+      hiveConf.set( "fs.raw.impl", RawFileSystem.class.getName() );
       hiveConf.set( HiveConf.ConfVars.METASTOREWAREHOUSE.varname, dbFolder.getRoot().getAbsolutePath() );
       }
-      return hiveConf;
+    return hiveConf;
     }
 
   /**
    * Method for running ad-hoc query in tests.
+   *
    * @param query
    * @return query results
    */
@@ -99,7 +100,7 @@ abstract public class HiveTestCase extends PlatformTestCase
     {
     HiveQueryRunner runner = new HiveQueryRunnerForTesting( hiveDriverFactory, new String[]{query}, true );
     runner.run();
-    return runner.getQueryResults()[0];
+    return runner.getQueryResults()[ 0 ];
     }
 
   /**
@@ -112,19 +113,18 @@ abstract public class HiveTestCase extends PlatformTestCase
 
   /**
    * Creates a new IMetaStoreClient for interacting with the MetaStore created in tests.
-   *
-   * */
+   */
   public IMetaStoreClient createMetaStoreClient() throws MetaException
     {
     return RetryingMetaStoreClient.getProxy( createHiveConf(),
       new HiveMetaHookLoader()
-      {
-      @Override
-      public HiveMetaHook getHook( Table tbl ) throws MetaException
         {
-        return null;
-        }
-      }, HiveMetaStoreClient.class.getName()
+        @Override
+        public HiveMetaHook getHook( Table tbl ) throws MetaException
+          {
+          return null;
+          }
+        }, HiveMetaStoreClient.class.getName()
     );
     }
 

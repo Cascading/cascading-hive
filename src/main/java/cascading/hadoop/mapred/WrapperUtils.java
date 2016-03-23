@@ -27,30 +27,37 @@ import org.apache.hadoop.mapreduce.TaskID;
 import org.apache.hadoop.mapreduce.TaskType;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 
-final class WrapperUtils {
+final class WrapperUtils
+  {
 
-  private WrapperUtils() {
-  }
-
-  static TaskAttemptContext getTaskAttemptContext(Configuration conf) {
-    TaskAttemptID taskAttemptID = TaskAttemptID.forName(conf.get("mapred.task.id"));
-    return new TaskAttemptContextImpl(conf, taskAttemptID);
-  }
-
-  static TaskAttemptContext getTaskAttemptContext(JobContext jobContext) {
-    Configuration conf = jobContext.getConfiguration();
-    TaskID taskId = new org.apache.hadoop.mapreduce.TaskID(jobContext.getJobID(), TaskType.MAP, 0);
-    TaskAttemptID taskAttemptId = new org.apache.hadoop.mapreduce.TaskAttemptID(taskId, 0);
-    return new TaskAttemptContextImpl(conf, taskAttemptId);
-  }
-
-  static State getState(int status) {
-    for (State value : State.values()) {
-      if (value.getValue() == status) {
-        return value;
-      }
+  private WrapperUtils()
+    {
     }
-    throw new IllegalStateException("Unknown status: " + status);
-  }
 
-}
+  static TaskAttemptContext getTaskAttemptContext( Configuration conf )
+    {
+    TaskAttemptID taskAttemptID = TaskAttemptID.forName( conf.get( "mapred.task.id" ) );
+    return new TaskAttemptContextImpl( conf, taskAttemptID );
+    }
+
+  static TaskAttemptContext getTaskAttemptContext( JobContext jobContext )
+    {
+    Configuration conf = jobContext.getConfiguration();
+    TaskID taskId = new org.apache.hadoop.mapreduce.TaskID( jobContext.getJobID(), TaskType.MAP, 0 );
+    TaskAttemptID taskAttemptId = new org.apache.hadoop.mapreduce.TaskAttemptID( taskId, 0 );
+    return new TaskAttemptContextImpl( conf, taskAttemptId );
+    }
+
+  static State getState( int status )
+    {
+    for( State value : State.values() )
+      {
+      if( value.getValue() == status )
+        {
+        return value;
+        }
+      }
+    throw new IllegalStateException( "Unknown status: " + status );
+    }
+
+  }

@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+
 package cascading.tap.hive;
 
 import java.util.Arrays;
@@ -25,7 +26,6 @@ import java.util.HashMap;
 import cascading.tap.partition.DelimitedPartition;
 import cascading.tuple.Fields;
 import cascading.tuple.TupleEntry;
-
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 
@@ -35,7 +35,7 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 class HivePartition extends DelimitedPartition
   {
 
-  /** separator of field and value in directory names for hive partitions*/
+  /** separator of field and value in directory names for hive partitions */
   private final static String EQUALS = "=";
 
   private String delimiter;
@@ -51,12 +51,12 @@ class HivePartition extends DelimitedPartition
     this.delimiter = getPattern().pattern();
     }
 
-
   /**
    * Creates a Hive MetaStore Partition object based on this Cascading partition and the table described by the given
    * HiveTableDescriptor.
-   * @param partitionString  The partition string
-   * @param tableDescriptor  The HiveTableDescriptor describing the table to which this partition belongs.
+   *
+   * @param partitionString The partition string
+   * @param tableDescriptor The HiveTableDescriptor describing the table to which this partition belongs.
    * @return a new Partition object, which can be written to the hive MetaStore.
    */
   Partition toHivePartition( String partitionString, HiveTableDescriptor tableDescriptor )
@@ -68,10 +68,9 @@ class HivePartition extends DelimitedPartition
       sd.setLocation( sd.getLocation() + "/" + partitionString );
 
     return new Partition( Arrays.asList( parse( partitionString ) ), tableDescriptor.getDatabaseName(),
-                          tableDescriptor.getTableName(), now, now, sd,
-                          new HashMap<String, String>() );
+      tableDescriptor.getTableName(), now, now, sd,
+      new HashMap<String, String>() );
     }
-
 
   @Override
   public void toTuple( String partition, TupleEntry tupleEntry )
@@ -86,7 +85,7 @@ class HivePartition extends DelimitedPartition
     {
     StringBuilder builder = new StringBuilder();
     Fields fields = getPartitionFields();
-    for ( int index = 0; index < fields.size(); index++ )
+    for( int index = 0; index < fields.size(); index++ )
       {
       String fieldName = fields.get( index ).toString();
       builder.append( fieldName ).append( EQUALS ).append( tupleEntry.getString( fieldName ) ).append( "/" );
@@ -97,12 +96,13 @@ class HivePartition extends DelimitedPartition
   /**
    * Parses a given partition String in the format '/key=value/otherKey=otherValue/' and returns the
    * values as an array of Strings in order of appearance.
+   *
    * @param partitionString The string to parse.
    * @return an array of Strings, but never <code>null</code>.
    */
-  private String [] parse( String partitionString )
+  private String[] parse( String partitionString )
     {
-    if ( partitionString == null )
+    if( partitionString == null )
       return new String[]{};
     String[] split = getPattern().split( partitionString );
 

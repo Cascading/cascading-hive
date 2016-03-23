@@ -38,7 +38,7 @@ public class HiveStepTest
   @Test
   public void testConstruction() throws Exception
     {
-    HiveStep step = new HiveStep( "id", Collections.<String, Map<String,Long>>emptyMap() );
+    HiveStep step = new HiveStep( "id", Collections.<String, Map<String, Long>>emptyMap() );
     ProcessWrapper processWrapper = new ProcessWrapper( step );
     assertTrue( processWrapper.hasCounters() );
     assertFalse( processWrapper.hasChildren() );

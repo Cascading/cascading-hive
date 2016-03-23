@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+
 package cascading.flow.hive;
 
 import java.io.Serializable;
@@ -41,7 +42,7 @@ public class HiveDriverFactory implements Serializable
   /** a HiveConf object. */
   protected transient HiveConf hiveConf;
 
-  /** decorator for the HiveHistory object to fetch counters.*/
+  /** decorator for the HiveHistory object to fetch counters. */
   private CascadingHiveHistoryDecorator hiveHistory;
 
   /** Initialises the HiveDriverFactory. */
@@ -66,7 +67,7 @@ public class HiveDriverFactory implements Serializable
    *
    * @return a new Driver instance.
    */
-  public Driver createHiveDriver( )
+  public Driver createHiveDriver()
     {
     SessionState sessionState = SessionState.start( getHiveConf() );
     if( hiveHistory != null )
@@ -84,14 +85,15 @@ public class HiveDriverFactory implements Serializable
 
   /**
    * Helper method to return the HiveConf object.
+   *
    * @return the HiveConf object.
    */
-   HiveConf getHiveConf()
+  HiveConf getHiveConf()
     {
-    if ( this.hiveConf == null )
+    if( this.hiveConf == null )
       {
       this.hiveConf = new HiveConf();
-      for ( Map.Entry<String, String> entry : properties.entrySet() )
+      for( Map.Entry<String, String> entry : properties.entrySet() )
         this.hiveConf.set( entry.getKey(), entry.getValue() );
       }
     return this.hiveConf;
@@ -99,6 +101,7 @@ public class HiveDriverFactory implements Serializable
 
   /**
    * Sets the CascadingHiveHistoryDecorator.
+   *
    * @param hiveHistory a CascadingHiveHistoryDecorator instance.
    */
   public void setCascadingHiveHistoryDecorator( CascadingHiveHistoryDecorator hiveHistory )

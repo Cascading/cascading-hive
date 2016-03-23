@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 import cascading.CascadingException;
 import cascading.flow.Flow;
 import cascading.flow.FlowListener;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
@@ -46,7 +45,6 @@ import org.apache.hadoop.hive.metastore.api.TxnAbortedException;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * Manages the state required to safely read from an ACID table.
@@ -75,7 +73,6 @@ public class LockManager implements FlowListener
     this.lockRetries = lockRetries;
     this.retryWaitSeconds = retryWaitSeconds;
     }
-
 
   static String getTableNames( Iterable<HiveTableDescriptor> descriptors )
     {
@@ -157,7 +154,7 @@ public class LockManager implements FlowListener
         {
         LockState state = response.getState();
         if( state == LockState.NOT_ACQUIRED || state == LockState.ABORT )
-          // I expect we'll only see NOT_ACQUIRED here?
+        // I expect we'll only see NOT_ACQUIRED here?
           break;
         if( state == LockState.ACQUIRED )
           {
@@ -273,13 +270,13 @@ public class LockManager implements FlowListener
   public interface LockFailureListener
     {
     static final LockFailureListener NULL_LISTENER = new LockFailureListener()
-    {
-    @Override
-    public void lockFailed( long lockId, Iterable<HiveTableDescriptor> tableDescriptors, Throwable t )
       {
-      LOG.warn( "Ignored lock failure: lockId=" + lockId + ", tables=" + getTableNames( tableDescriptors ), t );
-      }
-    };
+      @Override
+      public void lockFailed( long lockId, Iterable<HiveTableDescriptor> tableDescriptors, Throwable t )
+        {
+        LOG.warn( "Ignored lock failure: lockId=" + lockId + ", tables=" + getTableNames( tableDescriptors ), t );
+        }
+      };
 
     /** Called when the specified lock has failed. You should probably abort your job in this case. */
     void lockFailed( long lockId, Iterable<HiveTableDescriptor> tableDescriptors, Throwable t );

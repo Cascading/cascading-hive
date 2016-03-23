@@ -31,50 +31,62 @@ import org.apache.hadoop.mapreduce.task.JobContextImpl;
 import org.apache.hadoop.util.Progressable;
 import org.apache.hadoop.util.ReflectionUtils;
 
-public class OutputFormatWrapper<K, V> implements org.apache.hadoop.mapred.OutputFormat<K, V> {
+public class OutputFormatWrapper<K, V> implements org.apache.hadoop.mapred.OutputFormat<K, V>
+  {
 
   private static final String WRAPPED_MAPREDUCE_OUTPUT_FORMAT_CLASS = "wrapped.mapreduce.output.format.class";
   private static final String MAPRED_OUTPUT_FORMAT_CLASS = "mapred.output.format.class";
 
   protected OutputFormat<K, V> outputFormat;
 
-  public static <K, V> void setOutputFormat(Configuration conf, Class<? extends OutputFormat<K, V>> ouputFormatClass) {
-    conf.setClass(WRAPPED_MAPREDUCE_OUTPUT_FORMAT_CLASS, ouputFormatClass, OutputFormat.class);
-    conf.setClass(MAPRED_OUTPUT_FORMAT_CLASS, OutputFormatWrapper.class, org.apache.hadoop.mapred.OutputFormat.class);
-  }
+  public static <K, V> void setOutputFormat( Configuration conf, Class<? extends OutputFormat<K, V>> ouputFormatClass )
+    {
+    conf.setClass( WRAPPED_MAPREDUCE_OUTPUT_FORMAT_CLASS, ouputFormatClass, OutputFormat.class );
+    conf.setClass( MAPRED_OUTPUT_FORMAT_CLASS, OutputFormatWrapper.class, org.apache.hadoop.mapred.OutputFormat.class );
+    }
 
   @SuppressWarnings("unchecked")
-  OutputFormat<K, V> getOutputFormat(Configuration conf) {
-    if (outputFormat == null) {
+  OutputFormat<K, V> getOutputFormat( Configuration conf )
+    {
+    if( outputFormat == null )
+      {
       @SuppressWarnings("rawtypes")
-      Class<? extends OutputFormat> outputFormatClass = conf.getClass(WRAPPED_MAPREDUCE_OUTPUT_FORMAT_CLASS, null,
-          OutputFormat.class);
-      outputFormat = ReflectionUtils.newInstance(outputFormatClass, conf);
-    }
+      Class<? extends OutputFormat> outputFormatClass = conf.getClass( WRAPPED_MAPREDUCE_OUTPUT_FORMAT_CLASS, null,
+        OutputFormat.class );
+      outputFormat = ReflectionUtils.newInstance( outputFormatClass, conf );
+      }
     return outputFormat;
-  }
+    }
 
   @Override
-  public void checkOutputSpecs(FileSystem ignored, JobConf conf) throws IOException {
-    try {
-      JobContext jobContext = new JobContextImpl(conf, null);
-      getOutputFormat(conf).checkOutputSpecs(jobContext);
-    } catch (InterruptedException e) {
-      throw new IOException(e);
+  public void checkOutputSpecs( FileSystem ignored, JobConf conf ) throws IOException
+    {
+    try
+      {
+      JobContext jobContext = new JobContextImpl( conf, null );
+      getOutputFormat( conf ).checkOutputSpecs( jobContext );
+      }
+    catch( InterruptedException e )
+      {
+      throw new IOException( e );
+      }
     }
-  }
 
   @Override
-  public RecordWriter<K, V> getRecordWriter(FileSystem ignored, JobConf conf, String name, Progressable progress)
-    throws IOException {
-    try {
-      TaskAttemptContext taskAttemptContext = WrapperUtils.getTaskAttemptContext(conf);
-      org.apache.hadoop.mapreduce.RecordWriter<K, V> recordWriter = getOutputFormat(conf)
-          .getRecordWriter(taskAttemptContext);
-      return new RecordWriterWrapper<K, V>(recordWriter, taskAttemptContext);
-    } catch (InterruptedException e) {
-      throw new IOException(e);
+  public RecordWriter<K, V> getRecordWriter( FileSystem ignored, JobConf conf, String name, Progressable progress )
+    throws IOException
+    {
+    try
+      {
+      TaskAttemptContext taskAttemptContext = WrapperUtils.getTaskAttemptContext( conf );
+      org.apache.hadoop.mapreduce.RecordWriter<K, V> recordWriter = getOutputFormat( conf )
+        .getRecordWriter( taskAttemptContext );
+      return new RecordWriterWrapper<K, V>( recordWriter, taskAttemptContext );
+      }
+    catch( InterruptedException e )
+      {
+      throw new IOException( e );
+      }
     }
-  }
 
-}
+  }

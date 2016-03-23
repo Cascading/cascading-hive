@@ -55,13 +55,13 @@ class MetaStoreClientFactory implements Serializable
     HiveConf hiveConf = HiveConfFactory.getHiveConf( conf );
 
     return RetryingMetaStoreClient.getProxy( hiveConf, new HiveMetaHookLoader()
-    {
-    @Override
-    public HiveMetaHook getHook( Table tbl ) throws MetaException
       {
-      return null;
-      }
-    }, HiveMetaStoreClient.class.getName() );
+      @Override
+      public HiveMetaHook getHook( Table tbl ) throws MetaException
+        {
+        return null;
+        }
+      }, HiveMetaStoreClient.class.getName() );
     }
 
   }

@@ -31,7 +31,8 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.task.JobContextImpl;
 import org.apache.hadoop.util.ReflectionUtils;
 
-public class InputFormatWrapper<K, V> implements org.apache.hadoop.mapred.InputFormat<K, V> {
+public class InputFormatWrapper<K, V> implements org.apache.hadoop.mapred.InputFormat<K, V>
+  {
 
   private static final String INPUT_FORMAT_VALUE_COPIER_CLASS = "input.format.value.copier.class";
   private static final String WRAPPED_MAPREDUCE_INPUT_FORMAT_CLASS = "wrapped.mapreduce.input.format.class";
@@ -40,71 +41,88 @@ public class InputFormatWrapper<K, V> implements org.apache.hadoop.mapred.InputF
   protected InputFormat<K, V> inputFormat;
   protected InputFormatValueCopier<V> valueCopier = null;
 
-  public static <K, V> void setInputFormat(Configuration conf, Class<? extends InputFormat<K, V>> inputFormatClass) {
-    setInputFormat(conf, inputFormatClass, null);
-  }
-
-  public static <K, V> void setInputFormat(Configuration conf, Class<? extends InputFormat<K, V>> inputFormatClass,
-      Class<? extends InputFormatValueCopier<V>> valueCopierClass) {
-    conf.setClass(WRAPPED_MAPREDUCE_INPUT_FORMAT_CLASS, inputFormatClass, InputFormat.class);
-    conf.setClass(MAPRED_INPUT_FORMAT_CLASS, InputFormatWrapper.class, org.apache.hadoop.mapred.InputFormat.class);
-    if (valueCopierClass != null) {
-      conf.setClass(INPUT_FORMAT_VALUE_COPIER_CLASS, valueCopierClass, InputFormatValueCopier.class);
+  public static <K, V> void setInputFormat( Configuration conf, Class<? extends InputFormat<K, V>> inputFormatClass )
+    {
+    setInputFormat( conf, inputFormatClass, null );
     }
-  }
+
+  public static <K, V> void setInputFormat( Configuration conf, Class<? extends InputFormat<K, V>> inputFormatClass,
+                                            Class<? extends InputFormatValueCopier<V>> valueCopierClass )
+    {
+    conf.setClass( WRAPPED_MAPREDUCE_INPUT_FORMAT_CLASS, inputFormatClass, InputFormat.class );
+    conf.setClass( MAPRED_INPUT_FORMAT_CLASS, InputFormatWrapper.class, org.apache.hadoop.mapred.InputFormat.class );
+    if( valueCopierClass != null )
+      {
+      conf.setClass( INPUT_FORMAT_VALUE_COPIER_CLASS, valueCopierClass, InputFormatValueCopier.class );
+      }
+    }
 
   @SuppressWarnings("unchecked")
-  InputFormat<K, V> getInputFormat(Configuration conf) {
-    if (inputFormat == null) {
+  InputFormat<K, V> getInputFormat( Configuration conf )
+    {
+    if( inputFormat == null )
+      {
       @SuppressWarnings("rawtypes")
-      Class<? extends InputFormat> inputFormatClass = conf.getClass(WRAPPED_MAPREDUCE_INPUT_FORMAT_CLASS, null,
-          InputFormat.class);
-      inputFormat = ReflectionUtils.newInstance(inputFormatClass, conf);
-      if (conf.get(INPUT_FORMAT_VALUE_COPIER_CLASS) != null) {
+      Class<? extends InputFormat> inputFormatClass = conf.getClass( WRAPPED_MAPREDUCE_INPUT_FORMAT_CLASS, null,
+        InputFormat.class );
+      inputFormat = ReflectionUtils.newInstance( inputFormatClass, conf );
+      if( conf.get( INPUT_FORMAT_VALUE_COPIER_CLASS ) != null )
+        {
         @SuppressWarnings("rawtypes")
-        Class<? extends InputFormatValueCopier> copierClass = conf.getClass(INPUT_FORMAT_VALUE_COPIER_CLASS, null,
-            InputFormatValueCopier.class);
-        if (null != copierClass) {
-          valueCopier = ReflectionUtils.newInstance(copierClass, conf);
+        Class<? extends InputFormatValueCopier> copierClass = conf.getClass( INPUT_FORMAT_VALUE_COPIER_CLASS, null,
+          InputFormatValueCopier.class );
+        if( null != copierClass )
+          {
+          valueCopier = ReflectionUtils.newInstance( copierClass, conf );
+          }
         }
       }
-    }
     return inputFormat;
-  }
+    }
 
   @Override
-  public RecordReader<K, V> getRecordReader(InputSplit split, JobConf job, Reporter reporter) throws IOException {
-    return new RecordReaderWrapper<K, V>(getInputFormat(job), split, job, reporter, valueCopier);
-  }
+  public RecordReader<K, V> getRecordReader( InputSplit split, JobConf job, Reporter reporter ) throws IOException
+    {
+    return new RecordReaderWrapper<K, V>( getInputFormat( job ), split, job, reporter, valueCopier );
+    }
 
   @Override
-  public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
-    try {
-      List<org.apache.hadoop.mapreduce.InputSplit> splits = getInputFormat(job)
-          .getSplits(new JobContextImpl(job, null));
+  public InputSplit[] getSplits( JobConf job, int numSplits ) throws IOException
+    {
+    try
+      {
+      List<org.apache.hadoop.mapreduce.InputSplit> splits = getInputFormat( job )
+        .getSplits( new JobContextImpl( job, null ) );
 
-      if (splits == null) {
+      if( splits == null )
+        {
         return null;
-      }
-
-      InputSplit[] resultSplits = new InputSplit[splits.size()];
-      int i = 0;
-      for (org.apache.hadoop.mapreduce.InputSplit split : splits) {
-        if (split.getClass() == org.apache.hadoop.mapreduce.lib.input.FileSplit.class) {
-          org.apache.hadoop.mapreduce.lib.input.FileSplit mapreduceFileSplit = ((org.apache.hadoop.mapreduce.lib.input.FileSplit) split);
-          resultSplits[i++] = new FileSplit(mapreduceFileSplit.getPath(), mapreduceFileSplit.getStart(),
-              mapreduceFileSplit.getLength(), mapreduceFileSplit.getLocations());
-        } else {
-          InputSplitWrapper wrapper = new InputSplitWrapper(split);
-          wrapper.setConf(job);
-          resultSplits[i++] = wrapper;
         }
-      }
+
+      InputSplit[] resultSplits = new InputSplit[ splits.size() ];
+      int i = 0;
+      for( org.apache.hadoop.mapreduce.InputSplit split : splits )
+        {
+        if( split.getClass() == org.apache.hadoop.mapreduce.lib.input.FileSplit.class )
+          {
+          org.apache.hadoop.mapreduce.lib.input.FileSplit mapreduceFileSplit = ( (org.apache.hadoop.mapreduce.lib.input.FileSplit) split );
+          resultSplits[ i++ ] = new FileSplit( mapreduceFileSplit.getPath(), mapreduceFileSplit.getStart(),
+            mapreduceFileSplit.getLength(), mapreduceFileSplit.getLocations() );
+          }
+        else
+          {
+          InputSplitWrapper wrapper = new InputSplitWrapper( split );
+          wrapper.setConf( job );
+          resultSplits[ i++ ] = wrapper;
+          }
+        }
 
       return resultSplits;
 
-    } catch (InterruptedException e) {
-      throw new IOException(e);
+      }
+    catch( InterruptedException e )
+      {
+      throw new IOException( e );
+      }
     }
   }
-}

@@ -18,6 +18,7 @@
 
 package cascading.hadoop.mapred;
 
-public interface InputFormatValueCopier<T> {
-  public abstract void copyValue(T oldValue, T newValue);
-}
+public interface InputFormatValueCopier<T>
+  {
+  public abstract void copyValue( T oldValue, T newValue );
+  }

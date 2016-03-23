@@ -23,50 +23,60 @@ import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.StatusReporter;
 
-public class ReporterWrapper extends StatusReporter implements Reporter {
+public class ReporterWrapper extends StatusReporter implements Reporter
+  {
   private final Reporter reporter;
 
-  public ReporterWrapper(Reporter reporter) {
+  public ReporterWrapper( Reporter reporter )
+    {
     this.reporter = reporter;
-  }
+    }
 
   @Override
-  public Counters.Counter getCounter(Enum<?> name) {
-    return reporter.getCounter(name);
-  }
+  public Counters.Counter getCounter( Enum<?> name )
+    {
+    return reporter.getCounter( name );
+    }
 
   @Override
-  public Counters.Counter getCounter(String group, String name) {
-    return reporter.getCounter(group, name);
-  }
+  public Counters.Counter getCounter( String group, String name )
+    {
+    return reporter.getCounter( group, name );
+    }
 
   @Override
-  public void incrCounter(Enum<?> key, long amount) {
-    reporter.incrCounter(key, amount);
-  }
+  public void incrCounter( Enum<?> key, long amount )
+    {
+    reporter.incrCounter( key, amount );
+    }
 
   @Override
-  public void incrCounter(String group, String counter, long amount) {
-    reporter.incrCounter(group, counter, amount);
-  }
+  public void incrCounter( String group, String counter, long amount )
+    {
+    reporter.incrCounter( group, counter, amount );
+    }
 
   @Override
-  public InputSplit getInputSplit() throws UnsupportedOperationException {
+  public InputSplit getInputSplit() throws UnsupportedOperationException
+    {
     return reporter.getInputSplit();
-  }
+    }
 
   @Override
-  public void progress() {
+  public void progress()
+    {
     reporter.progress();
-  }
+    }
 
   @Override
-  public float getProgress() {
+  public float getProgress()
+    {
     throw new UnsupportedOperationException();
-  }
+    }
 
   @Override
-  public void setStatus(String status) {
-    reporter.setStatus(status);
+  public void setStatus( String status )
+    {
+    reporter.setStatus( status );
+    }
   }
-}

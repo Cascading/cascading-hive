@@ -33,7 +33,6 @@ import cascading.tap.Tap;
 import cascading.tap.hive.HiveNullTap;
 import cascading.tap.hive.HivePartitionTap;
 import cascading.tap.hive.HiveTap;
-import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 
@@ -45,15 +44,15 @@ public class HiveFlow extends ProcessFlow
   /**
    * Constructs a new HiveFlow object with the given name, queries, a list of source taps and sink.
    *
-   * @param name    The name of the flow.
-   * @param query The hive query to run.
-   * @param sources The source taps of the queries.
-   * @param sink    The sink of the queries.
+   * @param name       The name of the flow.
+   * @param query      The hive query to run.
+   * @param sources    The source taps of the queries.
+   * @param sink       The sink of the queries.
    * @param properties Properties to add to the hive conf when running the query such as performance options.
    */
-   public HiveFlow( String name, String query, Collection<Tap> sources, Tap sink, Map<String, String> properties )
+  public HiveFlow( String name, String query, Collection<Tap> sources, Tap sink, Map<String, String> properties )
     {
-    this( name, new HiveDriverFactory(properties), new String[]{query}, sources, sink );
+    this( name, new HiveDriverFactory( properties ), new String[]{query}, sources, sink );
     }
 
   /**
@@ -61,7 +60,7 @@ public class HiveFlow extends ProcessFlow
    * used when the Flow does not really have
    *
    * @param name    The name of the flow.
-   * @param query The hive query to run.
+   * @param query   The hive query to run.
    * @param sources The source taps of the queries.
    */
   public HiveFlow( String name, String query, Collection<Tap> sources )
@@ -93,7 +92,7 @@ public class HiveFlow extends ProcessFlow
    */
   public HiveFlow( String name, String queries[], Collection<Tap> sources, Tap sink, Map<String, String> properties )
     {
-    this( name, new HiveDriverFactory(properties), queries, sources, sink );
+    this( name, new HiveDriverFactory( properties ), queries, sources, sink );
     }
 
   /**
@@ -152,7 +151,7 @@ public class HiveFlow extends ProcessFlow
     try
       {
       Tap sink = getSink();
-      if ( sink instanceof HiveTap || sink instanceof HivePartitionTap )
+      if( sink instanceof HiveTap || sink instanceof HivePartitionTap )
         {
         Object conf = getFlowProcess().getConfig();
         if( conf == null )

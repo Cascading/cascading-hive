@@ -24,7 +24,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-import riffle.process.*;
+import riffle.process.DependencyIncoming;
+import riffle.process.DependencyOutgoing;
+import riffle.process.ProcessComplete;
+import riffle.process.ProcessCounters;
+import riffle.process.ProcessStart;
+import riffle.process.ProcessStop;
 
 /**
  * Class representing a step internal to Hive. The purpose is to report task level counters back to Cascading. Future
@@ -37,11 +42,12 @@ class HiveStep
   private final String id;
 
   /** counters associated with the task. */
-  private final Map<String, Map<String,Long>> counters;
+  private final Map<String, Map<String, Long>> counters;
 
   /**
    * Constructs a new HiveStep instance.
-   * @param id The id of the step.
+   *
+   * @param id       The id of the step.
    * @param counters Counters of the step.
    */
   HiveStep( String id, Map<String, Map<String, Long>> counters )
@@ -52,7 +58,6 @@ class HiveStep
     else
       this.counters = counters;
     }
-
 
   @DependencyIncoming
   public Collection incoming()

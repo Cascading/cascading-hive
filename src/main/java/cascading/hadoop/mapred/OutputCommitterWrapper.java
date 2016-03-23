@@ -25,73 +25,91 @@ import org.apache.hadoop.mapred.JobContext;
 import org.apache.hadoop.mapred.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 
-public class OutputCommitterWrapper extends org.apache.hadoop.mapred.OutputCommitter {
+public class OutputCommitterWrapper extends org.apache.hadoop.mapred.OutputCommitter
+  {
 
   private static final String MAPRED_OUTPUT_COMMITTER_CLASS = "mapred.output.committer.class";
 
   @SuppressWarnings("rawtypes")
   private final OutputFormatWrapper outputFormat = new OutputFormatWrapper();
 
-  public static void setOutputCommitter(Configuration conf) {
-    conf.setClass(MAPRED_OUTPUT_COMMITTER_CLASS, OutputCommitterWrapper.class, OutputCommitter.class);
-  }
+  public static void setOutputCommitter( Configuration conf )
+    {
+    conf.setClass( MAPRED_OUTPUT_COMMITTER_CLASS, OutputCommitterWrapper.class, OutputCommitter.class );
+    }
 
-  public static void unsetOutputCommitter(Configuration conf) {
-    conf.unset(MAPRED_OUTPUT_COMMITTER_CLASS);
-  }
+  public static void unsetOutputCommitter( Configuration conf )
+    {
+    conf.unset( MAPRED_OUTPUT_COMMITTER_CLASS );
+    }
 
-  private OutputCommitter getOutputCommitter(TaskAttemptContext taskAttemptContext) throws IOException {
-    try {
+  private OutputCommitter getOutputCommitter( TaskAttemptContext taskAttemptContext ) throws IOException
+    {
+    try
+      {
       Configuration conf = taskAttemptContext.getConfiguration();
-      return outputFormat.getOutputFormat(conf).getOutputCommitter(taskAttemptContext);
-    } catch (InterruptedException e) {
-      throw new IOException(e);
+      return outputFormat.getOutputFormat( conf ).getOutputCommitter( taskAttemptContext );
+      }
+    catch( InterruptedException e )
+      {
+      throw new IOException( e );
+      }
     }
-  }
 
-  private OutputCommitter getOutputCommitter(JobContext jobContext) throws IOException {
-    try {
+  private OutputCommitter getOutputCommitter( JobContext jobContext ) throws IOException
+    {
+    try
+      {
       Configuration conf = jobContext.getConfiguration();
-      return outputFormat.getOutputFormat(conf).getOutputCommitter(WrapperUtils.getTaskAttemptContext(jobContext));
-    } catch (InterruptedException e) {
-      throw new IOException(e);
+      return outputFormat.getOutputFormat( conf ).getOutputCommitter( WrapperUtils.getTaskAttemptContext( jobContext ) );
+      }
+    catch( InterruptedException e )
+      {
+      throw new IOException( e );
+      }
     }
-  }
 
   @Override
-  public void setupJob(JobContext jobContext) throws IOException {
-    getOutputCommitter(jobContext).setupJob(jobContext);
-  }
+  public void setupJob( JobContext jobContext ) throws IOException
+    {
+    getOutputCommitter( jobContext ).setupJob( jobContext );
+    }
 
   @Override
-  public void setupTask(TaskAttemptContext taskAttemptContext) throws IOException {
-    getOutputCommitter(taskAttemptContext).setupTask(taskAttemptContext);
-  }
+  public void setupTask( TaskAttemptContext taskAttemptContext ) throws IOException
+    {
+    getOutputCommitter( taskAttemptContext ).setupTask( taskAttemptContext );
+    }
 
   @Override
-  public boolean needsTaskCommit(TaskAttemptContext taskAttemptContext) throws IOException {
-    return getOutputCommitter(taskAttemptContext).needsTaskCommit(taskAttemptContext);
-  }
+  public boolean needsTaskCommit( TaskAttemptContext taskAttemptContext ) throws IOException
+    {
+    return getOutputCommitter( taskAttemptContext ).needsTaskCommit( taskAttemptContext );
+    }
 
   @Override
-  public void commitTask(TaskAttemptContext taskAttemptContext) throws IOException {
-    getOutputCommitter(taskAttemptContext).commitTask(taskAttemptContext);
-  }
+  public void commitTask( TaskAttemptContext taskAttemptContext ) throws IOException
+    {
+    getOutputCommitter( taskAttemptContext ).commitTask( taskAttemptContext );
+    }
 
   @Override
-  public void abortTask(TaskAttemptContext taskAttemptContext) throws IOException {
-    getOutputCommitter(taskAttemptContext).abortTask(taskAttemptContext);
-  }
+  public void abortTask( TaskAttemptContext taskAttemptContext ) throws IOException
+    {
+    getOutputCommitter( taskAttemptContext ).abortTask( taskAttemptContext );
+    }
 
   @Override
-  public void abortJob(JobContext jobContext, int status) throws IOException {
-    getOutputCommitter(jobContext).abortJob(jobContext, WrapperUtils.getState(status));
-  }
+  public void abortJob( JobContext jobContext, int status ) throws IOException
+    {
+    getOutputCommitter( jobContext ).abortJob( jobContext, WrapperUtils.getState( status ) );
+    }
 
   @Override
-  public void commitJob(JobContext jobContext) throws IOException {
-    unsetOutputCommitter(jobContext.getConfiguration());
-    getOutputCommitter(jobContext).commitJob(jobContext);
-  }
+  public void commitJob( JobContext jobContext ) throws IOException
+    {
+    unsetOutputCommitter( jobContext.getConfiguration() );
+    getOutputCommitter( jobContext ).commitJob( jobContext );
+    }
 
-}
+  }

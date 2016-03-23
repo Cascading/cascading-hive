@@ -24,7 +24,6 @@ import org.apache.hadoop.hive.ql.history.HiveHistory;
 
 /**
  * sub-interface of {@link HiveHistory } with Cascading specific methods.
- *
  */
 interface CascadingHiveHistoryDecorator extends HiveHistory
   {

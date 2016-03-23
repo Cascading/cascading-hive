@@ -20,7 +20,6 @@
 
 package cascading.flow.hive;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,7 +39,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import static org.mockito.Mockito.*;
-
 
 /**
  * Integration style tests, which bootstrap a set of tables and use them from cascading later on.

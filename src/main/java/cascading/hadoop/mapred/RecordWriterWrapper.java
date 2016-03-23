@@ -24,32 +24,42 @@ import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-class RecordWriterWrapper<K, V> implements org.apache.hadoop.mapred.RecordWriter<K, V> {
+class RecordWriterWrapper<K, V> implements org.apache.hadoop.mapred.RecordWriter<K, V>
+  {
 
   private final RecordWriter<K, V> recordWriter;
   private final TaskAttemptContext taskAttemptContext;
 
-  RecordWriterWrapper(RecordWriter<K, V> recordWriter, TaskAttemptContext taskAttemptContext) {
+  RecordWriterWrapper( RecordWriter<K, V> recordWriter, TaskAttemptContext taskAttemptContext )
+    {
     this.recordWriter = recordWriter;
     this.taskAttemptContext = taskAttemptContext;
-  }
+    }
 
   @Override
-  public void close(Reporter reporter) throws IOException {
-    try {
-      recordWriter.close(taskAttemptContext);
-    } catch (InterruptedException e) {
-      throw new IOException(e);
+  public void close( Reporter reporter ) throws IOException
+    {
+    try
+      {
+      recordWriter.close( taskAttemptContext );
+      }
+    catch( InterruptedException e )
+      {
+      throw new IOException( e );
+      }
     }
-  }
 
   @Override
-  public void write(K key, V value) throws IOException {
-    try {
-      recordWriter.write(key, value);
-    } catch (InterruptedException e) {
-      throw new IOException(e);
+  public void write( K key, V value ) throws IOException
+    {
+    try
+      {
+      recordWriter.write( key, value );
+      }
+    catch( InterruptedException e )
+      {
+      throw new IOException( e );
+      }
     }
-  }
 
-}
+  }

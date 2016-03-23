@@ -30,6 +30,13 @@ import java.lang.reflect.Type;
 import java.util.LinkedList;
 import java.util.List;
 
+import cascading.HiveTestCase;
+import cascading.flow.Flow;
+import cascading.pipe.Pipe;
+import cascading.scheme.hadoop.TextDelimited;
+import cascading.scheme.hcatalog.HCatScheme;
+import cascading.tap.hadoop.Hfs;
+import cascading.tuple.Fields;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -42,15 +49,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import cascading.HiveTestCase;
-import cascading.flow.Flow;
-import cascading.pipe.Pipe;
-import cascading.scheme.hadoop.TextDelimited;
-import cascading.scheme.hcatalog.HCatScheme;
-import cascading.tap.hadoop.Hfs;
-import cascading.tuple.Fields;
-
-public class HCatTapTest extends HiveTestCase {
+public class HCatTapTest extends HiveTestCase
+  {
 
   private static final long serialVersionUID = 1L;
 
@@ -69,159 +69,175 @@ public class HCatTapTest extends HiveTestCase {
   private Fields partitionFields;
 
   @Before
-  public void init() throws IOException {
-    try {
-      fileFolder = temp.newFolder("file");
-      tableFolder = temp.newFolder("table");
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+  public void init() throws IOException
+    {
+    try
+      {
+      fileFolder = temp.newFolder( "file" );
+      tableFolder = temp.newFolder( "table" );
+      }
+    catch( IOException e )
+      {
+      throw new RuntimeException( e );
+      }
+
+    runHiveQuery( String.format( "CREATE DATABASE %s", DATABASE_NAME ) );
+    runHiveQuery( String.format(
+      "CREATE TABLE %s.%s (foo STRING, bar INT) PARTITIONED BY (baz STRING) STORED AS ORC LOCATION '%s'",
+      DATABASE_NAME, TABLE_NAME, tableFolder.getCanonicalPath() ) );
+
+    dataFields = new Fields( new String[]{"foo", "bar"}, new Type[]{String.class, Integer.class} );
+    partitionFields = new Fields( "baz", String.class );
     }
-
-    runHiveQuery(String.format("CREATE DATABASE %s", DATABASE_NAME));
-    runHiveQuery(String.format(
-        "CREATE TABLE %s.%s (foo STRING, bar INT) PARTITIONED BY (baz STRING) STORED AS ORC LOCATION '%s'",
-        DATABASE_NAME, TABLE_NAME, tableFolder.getCanonicalPath()));
-
-    dataFields = new Fields(new String[] { "foo", "bar" }, new Type[] { String.class, Integer.class });
-    partitionFields = new Fields("baz", String.class);
-  }
 
   @After
-  public void cleanup() {
-    runHiveQuery(String.format("DROP TABLE IF EXISTS %s.%s", DATABASE_NAME, TABLE_NAME));
-    runHiveQuery(String.format("DROP TABLE IF EXISTS %s.%s", DATABASE_NAME, NEW_TABLE_NAME));
-    runHiveQuery(String.format("DROP DATABASE IF EXISTS %s", DATABASE_NAME));
-  }
-
-  @Test
-  public void resourceExists() throws Exception {
-    HCatTap source = new HCatTap(new HCatScheme(Fields.join(dataFields, partitionFields)), DATABASE_NAME, TABLE_NAME);
-    assertTrue(source.resourceExists(createHiveConf()));
-  }
-
-  @Test
-  public void resourceDoesNotExist() throws Exception {
-    HCatTap source = new HCatTap(new HCatScheme(Fields.join(dataFields, partitionFields)), DATABASE_NAME,
-        NEW_TABLE_NAME);
-    assertFalse(source.resourceExists(createHiveConf()));
-  }
-
-  @Test
-  public void modifiedTime() throws Exception {
-    HCatTap source = new HCatTap(new HCatScheme(Fields.join(dataFields, partitionFields)), DATABASE_NAME, TABLE_NAME);
-    assertTrue(source.getModifiedTime(createHiveConf()) > 0);
-  }
-
-  @Test
-  public void write() throws Exception {
-    try (Writer writer = new FileWriter(new File(fileFolder, "data"))) {
-      writer.write("a\t1\tx\nb\t2\ty\n");
+  public void cleanup()
+    {
+    runHiveQuery( String.format( "DROP TABLE IF EXISTS %s.%s", DATABASE_NAME, TABLE_NAME ) );
+    runHiveQuery( String.format( "DROP TABLE IF EXISTS %s.%s", DATABASE_NAME, NEW_TABLE_NAME ) );
+    runHiveQuery( String.format( "DROP DATABASE IF EXISTS %s", DATABASE_NAME ) );
     }
 
-    Fields fields = dataFields.append(partitionFields);
-    Hfs source = new Hfs(new TextDelimited(fields, "\t"), fileFolder.getCanonicalPath());
-
-    HCatTap sink = new HCatTap(new HCatScheme(Fields.join(dataFields, partitionFields)), DATABASE_NAME, TABLE_NAME);
-
-    Pipe pipe = new Pipe("pipe");
-    Flow flow = getPlatform().getFlowConnector(getProperties()).connect(source, sink, pipe);
-    flow.complete();
-
-    System.out.println(tableFolder.getAbsolutePath());
-
-    List<Partition> listPartitions = createMetaStoreClient().listPartitions(DATABASE_NAME, TABLE_NAME, (short) -1);
-    assertEquals(2, listPartitions.size());
-    assertEquals("x", listPartitions.get(0).getValues().get(0));
-    assertEquals("y", listPartitions.get(1).getValues().get(0));
-
-    List<Object> rows = runHiveQuery(String.format("SELECT * FROM %s.%s ORDER BY bar", DATABASE_NAME, TABLE_NAME));
-    assertEquals(2, rows.size());
-    assertEquals("a\t1\tx", rows.get(0));
-    assertEquals("b\t2\ty", rows.get(1));
-  }
+  @Test
+  public void resourceExists() throws Exception
+    {
+    HCatTap source = new HCatTap( new HCatScheme( Fields.join( dataFields, partitionFields ) ), DATABASE_NAME, TABLE_NAME );
+    assertTrue( source.resourceExists( createHiveConf() ) );
+    }
 
   @Test
-  public void read() throws Exception {
-    runHiveQuery(
-        String.format("INSERT INTO TABLE %s.%s PARTITION (baz='x') VALUES ('a','1')", DATABASE_NAME, TABLE_NAME));
-    runHiveQuery(
-        String.format("INSERT INTO TABLE %s.%s PARTITION (baz='y') VALUES ('b','2')", DATABASE_NAME, TABLE_NAME));
-
-    HCatTap source = new HCatTap(new HCatScheme(Fields.join(dataFields, partitionFields)), DATABASE_NAME, TABLE_NAME);
-
-    Fields fields = dataFields.append(partitionFields);
-    File output = new File(fileFolder, "data");
-    Hfs sink = new Hfs(new TextDelimited(fields, "\t"), output.getCanonicalPath());
-
-    Pipe pipe = new Pipe("pipe");
-    Flow flow = getPlatform().getFlowConnector(getProperties()).connect(source, sink, pipe);
-    flow.complete();
-
-    List<String> lines = readLines(new Path(output.getCanonicalPath()));
-    assertEquals(2, lines.size());
-    assertTrue("Expecting line 'a\t1\tx' but not found", lines.contains("a\t1\tx"));
-    assertTrue("Expecting line 'b\t2\ty' but not found", lines.contains("b\t2\ty"));
-  }
+  public void resourceDoesNotExist() throws Exception
+    {
+    HCatTap source = new HCatTap( new HCatScheme( Fields.join( dataFields, partitionFields ) ), DATABASE_NAME,
+      NEW_TABLE_NAME );
+    assertFalse( source.resourceExists( createHiveConf() ) );
+    }
 
   @Test
-  public void readWithFilter() throws Exception {
-    runHiveQuery(
-        String.format("INSERT INTO TABLE %s.%s PARTITION (baz='x') VALUES ('a','1')", DATABASE_NAME, TABLE_NAME));
-    runHiveQuery(
-        String.format("INSERT INTO TABLE %s.%s PARTITION (baz='y') VALUES ('b','2')", DATABASE_NAME, TABLE_NAME));
-
-    HCatTap source = new HCatTap(new HCatScheme(Fields.join(dataFields, partitionFields)), DATABASE_NAME, TABLE_NAME,
-        "baz='y'");
-
-    Fields fields = dataFields.append(partitionFields);
-    File output = new File(fileFolder, "data");
-    Hfs sink = new Hfs(new TextDelimited(fields, "\t"), output.getCanonicalPath());
-
-    Pipe pipe = new Pipe("pipe");
-    Flow flow = getPlatform().getFlowConnector(getProperties()).connect(source, sink, pipe);
-    flow.complete();
-
-    List<String> lines = readLines(new Path(output.getCanonicalPath()));
-    assertEquals(1, lines.size());
-    assertTrue("Expecting line 'b\t2\ty' but not found", lines.contains("b\t2\ty"));
-  }
+  public void modifiedTime() throws Exception
+    {
+    HCatTap source = new HCatTap( new HCatScheme( Fields.join( dataFields, partitionFields ) ), DATABASE_NAME, TABLE_NAME );
+    assertTrue( source.getModifiedTime( createHiveConf() ) > 0 );
+    }
 
   @Test
-  public void columnProjection() throws Exception {
-    runHiveQuery(
-        String.format("INSERT INTO TABLE %s.%s PARTITION (baz='x') VALUES ('a','1')", DATABASE_NAME, TABLE_NAME));
-    runHiveQuery(
-        String.format("INSERT INTO TABLE %s.%s PARTITION (baz='y') VALUES ('b','2')", DATABASE_NAME, TABLE_NAME));
-
-    Fields projectedFields = new Fields("bar", Integer.class);
-    HCatTap source = new HCatTap(new HCatScheme(Fields.join(projectedFields, partitionFields)), DATABASE_NAME,
-        TABLE_NAME, "baz='y'");
-
-    Fields fields = projectedFields.append(partitionFields);
-    File output = new File(fileFolder, "data");
-    Hfs sink = new Hfs(new TextDelimited(fields, "\t"), output.getCanonicalPath());
-
-    Pipe pipe = new Pipe("pipe");
-    Flow flow = getPlatform().getFlowConnector(getProperties()).connect(source, sink, pipe);
-    flow.complete();
-
-    List<String> lines = readLines(new Path(output.getCanonicalPath()));
-    assertEquals(1, lines.size());
-    assertTrue("Expecting line '2\ty' but not found", lines.contains("2\ty"));
-  }
-
-  private static List<String> readLines(Path path) throws Exception {
-    List<String> lines = new LinkedList<>();
-    LocalFileSystem fs = FileSystem.getLocal(new Configuration());
-    FileStatus[] statuses = fs.listStatus(path);
-    for (FileStatus status : statuses) {
-      BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(status.getPath())));
-      String line = null;
-      while ((line = br.readLine()) != null) {
-        lines.add(line);
+  public void write() throws Exception
+    {
+    try (Writer writer = new FileWriter( new File( fileFolder, "data" ) ))
+      {
+      writer.write( "a\t1\tx\nb\t2\ty\n" );
       }
-    }
-    return lines;
-  }
 
-}
+    Fields fields = dataFields.append( partitionFields );
+    Hfs source = new Hfs( new TextDelimited( fields, "\t" ), fileFolder.getCanonicalPath() );
+
+    HCatTap sink = new HCatTap( new HCatScheme( Fields.join( dataFields, partitionFields ) ), DATABASE_NAME, TABLE_NAME );
+
+    Pipe pipe = new Pipe( "pipe" );
+    Flow flow = getPlatform().getFlowConnector( getProperties() ).connect( source, sink, pipe );
+    flow.complete();
+
+    System.out.println( tableFolder.getAbsolutePath() );
+
+    List<Partition> listPartitions = createMetaStoreClient().listPartitions( DATABASE_NAME, TABLE_NAME, (short) -1 );
+    assertEquals( 2, listPartitions.size() );
+    assertEquals( "x", listPartitions.get( 0 ).getValues().get( 0 ) );
+    assertEquals( "y", listPartitions.get( 1 ).getValues().get( 0 ) );
+
+    List<Object> rows = runHiveQuery( String.format( "SELECT * FROM %s.%s ORDER BY bar", DATABASE_NAME, TABLE_NAME ) );
+    assertEquals( 2, rows.size() );
+    assertEquals( "a\t1\tx", rows.get( 0 ) );
+    assertEquals( "b\t2\ty", rows.get( 1 ) );
+    }
+
+  @Test
+  public void read() throws Exception
+    {
+    runHiveQuery(
+      String.format( "INSERT INTO TABLE %s.%s PARTITION (baz='x') VALUES ('a','1')", DATABASE_NAME, TABLE_NAME ) );
+    runHiveQuery(
+      String.format( "INSERT INTO TABLE %s.%s PARTITION (baz='y') VALUES ('b','2')", DATABASE_NAME, TABLE_NAME ) );
+
+    HCatTap source = new HCatTap( new HCatScheme( Fields.join( dataFields, partitionFields ) ), DATABASE_NAME, TABLE_NAME );
+
+    Fields fields = dataFields.append( partitionFields );
+    File output = new File( fileFolder, "data" );
+    Hfs sink = new Hfs( new TextDelimited( fields, "\t" ), output.getCanonicalPath() );
+
+    Pipe pipe = new Pipe( "pipe" );
+    Flow flow = getPlatform().getFlowConnector( getProperties() ).connect( source, sink, pipe );
+    flow.complete();
+
+    List<String> lines = readLines( new Path( output.getCanonicalPath() ) );
+    assertEquals( 2, lines.size() );
+    assertTrue( "Expecting line 'a\t1\tx' but not found", lines.contains( "a\t1\tx" ) );
+    assertTrue( "Expecting line 'b\t2\ty' but not found", lines.contains( "b\t2\ty" ) );
+    }
+
+  @Test
+  public void readWithFilter() throws Exception
+    {
+    runHiveQuery(
+      String.format( "INSERT INTO TABLE %s.%s PARTITION (baz='x') VALUES ('a','1')", DATABASE_NAME, TABLE_NAME ) );
+    runHiveQuery(
+      String.format( "INSERT INTO TABLE %s.%s PARTITION (baz='y') VALUES ('b','2')", DATABASE_NAME, TABLE_NAME ) );
+
+    HCatTap source = new HCatTap( new HCatScheme( Fields.join( dataFields, partitionFields ) ), DATABASE_NAME, TABLE_NAME,
+      "baz='y'" );
+
+    Fields fields = dataFields.append( partitionFields );
+    File output = new File( fileFolder, "data" );
+    Hfs sink = new Hfs( new TextDelimited( fields, "\t" ), output.getCanonicalPath() );
+
+    Pipe pipe = new Pipe( "pipe" );
+    Flow flow = getPlatform().getFlowConnector( getProperties() ).connect( source, sink, pipe );
+    flow.complete();
+
+    List<String> lines = readLines( new Path( output.getCanonicalPath() ) );
+    assertEquals( 1, lines.size() );
+    assertTrue( "Expecting line 'b\t2\ty' but not found", lines.contains( "b\t2\ty" ) );
+    }
+
+  @Test
+  public void columnProjection() throws Exception
+    {
+    runHiveQuery(
+      String.format( "INSERT INTO TABLE %s.%s PARTITION (baz='x') VALUES ('a','1')", DATABASE_NAME, TABLE_NAME ) );
+    runHiveQuery(
+      String.format( "INSERT INTO TABLE %s.%s PARTITION (baz='y') VALUES ('b','2')", DATABASE_NAME, TABLE_NAME ) );
+
+    Fields projectedFields = new Fields( "bar", Integer.class );
+    HCatTap source = new HCatTap( new HCatScheme( Fields.join( projectedFields, partitionFields ) ), DATABASE_NAME,
+      TABLE_NAME, "baz='y'" );
+
+    Fields fields = projectedFields.append( partitionFields );
+    File output = new File( fileFolder, "data" );
+    Hfs sink = new Hfs( new TextDelimited( fields, "\t" ), output.getCanonicalPath() );
+
+    Pipe pipe = new Pipe( "pipe" );
+    Flow flow = getPlatform().getFlowConnector( getProperties() ).connect( source, sink, pipe );
+    flow.complete();
+
+    List<String> lines = readLines( new Path( output.getCanonicalPath() ) );
+    assertEquals( 1, lines.size() );
+    assertTrue( "Expecting line '2\ty' but not found", lines.contains( "2\ty" ) );
+    }
+
+  private static List<String> readLines( Path path ) throws Exception
+    {
+    List<String> lines = new LinkedList<>();
+    LocalFileSystem fs = FileSystem.getLocal( new Configuration() );
+    FileStatus[] statuses = fs.listStatus( path );
+    for( FileStatus status : statuses )
+      {
+      BufferedReader br = new BufferedReader( new InputStreamReader( fs.open( status.getPath() ) ) );
+      String line = null;
+      while( ( line = br.readLine() ) != null )
+        {
+        lines.add( line );
+        }
+      }
+    return lines;
+    }
+
+  }

@@ -20,15 +20,13 @@
 
 package cascading.flow.hive;
 
-
-import cascading.CascadingException;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import cascading.CascadingException;
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
@@ -47,10 +45,10 @@ public class HiveQueryRunner implements Runnable, Callable<Throwable>
 
   /** The hive queries to run. */
   private final String queries[];
-  
+
   /** Result of executed queries. */
   private final List<Object>[] queryResults;
-  
+
   /** Flag to enable fetching query results. */
   private final boolean fetchQueryResults;
 
@@ -91,7 +89,7 @@ public class HiveQueryRunner implements Runnable, Callable<Throwable>
     this.driverFactory = driverFactory;
     this.queries = queries;
     this.fetchQueryResults = fetchQueryResults;
-    queryResults = fetchQueryResults ? new List[queries.length] : null;
+    queryResults = fetchQueryResults ? new List[ queries.length ] : null;
     }
 
   /**
@@ -103,12 +101,13 @@ public class HiveQueryRunner implements Runnable, Callable<Throwable>
    * <p>
    * This method can only be invoked if {@code fetchQueryResults} was set to {@code true} at construction time.
    * </p>
+   *
    * @return A {@link List} of rows each executed query.
    * @throws IllegalStateException If {@code fetchQueryResults} was set to false in the constructor.
    */
   public List<Object>[] getQueryResults()
     {
-    if ( !fetchQueryResults )
+    if( !fetchQueryResults )
       throw new IllegalStateException( "query results fetch is disabled" );
     return queryResults;
     }
@@ -121,35 +120,35 @@ public class HiveQueryRunner implements Runnable, Callable<Throwable>
     try
       {
       driver = driverFactory.createHiveDriver();
-      if ( fetchQueryResults )
-        Arrays.fill(queryResults, null);
-      for ( int i=0; i<queries.length; i++ )
+      if( fetchQueryResults )
+        Arrays.fill( queryResults, null );
+      for( int i = 0; i < queries.length; i++ )
         {
-        currentQuery = queries[i];
+        currentQuery = queries[ i ];
         LOG.info( "running hive query: '{}'", currentQuery );
         CommandProcessorResponse response = driver.run( currentQuery );
         if( response.getResponseCode() != 0 )
           throw new CascadingException( "hive error '" + response.getErrorMessage() + "' while running query " + currentQuery );
-        if ( fetchQueryResults )
+        if( fetchQueryResults )
           {
           List<Object> results = new LinkedList<>();
-          if(!driver.getResults(results))
+          if( !driver.getResults( results ) )
             {
             results = null;
             LOG.info( "no results returned for hive query '{}'", currentQuery );
             }
-          queryResults[i] = results;
+          queryResults[ i ] = results;
           }
         }
       }
     catch( CommandNeedRetryException exception )
       {
-      if (currentQuery == null)
+      if( currentQuery == null )
         throw new CascadingException( "problem while executing hive queries: " + Arrays.toString( queries ), exception );
       else
         throw new CascadingException( "problem while executing hive query: " + currentQuery, exception );
       }
-    catch ( IOException exception )
+    catch( IOException exception )
       {
       throw new CascadingException( "problem while fetching the results of hive query: " + currentQuery, exception );
       }

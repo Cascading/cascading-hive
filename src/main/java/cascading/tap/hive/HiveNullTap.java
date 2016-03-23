@@ -48,10 +48,11 @@ public class HiveNullTap extends Tap
   private final String identifier;
 
   /** null scheme */
-  private final Scheme scheme = new NullScheme(  );
+  private final Scheme scheme = new NullScheme();
 
   /**
    * Constructs a new HiveNullTap with the given identifier.
+   *
    * @param identifier
    */
   private HiveNullTap( String identifier )
@@ -102,7 +103,7 @@ public class HiveNullTap extends Tap
     }
 
   @Override
-  public Scheme getScheme ()
+  public Scheme getScheme()
     {
     return scheme;
     }

@@ -33,110 +33,137 @@ import org.apache.hadoop.io.serializer.Serializer;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.util.ReflectionUtils;
 
-class InputSplitWrapper implements InputSplit, Configurable {
+class InputSplitWrapper implements InputSplit, Configurable
+  {
 
   org.apache.hadoop.mapreduce.InputSplit inputSplit;
   private Configuration conf;
 
-  public InputSplitWrapper() {
-  }
+  public InputSplitWrapper()
+    {
+    }
 
-  public InputSplitWrapper(org.apache.hadoop.mapreduce.InputSplit inputSplit) {
+  public InputSplitWrapper( org.apache.hadoop.mapreduce.InputSplit inputSplit )
+    {
     this.inputSplit = inputSplit;
-  }
+    }
 
   @Override
-  public long getLength() throws IOException {
-    try {
+  public long getLength() throws IOException
+    {
+    try
+      {
       return inputSplit.getLength();
-    } catch (InterruptedException e) {
-      throw new IOException(e);
+      }
+    catch( InterruptedException e )
+      {
+      throw new IOException( e );
+      }
     }
-  }
 
   @Override
-  public String[] getLocations() throws IOException {
-    try {
+  public String[] getLocations() throws IOException
+    {
+    try
+      {
       return inputSplit.getLocations();
-    } catch (InterruptedException e) {
-      throw new IOException(e);
+      }
+    catch( InterruptedException e )
+      {
+      throw new IOException( e );
+      }
     }
-  }
 
   @Override
-  public void readFields(DataInput in) throws IOException {
-    inputSplit = deserializeInputSplit(conf, (DataInputStream) in);
-  }
+  public void readFields( DataInput in ) throws IOException
+    {
+    inputSplit = deserializeInputSplit( conf, (DataInputStream) in );
+    }
 
   @Override
-  public void write(DataOutput out) throws IOException {
-    serializeInputSplit(conf, (DataOutputStream) out, inputSplit);
-  }
+  public void write( DataOutput out ) throws IOException
+    {
+    serializeInputSplit( conf, (DataOutputStream) out, inputSplit );
+    }
 
   @Override
-  public void setConf(Configuration conf) {
+  public void setConf( Configuration conf )
+    {
     this.conf = conf;
-  }
+    }
 
   @Override
-  public Configuration getConf() {
+  public Configuration getConf()
+    {
     return conf;
-  }
+    }
 
-  public static void serializeInputSplit(Configuration conf, DataOutputStream out,
-      org.apache.hadoop.mapreduce.InputSplit inputSplit2)
-    throws IOException {
-    Class<? extends InputSplit> clazz = inputSplit2.getClass().asSubclass(InputSplit.class);
-    Text.writeString(out, clazz.getName());
-    SerializationFactory factory = new SerializationFactory(conf);
-    Serializer serializer = factory.getSerializer(clazz);
-    serializer.open(out instanceof UncloseableDataOutputStream ? out : new UncloseableDataOutputStream(out));
-    serializer.serialize(inputSplit2);
-  }
+  public static void serializeInputSplit( Configuration conf, DataOutputStream out,
+                                          org.apache.hadoop.mapreduce.InputSplit inputSplit2 )
+    throws IOException
+    {
+    Class<? extends InputSplit> clazz = inputSplit2.getClass().asSubclass( InputSplit.class );
+    Text.writeString( out, clazz.getName() );
+    SerializationFactory factory = new SerializationFactory( conf );
+    Serializer serializer = factory.getSerializer( clazz );
+    serializer.open( out instanceof UncloseableDataOutputStream ? out : new UncloseableDataOutputStream( out ) );
+    serializer.serialize( inputSplit2 );
+    }
 
-  public static org.apache.hadoop.mapreduce.InputSplit deserializeInputSplit(Configuration conf, DataInputStream in)
-    throws IOException {
-    String name = Text.readString(in);
+  public static org.apache.hadoop.mapreduce.InputSplit deserializeInputSplit( Configuration conf, DataInputStream in )
+    throws IOException
+    {
+    String name = Text.readString( in );
     Class<? extends org.apache.hadoop.mapreduce.InputSplit> clazz;
-    try {
-      clazz = conf.getClassByName(name).asSubclass(org.apache.hadoop.mapreduce.InputSplit.class);
-    } catch (ClassNotFoundException e) {
-      throw new IOException("Could not find class for deserialized class name: " + name, e);
+    try
+      {
+      clazz = conf.getClassByName( name ).asSubclass( org.apache.hadoop.mapreduce.InputSplit.class );
+      }
+    catch( ClassNotFoundException e )
+      {
+      throw new IOException( "Could not find class for deserialized class name: " + name, e );
+      }
+    return deserializeInputSplitInternal( conf,
+      in instanceof UncloseableDataInputStream ? in : new UncloseableDataInputStream( in ), clazz );
     }
-    return deserializeInputSplitInternal(conf,
-        in instanceof UncloseableDataInputStream ? in : new UncloseableDataInputStream(in), clazz);
-  }
 
-  private static <T extends org.apache.hadoop.mapreduce.InputSplit> T deserializeInputSplitInternal(Configuration conf,
-      DataInputStream in, Class<T> clazz)
-    throws IOException {
-    T split = ReflectionUtils.newInstance(clazz, conf);
-    SerializationFactory factory = new SerializationFactory(conf);
-    Deserializer<T> deserializer = factory.getDeserializer(clazz);
-    deserializer.open(in instanceof UncloseableDataInputStream ? in : new UncloseableDataInputStream(in));
-    return deserializer.deserialize(split);
-  }
-
-  private static class UncloseableDataOutputStream extends DataOutputStream {
-    public UncloseableDataOutputStream(DataOutputStream os) {
-      super(os);
+  private static <T extends org.apache.hadoop.mapreduce.InputSplit> T deserializeInputSplitInternal( Configuration conf,
+                                                                                                     DataInputStream in, Class<T> clazz )
+    throws IOException
+    {
+    T split = ReflectionUtils.newInstance( clazz, conf );
+    SerializationFactory factory = new SerializationFactory( conf );
+    Deserializer<T> deserializer = factory.getDeserializer( clazz );
+    deserializer.open( in instanceof UncloseableDataInputStream ? in : new UncloseableDataInputStream( in ) );
+    return deserializer.deserialize( split );
     }
+
+  private static class UncloseableDataOutputStream extends DataOutputStream
+    {
+    public UncloseableDataOutputStream( DataOutputStream os )
+      {
+      super( os );
+      }
 
     @Override
-    public void close() {
+    public void close()
+      {
       // We don't want classes given this stream to close it
+      }
     }
-  }
 
-  private static class UncloseableDataInputStream extends DataInputStream {
-    public UncloseableDataInputStream(DataInputStream is) {
-      super(is);
-    }
+  private static class UncloseableDataInputStream extends DataInputStream
+    {
+    public UncloseableDataInputStream( DataInputStream is )
+      {
+      super( is );
+      }
 
     @Override
-    public void close() {
+    public void close()
+      {
       // We don't want classes given this stream to close it
+      }
     }
-  }
 
-}
+  }

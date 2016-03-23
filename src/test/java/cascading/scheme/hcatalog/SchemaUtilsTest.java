@@ -20,20 +20,20 @@
 
 package cascading.scheme.hcatalog;
 
-import static junit.framework.Assert.assertEquals;
-
 import java.util.Arrays;
 import java.util.Set;
 
+import cascading.tuple.Fields;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.junit.Test;
 
-import cascading.tuple.Fields;
+import static junit.framework.Assert.assertEquals;
 
-public class SchemaUtilsTest {
+public class SchemaUtilsTest
+  {
 
   private static final String FOO = "foo";
   private static final String BAR = "bar";
@@ -43,109 +43,123 @@ public class SchemaUtilsTest {
   private static final HCatFieldSchema BAR_COLUMN;
   private static final HCatFieldSchema BAZ_COLUMN;
 
-  static {
-    try {
-      FOO_COLUMN = new HCatFieldSchema(FOO, TypeInfoFactory.stringTypeInfo, null);
-      BAR_COLUMN = new HCatFieldSchema(BAR, TypeInfoFactory.stringTypeInfo, null);
-      BAZ_COLUMN = new HCatFieldSchema(BAZ, TypeInfoFactory.stringTypeInfo, null);
-    } catch (HCatException e) {
-      throw new RuntimeException(e);
+  static
+    {
+    try
+      {
+      FOO_COLUMN = new HCatFieldSchema( FOO, TypeInfoFactory.stringTypeInfo, null );
+      BAR_COLUMN = new HCatFieldSchema( BAR, TypeInfoFactory.stringTypeInfo, null );
+      BAZ_COLUMN = new HCatFieldSchema( BAZ, TypeInfoFactory.stringTypeInfo, null );
+      }
+    catch( HCatException e )
+      {
+      throw new RuntimeException( e );
+      }
     }
-  }
 
-  private final HCatSchema partitionColumns = new HCatSchema(Arrays.asList(BAZ_COLUMN));
-  private final HCatSchema dataColumns = new HCatSchema(Arrays.asList(FOO_COLUMN, BAR_COLUMN));
-
-  @Test(expected = IllegalArgumentException.class)
-  public void duplicateFields() {
-    SchemaUtils.getLowerCaseFieldNames(new Fields(FOO.toUpperCase(), FOO));
-  }
-
-  @Test
-  public void typicalLowerCaseNames() {
-    Set<String> names = SchemaUtils.getLowerCaseFieldNames(new Fields(FOO.toUpperCase()));
-    assertEquals(1, names.size());
-    assertEquals(FOO, names.iterator().next());
-  }
-
-  @Test
-  public void sourceSchemaAll() throws HCatException {
-    Fields fields = new Fields(FOO, BAR, BAZ);
-
-    HCatSchema schema = SchemaUtils.getSourceSchema(partitionColumns, dataColumns, fields);
-
-    assertEquals(3, schema.size());
-    assertEquals(BAZ_COLUMN, schema.get(0));
-    assertEquals(FOO_COLUMN, schema.get(1));
-    assertEquals(BAR_COLUMN, schema.get(2));
-  }
-
-  @Test
-  public void sourceSchemaOmitPartitionColumn() throws HCatException {
-    Fields fields = new Fields(FOO, BAR);
-
-    HCatSchema schema = SchemaUtils.getSourceSchema(partitionColumns, dataColumns, fields);
-
-    assertEquals(2, schema.size());
-    assertEquals(FOO_COLUMN, schema.get(0));
-    assertEquals(BAR_COLUMN, schema.get(1));
-  }
-
-  @Test
-  public void sourceSchemaOmitDataColumn() throws HCatException {
-    Fields fields = new Fields(FOO, BAZ);
-
-    HCatSchema schema = SchemaUtils.getSourceSchema(partitionColumns, dataColumns, fields);
-
-    assertEquals(2, schema.size());
-    assertEquals(BAZ_COLUMN, schema.get(0));
-    assertEquals(FOO_COLUMN, schema.get(1));
-  }
+  private final HCatSchema partitionColumns = new HCatSchema( Arrays.asList( BAZ_COLUMN ) );
+  private final HCatSchema dataColumns = new HCatSchema( Arrays.asList( FOO_COLUMN, BAR_COLUMN ) );
 
   @Test(expected = IllegalArgumentException.class)
-  public void sourceSchemaSpecifyNonExistent() throws HCatException {
-    Fields fields = new Fields(FOO, BAR, BAZ);
-    HCatSchema dataColumns = new HCatSchema(Arrays.asList(FOO_COLUMN));
-
-    SchemaUtils.getSourceSchema(partitionColumns, dataColumns, fields);
-  }
+  public void duplicateFields()
+    {
+    SchemaUtils.getLowerCaseFieldNames( new Fields( FOO.toUpperCase(), FOO ) );
+    }
 
   @Test
-  public void sinkSchemaAll() throws HCatException {
-    Fields fields = new Fields(FOO, BAR, BAZ);
-
-    HCatSchema schema = SchemaUtils.getSinkSchema(partitionColumns, dataColumns, fields);
-
-    assertEquals(3, schema.size());
-    assertEquals(BAZ_COLUMN, schema.get(0));
-    assertEquals(FOO_COLUMN, schema.get(1));
-    assertEquals(BAR_COLUMN, schema.get(2));
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void sinkSchemaOmitPartitionColumn() throws HCatException {
-    Fields fields = new Fields(FOO, BAR);
-
-    SchemaUtils.getSinkSchema(partitionColumns, dataColumns, fields);
-  }
+  public void typicalLowerCaseNames()
+    {
+    Set<String> names = SchemaUtils.getLowerCaseFieldNames( new Fields( FOO.toUpperCase() ) );
+    assertEquals( 1, names.size() );
+    assertEquals( FOO, names.iterator().next() );
+    }
 
   @Test
-  public void sinkSchemaOmitDataColumn() throws HCatException {
-    Fields fields = new Fields(FOO, BAZ);
+  public void sourceSchemaAll() throws HCatException
+    {
+    Fields fields = new Fields( FOO, BAR, BAZ );
 
-    HCatSchema schema = SchemaUtils.getSinkSchema(partitionColumns, dataColumns, fields);
+    HCatSchema schema = SchemaUtils.getSourceSchema( partitionColumns, dataColumns, fields );
 
-    assertEquals(2, schema.size());
-    assertEquals(BAZ_COLUMN, schema.get(0));
-    assertEquals(FOO_COLUMN, schema.get(1));
-  }
+    assertEquals( 3, schema.size() );
+    assertEquals( BAZ_COLUMN, schema.get( 0 ) );
+    assertEquals( FOO_COLUMN, schema.get( 1 ) );
+    assertEquals( BAR_COLUMN, schema.get( 2 ) );
+    }
+
+  @Test
+  public void sourceSchemaOmitPartitionColumn() throws HCatException
+    {
+    Fields fields = new Fields( FOO, BAR );
+
+    HCatSchema schema = SchemaUtils.getSourceSchema( partitionColumns, dataColumns, fields );
+
+    assertEquals( 2, schema.size() );
+    assertEquals( FOO_COLUMN, schema.get( 0 ) );
+    assertEquals( BAR_COLUMN, schema.get( 1 ) );
+    }
+
+  @Test
+  public void sourceSchemaOmitDataColumn() throws HCatException
+    {
+    Fields fields = new Fields( FOO, BAZ );
+
+    HCatSchema schema = SchemaUtils.getSourceSchema( partitionColumns, dataColumns, fields );
+
+    assertEquals( 2, schema.size() );
+    assertEquals( BAZ_COLUMN, schema.get( 0 ) );
+    assertEquals( FOO_COLUMN, schema.get( 1 ) );
+    }
 
   @Test(expected = IllegalArgumentException.class)
-  public void sinkSchemaSpecifyNonExistent() throws HCatException {
-    Fields fields = new Fields(FOO, BAR, BAZ);
-    HCatSchema dataColumns = new HCatSchema(Arrays.asList(FOO_COLUMN));
+  public void sourceSchemaSpecifyNonExistent() throws HCatException
+    {
+    Fields fields = new Fields( FOO, BAR, BAZ );
+    HCatSchema dataColumns = new HCatSchema( Arrays.asList( FOO_COLUMN ) );
 
-    SchemaUtils.getSinkSchema(partitionColumns, dataColumns, fields);
+    SchemaUtils.getSourceSchema( partitionColumns, dataColumns, fields );
+    }
+
+  @Test
+  public void sinkSchemaAll() throws HCatException
+    {
+    Fields fields = new Fields( FOO, BAR, BAZ );
+
+    HCatSchema schema = SchemaUtils.getSinkSchema( partitionColumns, dataColumns, fields );
+
+    assertEquals( 3, schema.size() );
+    assertEquals( BAZ_COLUMN, schema.get( 0 ) );
+    assertEquals( FOO_COLUMN, schema.get( 1 ) );
+    assertEquals( BAR_COLUMN, schema.get( 2 ) );
+    }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void sinkSchemaOmitPartitionColumn() throws HCatException
+    {
+    Fields fields = new Fields( FOO, BAR );
+
+    SchemaUtils.getSinkSchema( partitionColumns, dataColumns, fields );
+    }
+
+  @Test
+  public void sinkSchemaOmitDataColumn() throws HCatException
+    {
+    Fields fields = new Fields( FOO, BAZ );
+
+    HCatSchema schema = SchemaUtils.getSinkSchema( partitionColumns, dataColumns, fields );
+
+    assertEquals( 2, schema.size() );
+    assertEquals( BAZ_COLUMN, schema.get( 0 ) );
+    assertEquals( FOO_COLUMN, schema.get( 1 ) );
+    }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void sinkSchemaSpecifyNonExistent() throws HCatException
+    {
+    Fields fields = new Fields( FOO, BAR, BAZ );
+    HCatSchema dataColumns = new HCatSchema( Arrays.asList( FOO_COLUMN ) );
+
+    SchemaUtils.getSinkSchema( partitionColumns, dataColumns, fields );
+    }
+
   }
-
-}

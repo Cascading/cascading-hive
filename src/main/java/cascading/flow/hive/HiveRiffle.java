@@ -47,8 +47,8 @@ import org.apache.hadoop.mapreduce.Counter;
 import riffle.process.DependencyIncoming;
 import riffle.process.DependencyOutgoing;
 import riffle.process.ProcessChildren;
-import riffle.process.ProcessConfiguration;
 import riffle.process.ProcessComplete;
+import riffle.process.ProcessConfiguration;
 import riffle.process.ProcessCounters;
 import riffle.process.ProcessStart;
 import riffle.process.ProcessStop;
@@ -172,16 +172,16 @@ class HiveRiffle implements CascadingHiveHistoryDecorator
     // roll up all counters
     Map<String, Map<String, Long>> counters = new HashMap<String, Map<String, Long>>();
 
-    for ( HiveStep internalHiveTask : hiveTasks )
+    for( HiveStep internalHiveTask : hiveTasks )
       {
-      for( Map.Entry<String, Map<String,Long>> entry: internalHiveTask.getCounters().entrySet() )
+      for( Map.Entry<String, Map<String, Long>> entry : internalHiveTask.getCounters().entrySet() )
         {
         if( !counters.containsKey( entry.getKey() ) )
           counters.put( entry.getKey(), entry.getValue() );
         else
           {
           Map<String, Long> existing = counters.get( entry.getKey() );
-          for ( Map.Entry<String, Long> ctr : entry.getValue().entrySet() )
+          for( Map.Entry<String, Long> ctr : entry.getValue().entrySet() )
             {
             if( !existing.containsKey( ctr.getKey() ) )
               existing.put( ctr.getKey(), ctr.getValue() );
@@ -215,7 +215,6 @@ class HiveRiffle implements CascadingHiveHistoryDecorator
       }
     return groups;
     }
-
 
   @Override
   public String getHistFileName()
@@ -296,7 +295,6 @@ class HiveRiffle implements CascadingHiveHistoryDecorator
     {
     original.closeStream();
     }
-
 
   public void setOriginal( HiveHistory original )
     {

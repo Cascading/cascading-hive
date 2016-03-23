@@ -25,13 +25,12 @@ import java.io.IOException;
 import cascading.flow.FlowProcess;
 import cascading.scheme.NullScheme;
 import cascading.tap.Tap;
-import cascading.tap.hive.HiveNullTap;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import static org.junit.Assert.*;
 
-@SuppressWarnings( "unchecked" )
+@SuppressWarnings("unchecked")
 public class HiveNullTapTest
   {
   @Test

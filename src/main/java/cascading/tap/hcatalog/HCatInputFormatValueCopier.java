@@ -20,18 +20,22 @@
 
 package cascading.tap.hcatalog;
 
+import cascading.hadoop.mapred.InputFormatValueCopier;
 import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.HCatRecord;
 
-import cascading.hadoop.mapred.InputFormatValueCopier;
-
-public class HCatInputFormatValueCopier implements InputFormatValueCopier<HCatRecord> {
+public class HCatInputFormatValueCopier implements InputFormatValueCopier<HCatRecord>
+  {
   @Override
-  public void copyValue(HCatRecord oldValue, HCatRecord newValue) {
-    try {
-      oldValue.copy(newValue);
-    } catch (HCatException e) {
-      throw new RuntimeException(e);
+  public void copyValue( HCatRecord oldValue, HCatRecord newValue )
+    {
+    try
+      {
+      oldValue.copy( newValue );
+      }
+    catch( HCatException e )
+      {
+      throw new RuntimeException( e );
+      }
     }
   }
-}

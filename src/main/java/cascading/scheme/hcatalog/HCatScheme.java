@@ -22,6 +22,16 @@ package cascading.scheme.hcatalog;
 
 import java.io.IOException;
 
+import cascading.flow.FlowProcess;
+import cascading.hadoop.mapred.OutputCommitterWrapper;
+import cascading.scheme.Scheme;
+import cascading.scheme.SinkCall;
+import cascading.scheme.SourceCall;
+import cascading.scheme.hcatalog.HCatScheme.SourceContext;
+import cascading.tap.Tap;
+import cascading.tap.hcatalog.HCatTap;
+import cascading.tuple.Fields;
+import cascading.tuple.TupleEntry;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapred.OutputCollector;
@@ -38,17 +48,6 @@ import org.apache.hive.hcatalog.mapreduce.HCatTableInfo;
 import org.apache.hive.hcatalog.mapreduce.OutputJobInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import cascading.flow.FlowProcess;
-import cascading.hadoop.mapred.OutputCommitterWrapper;
-import cascading.scheme.Scheme;
-import cascading.scheme.SinkCall;
-import cascading.scheme.SourceCall;
-import cascading.scheme.hcatalog.HCatScheme.SourceContext;
-import cascading.tap.Tap;
-import cascading.tap.hcatalog.HCatTap;
-import cascading.tuple.Fields;
-import cascading.tuple.TupleEntry;
 
 /**
  * A {@link Scheme} to be used in conjunction with {@link HCatTap}.
@@ -69,11 +68,12 @@ import cascading.tuple.TupleEntry;
  *
  * @since 2.1
  */
-public class HCatScheme extends Scheme<Configuration, RecordReader, OutputCollector, SourceContext, HCatSchema> {
+public class HCatScheme extends Scheme<Configuration, RecordReader, OutputCollector, SourceContext, HCatSchema>
+  {
 
   private static final long serialVersionUID = 1L;
 
-  private static final Logger LOG = LoggerFactory.getLogger(HCatScheme.class);
+  private static final Logger LOG = LoggerFactory.getLogger( HCatScheme.class );
 
   /**
    * Creates a new {@link HCatScheme}.
@@ -81,121 +81,139 @@ public class HCatScheme extends Scheme<Configuration, RecordReader, OutputCollec
    * @param fields Selected {@link Fields}. Field names and type must match their equivalent in the Hive table.
    * @throws {@link IllegalArgumentException} If duplicate case-insensitive names are set in {@code fields}.
    */
-  public HCatScheme(Fields fields) {
-    super(fields, fields);
-    SchemaUtils.getLowerCaseFieldNames(fields); // fail-fast on case insensitive duplicates
-  }
-
-  @Override
-  public void sourceConfInit(FlowProcess<? extends Configuration> flowProcess,
-      Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf) {
-    try {
-      HCatSchema partitionColumns = HCatInputFormat.getPartitionColumns(conf);
-      HCatSchema dataColumns = HCatInputFormat.getDataColumns(conf);
-      HCatSchema schema = SchemaUtils.getSourceSchema(partitionColumns, dataColumns, getSourceFields());
-      // This is equivalent to HCatBaseInputFormat.setOutputSchema
-      conf.set(HCatConstants.HCAT_KEY_OUTPUT_SCHEMA, HCatUtil.serialize(schema));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+  public HCatScheme( Fields fields )
+    {
+    super( fields, fields );
+    SchemaUtils.getLowerCaseFieldNames( fields ); // fail-fast on case insensitive duplicates
     }
-  }
 
   @Override
-  public void sourcePrepare(FlowProcess<? extends Configuration> flowProcess,
-      SourceCall<SourceContext, RecordReader> sourceCall)
-    throws IOException {
+  public void sourceConfInit( FlowProcess<? extends Configuration> flowProcess,
+                              Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf )
+    {
+    try
+      {
+      HCatSchema partitionColumns = HCatInputFormat.getPartitionColumns( conf );
+      HCatSchema dataColumns = HCatInputFormat.getDataColumns( conf );
+      HCatSchema schema = SchemaUtils.getSourceSchema( partitionColumns, dataColumns, getSourceFields() );
+      // This is equivalent to HCatBaseInputFormat.setOutputSchema
+      conf.set( HCatConstants.HCAT_KEY_OUTPUT_SCHEMA, HCatUtil.serialize( schema ) );
+      }
+    catch( IOException e )
+      {
+      throw new RuntimeException( e );
+      }
+    }
+
+  @Override
+  public void sourcePrepare( FlowProcess<? extends Configuration> flowProcess,
+                             SourceCall<SourceContext, RecordReader> sourceCall )
+    throws IOException
+    {
     Configuration conf = flowProcess.getConfig();
 
-    HCatSchema partitionColumns = HCatInputFormat.getPartitionColumns(conf);
-    HCatSchema dataColumns = HCatInputFormat.getDataColumns(conf);
-    HCatSchema schema = SchemaUtils.getSourceSchema(partitionColumns, dataColumns, getSourceFields());
+    HCatSchema partitionColumns = HCatInputFormat.getPartitionColumns( conf );
+    HCatSchema dataColumns = HCatInputFormat.getDataColumns( conf );
+    HCatSchema schema = SchemaUtils.getSourceSchema( partitionColumns, dataColumns, getSourceFields() );
 
     WritableComparable<?> key = (WritableComparable<?>) sourceCall.getInput().createKey();
     HCatRecord record = (HCatRecord) sourceCall.getInput().createValue();
-    sourceCall.setContext(new SourceContext(schema, key, record));
-  }
+    sourceCall.setContext( new SourceContext( schema, key, record ) );
+    }
 
   @Override
-  public boolean source(FlowProcess<? extends Configuration> flowProcess,
-      SourceCall<SourceContext, RecordReader> sourceCall)
-    throws IOException {
+  public boolean source( FlowProcess<? extends Configuration> flowProcess,
+                         SourceCall<SourceContext, RecordReader> sourceCall )
+    throws IOException
+    {
     WritableComparable<?> key = sourceCall.getContext().key;
     HCatRecord record = sourceCall.getContext().record;
 
-    if (!sourceCall.getInput().next(key, record)) {
+    if( !sourceCall.getInput().next( key, record ) )
+      {
       return false;
-    }
+      }
 
     HCatSchema schema = sourceCall.getContext().schema;
     TupleEntry entry = sourceCall.getIncomingEntry();
 
     Fields fields = getSourceFields();
-    for (Comparable<?> field : fields) {
-      Object value = record.get(field.toString(), schema);
-      entry.setObject(field, value);
-    }
+    for( Comparable<?> field : fields )
+      {
+      Object value = record.get( field.toString(), schema );
+      entry.setObject( field, value );
+      }
 
     return true;
-  }
-
-  @Override
-  public void sinkConfInit(FlowProcess<? extends Configuration> flowProcess,
-      Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf) {
-    OutputCommitterWrapper.setOutputCommitter(conf);
-
-    try {
-      OutputJobInfo outputJobInfo = HCatBaseOutputFormat.getJobInfo(conf);
-      HCatTableInfo tableInfo = outputJobInfo.getTableInfo();
-      HCatSchema schema = SchemaUtils.getSinkSchema(tableInfo.getPartitionColumns(), tableInfo.getDataColumns(),
-          getSinkFields());
-      HCatOutputFormat.setSchema(conf, schema);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
     }
-  }
 
   @Override
-  public void sinkPrepare(FlowProcess<? extends Configuration> flowProcess,
-      SinkCall<HCatSchema, OutputCollector> sinkCall)
-    throws IOException {
-    Configuration conf = flowProcess.getConfig();
-    OutputCommitterWrapper.unsetOutputCommitter(conf);
+  public void sinkConfInit( FlowProcess<? extends Configuration> flowProcess,
+                            Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf )
+    {
+    OutputCommitterWrapper.setOutputCommitter( conf );
 
-    OutputJobInfo outputJobInfo = HCatBaseOutputFormat.getJobInfo(conf);
+    try
+      {
+      OutputJobInfo outputJobInfo = HCatBaseOutputFormat.getJobInfo( conf );
+      HCatTableInfo tableInfo = outputJobInfo.getTableInfo();
+      HCatSchema schema = SchemaUtils.getSinkSchema( tableInfo.getPartitionColumns(), tableInfo.getDataColumns(),
+        getSinkFields() );
+      HCatOutputFormat.setSchema( conf, schema );
+      }
+    catch( IOException e )
+      {
+      throw new RuntimeException( e );
+      }
+    }
+
+  @Override
+  public void sinkPrepare( FlowProcess<? extends Configuration> flowProcess,
+                           SinkCall<HCatSchema, OutputCollector> sinkCall )
+    throws IOException
+    {
+    Configuration conf = flowProcess.getConfig();
+    OutputCommitterWrapper.unsetOutputCommitter( conf );
+
+    OutputJobInfo outputJobInfo = HCatBaseOutputFormat.getJobInfo( conf );
     HCatTableInfo tableInfo = outputJobInfo.getTableInfo();
-    HCatSchema schema = SchemaUtils.getSinkSchema(tableInfo.getPartitionColumns(), tableInfo.getDataColumns(),
-        getSinkFields());
-    sinkCall.setContext(schema);
-  }
+    HCatSchema schema = SchemaUtils.getSinkSchema( tableInfo.getPartitionColumns(), tableInfo.getDataColumns(),
+      getSinkFields() );
+    sinkCall.setContext( schema );
+    }
 
   @SuppressWarnings("unchecked")
   @Override
-  public void sink(FlowProcess<? extends Configuration> flowProcess, SinkCall<HCatSchema, OutputCollector> sinkCall)
-    throws IOException {
+  public void sink( FlowProcess<? extends Configuration> flowProcess, SinkCall<HCatSchema, OutputCollector> sinkCall )
+    throws IOException
+    {
     HCatSchema schema = sinkCall.getContext();
     TupleEntry entry = sinkCall.getOutgoingEntry();
-    HCatRecord record = new DefaultHCatRecord(schema.size());
+    HCatRecord record = new DefaultHCatRecord( schema.size() );
 
     Fields fields = getSinkFields();
-    for (Comparable<?> field : fields) {
-      Object value = entry.getObject(field);
-      record.set(field.toString(), schema, value);
+    for( Comparable<?> field : fields )
+      {
+      Object value = entry.getObject( field );
+      record.set( field.toString(), schema, value );
+      }
+
+    sinkCall.getOutput().collect( null, record );
     }
 
-    sinkCall.getOutput().collect(null, record);
-  }
-
-  static class SourceContext {
+  static class SourceContext
+    {
     private final HCatSchema schema;
     private final WritableComparable<?> key;
     private final HCatRecord record;
 
-    SourceContext(HCatSchema schema, WritableComparable<?> key, HCatRecord record) {
+    SourceContext( HCatSchema schema, WritableComparable<?> key, HCatRecord record )
+      {
       this.schema = schema;
       this.key = key;
       this.record = record;
+      }
+
     }
 
   }
-
-}

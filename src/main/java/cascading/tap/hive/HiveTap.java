@@ -410,8 +410,7 @@ public class HiveTap extends Hfs
   /**
    * Private method that sets the correct location of the files on HDFS. For an existing table
    * it uses the value from the Hive MetaStore. Otherwise it uses the default location for Hive.
-   *
-   * */
+   */
   private void setFilesystemLocation()
     {
     // If the table already exists get the location otherwise use the location from the table descriptor.

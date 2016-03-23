@@ -808,8 +808,8 @@ public class HiveTableDescriptor implements Serializable
         {
         Class<?> type = PRIMITIVES.get( typeInfos.get( i ) );
 
-          if( type == null )
-            type = Object.class;
+        if( type == null )
+          type = Object.class;
 
         types[ i ] = type;
         }
