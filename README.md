@@ -8,6 +8,7 @@ has the following major features:
 - writing/creating Hive tables from a Cascading Flow
 - writing/creating partitioned Hive tables from a Cascading Flow
 - deconstructing a Hive view into Taps
+- reading/writing taps from HCatalog
 
 The `demo` sub-directory contains applications that demonstrate those
 features.
@@ -18,12 +19,11 @@ files.
 
 ## Hive dependency
 
-Cascading-Hive works with hive-0.10+ although hive-0.13+ is required for the reading
-of transactional tables. When using the maven dependency you have to specify the
-version of Hive you are using as a runtime dependency yourself. This is done to avoid
-classpath issues with the various Hadoop and Hive distributions in existence. See the
-`demo` project for an example.
-
+Cascading-Hive works Hive 1.x, 2.x is not yet supported. When using the
+cascading-hive in your project you have to specify the version of Hive you are
+using as a runtime dependency yourself. This is done to avoid classpath issues
+with the various Hadoop and Hive distributions in existence. See the `demo`
+project for an example.
 
 ## Installing
 
