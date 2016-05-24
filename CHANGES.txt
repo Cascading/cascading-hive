@@ -1,9 +1,10 @@
 Cascading-Hive changelog
 
-2.1 (unreleased)
+2.1.0
 
-- update corc to 1.1
-
+- update corc to 2.0.3
+- update to Cascading 3.1.0
+- new HCatalog Tap & Scheme
 
 2.0.1
 
