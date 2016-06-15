@@ -151,12 +151,18 @@ public class HCatScheme extends Scheme<Configuration, RecordReader, OutputCollec
   public void sinkConfInit( FlowProcess<? extends Configuration> flowProcess,
                             Tap<Configuration, RecordReader, OutputCollector> tap, Configuration conf )
     {
-    OutputCommitterWrapper.setOutputCommitter( conf );
-
     try
       {
       OutputJobInfo outputJobInfo = HCatBaseOutputFormat.getJobInfo( conf );
       HCatTableInfo tableInfo = outputJobInfo.getTableInfo();
+      if ( tableInfo.getPartitionColumns().size() > 0 )
+        {
+        PartitionedOutputCommitterWrapper.setOutputCommitter( conf );
+        }
+      else
+        {
+        UnpartitionedOutputCommitterWrapper.setOutputCommitter( conf );
+        }
       HCatSchema schema = SchemaUtils.getSinkSchema( tableInfo.getPartitionColumns(), tableInfo.getDataColumns(),
         getSinkFields() );
       HCatOutputFormat.setSchema( conf, schema );

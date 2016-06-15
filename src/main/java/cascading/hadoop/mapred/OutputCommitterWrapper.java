@@ -33,9 +33,14 @@ public class OutputCommitterWrapper extends org.apache.hadoop.mapred.OutputCommi
   @SuppressWarnings("rawtypes")
   private final OutputFormatWrapper outputFormat = new OutputFormatWrapper();
 
-  public static void setOutputCommitter( Configuration conf )
+  protected static void setOutputCommitter( Configuration conf, Class<? extends OutputCommitterWrapper> outputCommitterWrapperClass )
     {
-    conf.setClass( MAPRED_OUTPUT_COMMITTER_CLASS, OutputCommitterWrapper.class, OutputCommitter.class );
+    conf.setClass(MAPRED_OUTPUT_COMMITTER_CLASS, outputCommitterWrapperClass, OutputCommitter.class);
+    }
+
+   public static void setOutputCommitter( Configuration conf )
+    {
+    setOutputCommitter( conf, OutputCommitterWrapper.class );
     }
 
   public static void unsetOutputCommitter( Configuration conf )
@@ -108,7 +113,6 @@ public class OutputCommitterWrapper extends org.apache.hadoop.mapred.OutputCommi
   @Override
   public void commitJob( JobContext jobContext ) throws IOException
     {
-    unsetOutputCommitter( jobContext.getConfiguration() );
     getOutputCommitter( jobContext ).commitJob( jobContext );
     }
 
