@@ -189,6 +189,10 @@ public class HCatTap extends Tap<Configuration, RecordReader, OutputCollector>
       {
       return false;
       }
+    finally
+      {
+      client.close();
+      }
     return true;
     }
 
@@ -208,13 +212,20 @@ public class HCatTap extends Tap<Configuration, RecordReader, OutputCollector>
   public long getModifiedTime( Configuration conf ) throws IOException
     {
     HCatClient client = HCatClient.create( conf );
-    HCatTable table = client.getTable( databaseName, tableName );
-    String lastModifiedTime = table.getTblProps().get( "last_modified_time" );
-    if( lastModifiedTime == null )
+    try
       {
-      return System.currentTimeMillis();
+      HCatTable table = client.getTable( databaseName, tableName );
+      String lastModifiedTime = table.getTblProps().get( "last_modified_time" );
+      if( lastModifiedTime == null )
+        {
+        return System.currentTimeMillis();
+        }
+      return Long.parseLong( lastModifiedTime );
       }
-    return Long.parseLong( lastModifiedTime );
+    finally
+      {
+      client.close();
+      }
     }
 
   }
