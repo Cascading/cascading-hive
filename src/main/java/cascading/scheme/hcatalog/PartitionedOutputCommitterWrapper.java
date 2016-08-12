@@ -21,14 +21,13 @@ package cascading.scheme.hcatalog;
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapred.JobContext;
 import org.apache.hadoop.mapred.TaskAttemptContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cascading.hadoop.mapred.OutputCommitterWrapper;
 
-public class PartitionedOutputCommitterWrapper extends OutputCommitterWrapper
+public class PartitionedOutputCommitterWrapper extends UnpartitionedOutputCommitterWrapper
   {
 
   private static final Logger LOG = LoggerFactory.getLogger( PartitionedOutputCommitterWrapper.class );
@@ -37,14 +36,6 @@ public class PartitionedOutputCommitterWrapper extends OutputCommitterWrapper
     {
     OutputCommitterWrapper.setOutputCommitter( conf, PartitionedOutputCommitterWrapper.class );
    }
-
-  @Override
-  public void setupJob( JobContext jobContext ) throws IOException
-    {
-    unsetOutputCommitter( jobContext.getConfiguration() );
-    super.setupJob( jobContext );
-    setOutputCommitter( jobContext.getConfiguration() );
-    }
 
   @Override
   public void commitTask( TaskAttemptContext taskAttemptContext ) throws IOException
@@ -65,22 +56,6 @@ public class PartitionedOutputCommitterWrapper extends OutputCommitterWrapper
         throw e;
         }
       }
-    }
-
-  @Override
-  public void abortJob(JobContext jobContext, int status) throws IOException
-    {
-    unsetOutputCommitter( jobContext.getConfiguration() );
-    super.abortJob( jobContext, status );
-    setOutputCommitter( jobContext.getConfiguration() );
-    }
-
-  @Override
-  public void commitJob(JobContext jobContext) throws IOException
-    {
-    unsetOutputCommitter( jobContext.getConfiguration() );
-    super.commitJob( jobContext );
-    setOutputCommitter( jobContext.getConfiguration() );
     }
 
   }

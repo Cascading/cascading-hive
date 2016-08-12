@@ -29,23 +29,32 @@ public class OutputCommitterWrapper extends org.apache.hadoop.mapred.OutputCommi
   {
 
   private static final String MAPRED_OUTPUT_COMMITTER_CLASS = "mapred.output.committer.class";
+  private static final String WRAPPED_MAPRED_OUTPUT_COMMITTER_CLASS = "wrapped.mapred.output.committer.class";
 
   @SuppressWarnings("rawtypes")
   private final OutputFormatWrapper outputFormat = new OutputFormatWrapper();
 
   protected static void setOutputCommitter( Configuration conf, Class<? extends OutputCommitterWrapper> outputCommitterWrapperClass )
     {
-    conf.setClass(MAPRED_OUTPUT_COMMITTER_CLASS, outputCommitterWrapperClass, OutputCommitter.class);
+    String wrappedOutputCommitter = conf.get( MAPRED_OUTPUT_COMMITTER_CLASS );
+    if( wrappedOutputCommitter != null )
+      conf.set( WRAPPED_MAPRED_OUTPUT_COMMITTER_CLASS, wrappedOutputCommitter );
+
+    conf.setClass( MAPRED_OUTPUT_COMMITTER_CLASS, outputCommitterWrapperClass, OutputCommitter.class );
     }
 
-   public static void setOutputCommitter( Configuration conf )
+  public static void setOutputCommitter( Configuration conf )
     {
     setOutputCommitter( conf, OutputCommitterWrapper.class );
     }
 
   public static void unsetOutputCommitter( Configuration conf )
     {
-    conf.unset( MAPRED_OUTPUT_COMMITTER_CLASS );
+    String wrappedOutputCommitter = conf.get( WRAPPED_MAPRED_OUTPUT_COMMITTER_CLASS );
+    if( wrappedOutputCommitter == null )
+      conf.unset( MAPRED_OUTPUT_COMMITTER_CLASS );
+    else
+      conf.set( MAPRED_OUTPUT_COMMITTER_CLASS, wrappedOutputCommitter );
     }
 
   private OutputCommitter getOutputCommitter( TaskAttemptContext taskAttemptContext ) throws IOException
