@@ -47,5 +47,25 @@ future.
 Also note that it is not yet possible to write to transactional tables and that
 the `HiveTap` will prevent any attempt to do so.
 
+Using `HCatTap` to sink data to a Blob Storage service may lead to issues that
+can be hard to deal with due to Blob Storage not being a real file system. If
+you are planning to do so, use it at your own risk.
+
+We encountered various issues when using `HCatTap` to sync tables in S3 but we got
+it working by changing the EMR settings - tested on EMR 4.7.0:
+
+		mapred.output.direct.EmrFileSystem = false
+		mapred.output.direct.NativeS3FileSystem = false
+
+These settings are required in order be able to commit dynamic partitions. This also
+implies that direct commits in EMR will be disabled and the job may take longer during
+the commit phase of tasks and jobs since the underlying `FileSystem` will have to copy
+the files to their final locations and delete the temporary copies. Depending on your use
+case this waiting time and relying on eventually consistent data may or may not be an
+issue.
+
+Note that even though direct commits won't be available, EMR consistent views can still
+be used.
+
 Finally note that Hive relies on the `hadoop` command being present in your
 `PATH` when it executes the queries on the Hadoop cluster.
