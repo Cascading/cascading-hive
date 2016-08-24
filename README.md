@@ -37,6 +37,7 @@ Cascading-Hive is also available on http://conjars.org.
 
 ## Limitations
 
+### Views
 Please note that the support for Hive views is currently limited since views
 pretend to be a resource or a `Tap` in Cascading terms, but are actually
 computation. It is currently not possible to read from a Hive View within a
@@ -44,15 +45,18 @@ Cascading Flow. To work around this, you can create a table in Hive instead, and
 read from that within your Cascading Flow. This restriction might change in the
 future.
 
+### Transactional Tables
 Also note that it is not yet possible to write to transactional tables and that
 the `HiveTap` will prevent any attempt to do so.
 
+
+### HCatTap
 Using `HCatTap` to sink data to a Blob Storage service may lead to issues that
 can be hard to deal with due to Blob Storage not being a real file system. If
 you are planning to do so, use it at your own risk.
 
-We encountered various issues when using `HCatTap` to sync tables in S3 but we got
-it working by changing the EMR settings - tested on EMR 4.7.0:
+Users encountered various issues when using `HCatTap` to sync tables in S3 but
+there is a known workaround (tested on EMR 4.7.0):
 
 		mapred.output.direct.EmrFileSystem = false
 		mapred.output.direct.NativeS3FileSystem = false
@@ -67,5 +71,6 @@ issue.
 Note that even though direct commits won't be available, EMR consistent views can still
 be used.
 
+### Environment
 Finally note that Hive relies on the `hadoop` command being present in your
 `PATH` when it executes the queries on the Hadoop cluster.
