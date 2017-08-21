@@ -129,7 +129,7 @@ public class HCatTap extends Tap<Configuration, RecordReader, OutputCollector>
   @Override
   public String getIdentifier()
     {
-    return String.format( "hcatalog://%s.%s", databaseName, tableName );
+    return String.format( "hcatalog://%s.%s-%s", databaseName, tableName, id(this));
     }
 
   @Override
