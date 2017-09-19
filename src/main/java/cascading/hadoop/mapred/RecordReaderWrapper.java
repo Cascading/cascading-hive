@@ -39,15 +39,17 @@ class RecordReaderWrapper<K, V> implements RecordReader<K, V>
 
   private K key = null;
   private V value = null;
+  private final InputFormatValueCopier<K> keyCopier;
   private final InputFormatValueCopier<V> valueCopier;
 
   private boolean firstRecord = false;
   private boolean eof = false;
 
   public RecordReaderWrapper( InputFormat<K, V> newInputFormat, InputSplit oldSplit, JobConf oldJobConf,
-                              Reporter reporter, InputFormatValueCopier<V> valueCopier ) throws IOException
+                              Reporter reporter, InputFormatValueCopier<K> keyCopier,
+                              InputFormatValueCopier<V> valueCopier ) throws IOException
     {
-
+    this.keyCopier = keyCopier;
     this.valueCopier = valueCopier;
     splitLen = oldSplit.getLength();
 
@@ -166,8 +168,12 @@ class RecordReaderWrapper<K, V> implements RecordReader<K, V>
 
         if( key != recordReader.getCurrentKey() )
           {
-          throw new IOException( "InputFormatWrapper only supports RecordReaders that return the same key objects. "
-            + "Current reader class : " + recordReader.getClass() );
+          if( keyCopier == null )
+            {
+            throw new IOException( "InputFormatWrapper only supports RecordReaders that return the same key objects "
+              + "unless a InputFormatValueCopier is provided. Current reader class : " + recordReader.getClass() );
+            }
+          keyCopier.copyValue( key, recordReader.getCurrentKey() );
           }
 
         if( value != recordReader.getCurrentValue() )

@@ -39,6 +39,7 @@ import cascading.scheme.hadoop.TextDelimited;
 import cascading.scheme.hcatalog.HCatScheme;
 import cascading.tap.hadoop.Hfs;
 import cascading.tuple.Fields;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -51,9 +52,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-public class HCatTapTest extends HiveTestCase
+public abstract class HCatTapTestBase extends HiveTestCase
   {
-
   private static final long serialVersionUID = 1L;
 
   private static final String DATABASE_NAME = "my_db";
@@ -64,6 +64,8 @@ public class HCatTapTest extends HiveTestCase
   @Rule
   public TemporaryFolder temp = new TemporaryFolder();
 
+  public final String tableFileFormat;
+
   private File fileFolder;
   private File dbFolder;
   private File partitionedTableFolder;
@@ -72,6 +74,11 @@ public class HCatTapTest extends HiveTestCase
   private Fields dataFields;
 
   private Fields partitionFields;
+
+  HCatTapTestBase( String tableFileFormat )
+    {
+    this.tableFileFormat = tableFileFormat;
+    }
 
   @Before
   public void init() throws IOException
@@ -89,15 +96,15 @@ public class HCatTapTest extends HiveTestCase
     {
     partitionedTableFolder = temp.newFolder( PARTITIONED_TABLE_NAME );
     runHiveQuery( String.format(
-        "CREATE TABLE %s.%s (foo STRING, bar INT) PARTITIONED BY (baz STRING) STORED AS ORC LOCATION '%s'",
-        DATABASE_NAME, PARTITIONED_TABLE_NAME, partitionedTableFolder.getCanonicalPath() ) );
+        "CREATE TABLE %s.%s (foo STRING, bar INT) PARTITIONED BY (baz STRING) STORED AS %s LOCATION '%s'",
+        DATABASE_NAME, PARTITIONED_TABLE_NAME, tableFileFormat, partitionedTableFolder.getCanonicalPath() ) );
     }
 
   private void createUnpartitionedTable() throws IOException
     {
     unpartitionedTableFolder = temp.newFolder( UNPARTITIONED_TABLE_NAME );
-    runHiveQuery( String.format( "CREATE TABLE %s.%s (foo STRING, bar INT) STORED AS ORC LOCATION '%s'", DATABASE_NAME,
-        UNPARTITIONED_TABLE_NAME, unpartitionedTableFolder.getCanonicalPath() ) );
+    runHiveQuery( String.format( "CREATE TABLE %s.%s (foo STRING, bar INT) STORED AS %s LOCATION '%s'", DATABASE_NAME,
+        UNPARTITIONED_TABLE_NAME, tableFileFormat, unpartitionedTableFolder.getCanonicalPath() ) );
     }
 
   @After
@@ -400,7 +407,7 @@ public class HCatTapTest extends HiveTestCase
     assertTrue( "Expecting line '2' but not found", lines.contains( "2" ) );
     }
 
-  private static List<String> readLines(Path path) throws Exception
+  private static List<String> readLines( Path path ) throws Exception
     {
     List<String> lines = new LinkedList<>();
     LocalFileSystem fs = FileSystem.getLocal( new Configuration() );
