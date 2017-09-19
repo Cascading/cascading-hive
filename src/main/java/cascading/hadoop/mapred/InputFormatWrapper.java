@@ -34,27 +34,51 @@ import org.apache.hadoop.util.ReflectionUtils;
 public class InputFormatWrapper<K, V> implements org.apache.hadoop.mapred.InputFormat<K, V>
   {
 
+  private static final String INPUT_FORMAT_KEY_COPIER_CLASS = "input.format.key.copier.class";
   private static final String INPUT_FORMAT_VALUE_COPIER_CLASS = "input.format.value.copier.class";
   private static final String WRAPPED_MAPREDUCE_INPUT_FORMAT_CLASS = "wrapped.mapreduce.input.format.class";
   private static final String MAPRED_INPUT_FORMAT_CLASS = "mapred.input.format.class";
 
   protected InputFormat<K, V> inputFormat;
+  protected InputFormatValueCopier<K> keyCopier = null;
   protected InputFormatValueCopier<V> valueCopier = null;
 
   public static <K, V> void setInputFormat( Configuration conf, Class<? extends InputFormat<K, V>> inputFormatClass )
     {
-    setInputFormat( conf, inputFormatClass, null );
+    setInputFormat( conf, inputFormatClass, null, null );
     }
 
   public static <K, V> void setInputFormat( Configuration conf, Class<? extends InputFormat<K, V>> inputFormatClass,
+                                            Class<? extends InputFormatValueCopier<K>> keyCopierClass,
                                             Class<? extends InputFormatValueCopier<V>> valueCopierClass )
     {
     conf.setClass( WRAPPED_MAPREDUCE_INPUT_FORMAT_CLASS, inputFormatClass, InputFormat.class );
     conf.setClass( MAPRED_INPUT_FORMAT_CLASS, InputFormatWrapper.class, org.apache.hadoop.mapred.InputFormat.class );
+    if( keyCopierClass != null )
+      {
+      conf.setClass( INPUT_FORMAT_KEY_COPIER_CLASS, keyCopierClass, InputFormatValueCopier.class );
+      }
     if( valueCopierClass != null )
       {
       conf.setClass( INPUT_FORMAT_VALUE_COPIER_CLASS, valueCopierClass, InputFormatValueCopier.class );
       }
+    }
+
+  private <T> InputFormatValueCopier<T> getValueCopier( Configuration conf, String confProperty )
+    {
+    if( conf.get( confProperty ) != null )
+      {
+      @SuppressWarnings( "rawtypes" )
+      Class<? extends InputFormatValueCopier> copierClass = conf.getClass( confProperty, null,
+        InputFormatValueCopier.class );
+      if( null != copierClass )
+        {
+        @SuppressWarnings( "unchecked" )
+        InputFormatValueCopier<T> copier = ReflectionUtils.newInstance( copierClass, conf );
+        return copier;
+        }
+      }
+    return null;
     }
 
   @SuppressWarnings("unchecked")
@@ -66,16 +90,8 @@ public class InputFormatWrapper<K, V> implements org.apache.hadoop.mapred.InputF
       Class<? extends InputFormat> inputFormatClass = conf.getClass( WRAPPED_MAPREDUCE_INPUT_FORMAT_CLASS, null,
         InputFormat.class );
       inputFormat = ReflectionUtils.newInstance( inputFormatClass, conf );
-      if( conf.get( INPUT_FORMAT_VALUE_COPIER_CLASS ) != null )
-        {
-        @SuppressWarnings("rawtypes")
-        Class<? extends InputFormatValueCopier> copierClass = conf.getClass( INPUT_FORMAT_VALUE_COPIER_CLASS, null,
-          InputFormatValueCopier.class );
-        if( null != copierClass )
-          {
-          valueCopier = ReflectionUtils.newInstance( copierClass, conf );
-          }
-        }
+      keyCopier = getValueCopier( conf, INPUT_FORMAT_KEY_COPIER_CLASS );
+      valueCopier = getValueCopier( conf, INPUT_FORMAT_VALUE_COPIER_CLASS );
       }
     return inputFormat;
     }
@@ -83,7 +99,7 @@ public class InputFormatWrapper<K, V> implements org.apache.hadoop.mapred.InputF
   @Override
   public RecordReader<K, V> getRecordReader( InputSplit split, JobConf job, Reporter reporter ) throws IOException
     {
-    return new RecordReaderWrapper<K, V>( getInputFormat( job ), split, job, reporter, valueCopier );
+    return new RecordReaderWrapper<K, V>( getInputFormat( job ), split, job, reporter, keyCopier, valueCopier );
     }
 
   @Override

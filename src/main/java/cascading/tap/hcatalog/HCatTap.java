@@ -21,6 +21,9 @@
 package cascading.tap.hcatalog;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import cascading.flow.FlowProcess;
 import cascading.hadoop.mapred.InputFormatWrapper;
@@ -84,6 +87,7 @@ public class HCatTap extends Tap<Configuration, RecordReader, OutputCollector>
   private final String databaseName;
   private final String tableName;
   private final String filter;
+  private Map<String, String> additionalConf = Collections.emptyMap();
 
   /**
    * Constructs a new {@link HCatTap} with no partition filter.
@@ -126,6 +130,19 @@ public class HCatTap extends Tap<Configuration, RecordReader, OutputCollector>
     this.filter = filter;
     }
 
+  public void setAdditionalConf( Map<String, String> additionalConf )
+    {
+    this.additionalConf = ( additionalConf != null ) ? additionalConf : Collections.<String, String> emptyMap();
+    }
+
+  private void extendConf( Configuration conf )
+    {
+    for( Entry<String, String> property : additionalConf.entrySet() )
+      {
+      conf.set( property.getKey(), property.getValue() );
+      }
+    }
+
   @Override
   public String getIdentifier()
     {
@@ -135,7 +152,8 @@ public class HCatTap extends Tap<Configuration, RecordReader, OutputCollector>
   @Override
   public void sourceConfInit( FlowProcess<? extends Configuration> flowProcess, Configuration conf )
     {
-    InputFormatWrapper.setInputFormat( conf, HCatInputFormat.class, HCatInputFormatValueCopier.class );
+    extendConf(conf);
+    InputFormatWrapper.setInputFormat( conf, HCatInputFormat.class, HCatInputFormatKeyCopier.class, HCatInputFormatValueCopier.class );
     try
       {
       HCatInputFormat.setInput( conf, databaseName, tableName, filter );
@@ -157,6 +175,7 @@ public class HCatTap extends Tap<Configuration, RecordReader, OutputCollector>
   @Override
   public void sinkConfInit( FlowProcess<? extends Configuration> flowProcess, Configuration conf )
     {
+    extendConf(conf);
     OutputFormatWrapper.setOutputFormat( conf, HCatOutputFormat.class );
     OutputJobInfo outputJobInfo = OutputJobInfo.create( databaseName, tableName, null );
     try
