@@ -1,5 +1,10 @@
 Cascading-Hive changelog
 
+2.1.1 (unreleased)
+
+- Adding id of the tap as part of the identifier
+- Allow to copy keys in RecordReaderWrapper
+
 2.1.0
 
 - update corc to 2.0.3
